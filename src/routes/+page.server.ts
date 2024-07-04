@@ -1,9 +1,12 @@
-import { db } from "$lib/db";
+import type { PageServerLoad } from "./$types";
 
-export async function load() {
-	const users = await db.query.UserTable.findMany();
+export const load: PageServerLoad = async ({ locals }: { locals: App.Locals }) => {
+	if (!locals.user) {
+		return { username: null };
 
-	return {
-		users
-	};
-}
+		// Use to protect routes
+		// redirect(302, "/login");
+	}
+
+	return { username: locals?.user?.username };
+};
