@@ -1,8 +1,8 @@
-import { pgTable, uuid, text } from "drizzle-orm/pg-core";
+import { pgTable, serial, text, varchar } from "drizzle-orm/pg-core";
 
 export const UserTable = pgTable("users", {
-	id: uuid("id").primaryKey(),
-	name: text("name").notNull().notNull(),
-	username: text("username").notNull(),
-	email: text("email").notNull()
+	id: serial("id").primaryKey(),
+	name: text("name").notNull(),
+	username: varchar("username", { length: 255 }).notNull().unique(),
+	email: varchar("email", { length: 255 }).notNull().unique()
 });
