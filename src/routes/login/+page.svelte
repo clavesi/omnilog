@@ -3,4 +3,4 @@
 </script>
 
 <Button href="/login/github">Login with GitHub</Button>
-<Button href="/login/google">Login with Google</Button>
+<Button disabled>Login with Google</Button>
