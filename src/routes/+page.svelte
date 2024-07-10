@@ -3,7 +3,9 @@
 </script>
 
 {#if data.username}
-	<h1 class="text-3xl font-bold">Welcome, {data.username}!</h1>
+	<div>
+		<h1 class="text-3xl font-bold">Welcome, {data.username}!</h1>
+	</div>
 {:else}
 	<h1 class="text-3xl font-bold">Welcome to SvelteKit</h1>
 	<p>Visit <a href="https://kit.svelte.dev">kit.svelte.dev</a> to read the documentation</p>

@@ -58,7 +58,8 @@ export async function GET(event: RequestEvent): Promise<Response> {
 					providerId: githubUser.id,
 					displayName: githubUser.name,
 					username: githubUser.login,
-					email: primary.email
+					email: primary.email,
+					imageUrl: githubUser.avatar_url
 				});
 
 				const session = await lucia.createSession(userId, {});

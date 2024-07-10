@@ -17,6 +17,7 @@ CREATE TABLE IF NOT EXISTS "user" (
 	"name" text NOT NULL,
 	"username" varchar(255) NOT NULL,
 	"email" varchar(255) NOT NULL,
+	"image_url" varchar(255),
 	CONSTRAINT "user_provider_provider_id_pk" PRIMARY KEY("provider","provider_id"),
 	CONSTRAINT "user_id_unique" UNIQUE("id"),
 	CONSTRAINT "user_username_unique" UNIQUE("username"),

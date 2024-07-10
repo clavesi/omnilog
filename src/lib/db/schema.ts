@@ -18,7 +18,8 @@ export const UserTable = pgTable(
 		providerId: integer("provider_id").notNull(),
 		displayName: text("name").notNull(),
 		username: varchar("username", { length: 255 }).notNull().unique(),
-		email: varchar("email", { length: 255 }).notNull().unique()
+		email: varchar("email", { length: 255 }).notNull().unique(),
+		imageUrl: varchar("image_url", { length: 255 })
 	},
 	(table) => {
 		return {

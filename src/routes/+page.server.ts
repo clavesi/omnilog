@@ -8,5 +8,7 @@ export const load: PageServerLoad = async ({ locals }: { locals: App.Locals }) =
 		// redirect(302, "/login");
 	}
 
-	return { username: locals?.user?.username };
+	return {
+		username: locals?.user?.username
+	};
 };
