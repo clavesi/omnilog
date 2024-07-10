@@ -9,9 +9,9 @@
 		<div class="flex items-center gap-4">
 			{#if data.username}
 				<p>{data.username}</p>
-				<a href="/logout">Logout</a>
+				<a href="/auth/logout">Logout</a>
 			{:else}
-				<a href="/login">Login</a>
+				<a href="/auth/login">Login</a>
 			{/if}
 		</div>
 	</div>

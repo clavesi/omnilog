@@ -1,5 +1,5 @@
 {
-  "id": "fb3a27e4-1598-4f3c-acb0-5d02ad2b8020",
+  "id": "e6c9df9d-0bd1-4547-a2a4-e66c03f35ebe",
   "prevId": "00000000-0000-0000-0000-000000000000",
   "version": "7",
   "dialect": "postgresql",
@@ -53,7 +53,7 @@
         "id": {
           "name": "id",
           "type": "varchar(100)",
-          "primaryKey": true,
+          "primaryKey": false,
           "notNull": true
         },
         "provider": {
@@ -90,8 +90,23 @@
       },
       "indexes": {},
       "foreignKeys": {},
-      "compositePrimaryKeys": {},
+      "compositePrimaryKeys": {
+        "user_provider_provider_id_pk": {
+          "name": "user_provider_provider_id_pk",
+          "columns": [
+            "provider",
+            "provider_id"
+          ]
+        }
+      },
       "uniqueConstraints": {
+        "user_id_unique": {
+          "name": "user_id_unique",
+          "nullsNotDistinct": false,
+          "columns": [
+            "id"
+          ]
+        },
         "user_username_unique": {
           "name": "user_username_unique",
           "nullsNotDistinct": false,

@@ -56,8 +56,8 @@ export async function GET(event: RequestEvent): Promise<Response> {
 					id: userId,
 					provider: "github",
 					providerId: githubUser.id,
+					displayName: githubUser.name,
 					username: githubUser.login,
-					name: githubUser.login,
 					email: primary.email
 				});
 
@@ -92,6 +92,7 @@ export async function GET(event: RequestEvent): Promise<Response> {
 interface GitHubUser {
 	id: number;
 	login: string;
+	name: string;
 	avatar_url: string;
 }
 

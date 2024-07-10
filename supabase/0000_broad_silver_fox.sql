@@ -11,12 +11,14 @@ CREATE TABLE IF NOT EXISTS "session" (
 );
 --> statement-breakpoint
 CREATE TABLE IF NOT EXISTS "user" (
-	"id" varchar(100) PRIMARY KEY NOT NULL,
+	"id" varchar(100) NOT NULL,
 	"provider" "provider" NOT NULL,
 	"provider_id" integer NOT NULL,
 	"name" text NOT NULL,
 	"username" varchar(255) NOT NULL,
 	"email" varchar(255) NOT NULL,
+	CONSTRAINT "user_provider_provider_id_pk" PRIMARY KEY("provider","provider_id"),
+	CONSTRAINT "user_id_unique" UNIQUE("id"),
 	CONSTRAINT "user_username_unique" UNIQUE("username"),
 	CONSTRAINT "user_email_unique" UNIQUE("email")
 );

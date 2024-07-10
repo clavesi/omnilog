@@ -15,5 +15,5 @@ export const GET = async (event) => {
 			...sessionCookie.attributes
 		});
 	}
-	return redirect(302, "/login");
+	return redirect(302, "/auth/login");
 };
