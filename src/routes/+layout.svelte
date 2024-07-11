@@ -1,5 +1,7 @@
 <script lang="ts">
 	import "../app.css";
+	import { Button } from "$lib/components/ui/button";
+
 	export let data;
 </script>
 
@@ -8,7 +10,7 @@
 		<a href="/" class="text-4xl font-bold">omnilog</a>
 		<div class="flex items-center gap-4">
 			{#if data.username}
-				<a href="/auth/logout" class="rounded-md bg-green-800 px-4 py-2">Logout</a>
+				<Button href="/auth/logout" class="rounded-md">Sign Out</Button>
 				<img src={data.imageUrl} alt="user profile" class="size-12 rounded-full" />
 			{:else}
 				<a href="/auth/login">Login</a>
