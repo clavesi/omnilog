@@ -1,6 +1,6 @@
 import { github, lucia } from "$lib/server/auth/auth";
 import { OAuth2RequestError } from "arctic";
-import { generateId } from "lucia";
+import { generateIdFromEntropySize } from "lucia";
 import type { RequestEvent } from "@sveltejs/kit";
 import { db } from "$lib/db";
 import { UserTable } from "$lib/db/schema";
@@ -51,7 +51,7 @@ export async function GET(event: RequestEvent): Promise<Response> {
 			const primary = githubEmails.find((email) => email.primary);
 
 			if (primary) {
-				const userId = generateId(40);
+				const userId = generateIdFromEntropySize(10);
 				await db.insert(UserTable).values({
 					id: userId,
 					provider: "github",

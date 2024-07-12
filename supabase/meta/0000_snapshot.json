@@ -1,5 +1,5 @@
 {
-  "id": "6fd6648e-c28b-4898-801a-e16a9c6e7a83",
+  "id": "16c0a1b7-6516-477e-9e88-b7be8fc67e42",
   "prevId": "00000000-0000-0000-0000-000000000000",
   "version": "7",
   "dialect": "postgresql",
@@ -52,8 +52,8 @@
       "columns": {
         "id": {
           "name": "id",
-          "type": "varchar(100)",
-          "primaryKey": false,
+          "type": "text",
+          "primaryKey": true,
           "notNull": true
         },
         "provider": {
@@ -77,34 +77,26 @@
         },
         "username": {
           "name": "username",
-          "type": "varchar(255)",
+          "type": "text",
           "primaryKey": false,
           "notNull": true
         },
         "email": {
           "name": "email",
-          "type": "varchar(255)",
+          "type": "text",
           "primaryKey": false,
           "notNull": true
         },
         "image_url": {
           "name": "image_url",
-          "type": "varchar(255)",
+          "type": "text",
           "primaryKey": false,
           "notNull": false
         }
       },
       "indexes": {},
       "foreignKeys": {},
-      "compositePrimaryKeys": {
-        "user_provider_provider_id_pk": {
-          "name": "user_provider_provider_id_pk",
-          "columns": [
-            "provider",
-            "provider_id"
-          ]
-        }
-      },
+      "compositePrimaryKeys": {},
       "uniqueConstraints": {
         "user_id_unique": {
           "name": "user_id_unique",
