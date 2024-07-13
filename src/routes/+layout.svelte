@@ -1,4 +1,6 @@
 <script lang="ts">
+	import "@fontsource/source-sans-pro/900.css";
+	import "@fontsource-variable/open-sans/wdth-italic.css";
 	import "../app.css";
 	import { browser } from "$app/environment";
 	import { Sun, Moon } from "lucide-svelte";
@@ -28,11 +30,9 @@
 	export let data;
 </script>
 
-<svelte:head></svelte:head>
-
 <nav>
 	<div class="flex items-center justify-between p-4 mb-2 text-xl border-b">
-		<a href="/" class="text-4xl font-bold">omnilog</a>
+		<a href="/" class="text-4xl fontTitle text-mauve">omnilog</a>
 		<div class="flex items-center gap-4">
 			{#if darkMode}
 				<Button variant="secondary" on:click={handleThemeSwitch}>

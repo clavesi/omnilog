@@ -8,6 +8,12 @@ importers:
 
   .:
     dependencies:
+      '@fontsource-variable/open-sans':
+        specifier: ^5.0.29
+        version: 5.0.29
+      '@fontsource/source-sans-pro':
+        specifier: ^5.0.8
+        version: 5.0.8
       '@supabase/supabase-js':
         specifier: ^2.44.2
         version: 2.44.2
@@ -577,6 +583,12 @@ packages:
 
   '@floating-ui/utils@0.2.4':
     resolution: {integrity: sha512-dWO2pw8hhi+WrXq1YJy2yCuWoL20PddgGaqTgVe4cOS9Q6qklXCiA1tJEqX6BEwRNSCP84/afac9hd4MS+zEUA==}
+
+  '@fontsource-variable/open-sans@5.0.29':
+    resolution: {integrity: sha512-p8T55iQwhErREcjY997t4ah9JKTyJNSBDDVfvVsWIQRGpA2fcTPk9rLue/Mkrr5/efkehxTSbT8JpTTRaFbM5A==}
+
+  '@fontsource/source-sans-pro@5.0.8':
+    resolution: {integrity: sha512-5U2UvIYRkCMozZ388gCE73PEpa2MFgN/0t9O4a1FF7bGT/MIneQWSL1XpWZ8iMVYdh6ntxRf3iFA6slCIuFgkg==}
 
   '@humanwhocodes/module-importer@1.0.1':
     resolution: {integrity: sha512-bxveV4V8v5Yb4ncFTT3rPSgZBOpCkjfK0y4oVVVJwIuDVBRMDXrPyXRL988i5ap9m9bnyEEjWfm5WkBmtffLfA==}
@@ -2598,6 +2610,10 @@ snapshots:
       '@floating-ui/utils': 0.2.4
 
   '@floating-ui/utils@0.2.4': {}
+
+  '@fontsource-variable/open-sans@5.0.29': {}
+
+  '@fontsource/source-sans-pro@5.0.8': {}
 
   '@humanwhocodes/module-importer@1.0.1': {}
 

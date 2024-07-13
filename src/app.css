@@ -24,6 +24,15 @@
     --input: 0 0% 89.8%;
     --ring: 0 0% 3.9%;
     --radius: 0.5rem;
+
+    --pink: hsl(316deg, 73%, 69%);
+    --mauve: hsl(266deg, 85%, 58%);
+    --red: hsl(347deg, 87%, 44%);
+    --yellow: hsl(35deg, 77%, 49%);
+    --green: hsl(109deg, 58%, 40%);
+    --sky: hsl(197deg, 97%, 46%);
+    --blue: hsl(220deg, 91%, 54%);
+    --lavender: hsl(231deg, 97%, 72%);
   }
 
   .dark {
@@ -46,6 +55,15 @@
     --border: 0 0% 14.9%;
     --input: 0 0% 14.9%;
     --ring: 0 0% 83.1%;
+
+    --pink: hsl(316deg, 72%, 86%);
+    --mauve: hsl(267deg, 84%, 81%);
+    --red: hsl(343deg, 81%, 75%);
+    --yellow: hsl(41deg, 86%, 83%);
+    --green: hsl(115deg, 54%, 76%);
+    --sky: hsl(189deg, 71%, 73%);
+    --blue: hsl(217deg, 92%, 76%);
+    --lavender: hsl(232deg, 97%, 85%);
   }
 }
 
@@ -57,4 +75,27 @@
   body {
     @apply bg-background text-foreground;
   }
+}
+
+
+/* Font Combinations (Header Title Body) */
+/* Lato (HTB) Heavy/Normal/Normal */
+
+/* Source Sans Pro (H) Bold + Opens Sans (TB) Bold/Normal */
+
+:global(body) {
+  font-family: "Open Sans Variable", sans-serif;
+  font-style: normal;
+  font-weight: 500;
+  font-variation-settings: "wght" 500;
+  background-color: 0 0% 83.1%;
+}
+
+.fontTitle {
+  font-family: "Source Sans Pro", sans-serif;
+}
+
+.fontHeader {
+  font-weight: 700;
+  font-variation-settings: "wght" 700;
 }

@@ -47,7 +47,15 @@ const config = {
 				card: {
 					DEFAULT: "hsl(var(--card) / <alpha-value>)",
 					foreground: "hsl(var(--card-foreground) / <alpha-value>)"
-				}
+				},
+				pink: "var(--pink)",
+				mauve: "var(--mauve)",
+				red: "var(--red)",
+				yellow: "var(--yellow)",
+				green: "var(--green)",
+				sky: "var(--sky)",
+				blue: "var(--blue)",
+				lavender: "var(--lavender)"
 			},
 			borderRadius: {
 				lg: "var(--radius)",
