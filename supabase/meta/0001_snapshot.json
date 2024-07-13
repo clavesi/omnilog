@@ -1,12 +1,12 @@
 {
-  "id": "8d4f15ab-3b73-461d-a19a-5e43132cc52c",
-  "prevId": "00000000-0000-0000-0000-000000000000",
+  "id": "a075df5b-5e2b-4b9f-acd0-ec106ceb8513",
+  "prevId": "8d4f15ab-3b73-461d-a19a-5e43132cc52c",
   "version": "7",
   "dialect": "postgresql",
   "tables": {
-    "public.anime": {
+    "media_schema.anime": {
       "name": "anime",
-      "schema": "",
+      "schema": "media_schema",
       "columns": {
         "id": {
           "name": "id",
@@ -45,6 +45,7 @@
           "name": "anime_media_id_media_id_fk",
           "tableFrom": "anime",
           "tableTo": "media",
+          "schemaTo": "media_schema",
           "columnsFrom": [
             "media_id"
           ],
@@ -58,9 +59,9 @@
       "compositePrimaryKeys": {},
       "uniqueConstraints": {}
     },
-    "public.book": {
+    "media_schema.book": {
       "name": "book",
-      "schema": "",
+      "schema": "media_schema",
       "columns": {
         "id": {
           "name": "id",
@@ -99,6 +100,7 @@
           "name": "book_media_id_media_id_fk",
           "tableFrom": "book",
           "tableTo": "media",
+          "schemaTo": "media_schema",
           "columnsFrom": [
             "media_id"
           ],
@@ -112,9 +114,9 @@
       "compositePrimaryKeys": {},
       "uniqueConstraints": {}
     },
-    "public.genre": {
+    "media_schema.genre": {
       "name": "genre",
-      "schema": "",
+      "schema": "media_schema",
       "columns": {
         "id": {
           "name": "id",
@@ -142,9 +144,9 @@
         }
       }
     },
-    "public.manga": {
+    "media_schema.manga": {
       "name": "manga",
-      "schema": "",
+      "schema": "media_schema",
       "columns": {
         "id": {
           "name": "id",
@@ -183,6 +185,7 @@
           "name": "manga_media_id_media_id_fk",
           "tableFrom": "manga",
           "tableTo": "media",
+          "schemaTo": "media_schema",
           "columnsFrom": [
             "media_id"
           ],
@@ -196,9 +199,9 @@
       "compositePrimaryKeys": {},
       "uniqueConstraints": {}
     },
-    "public.media": {
+    "media_schema.media": {
       "name": "media",
-      "schema": "",
+      "schema": "media_schema",
       "columns": {
         "id": {
           "name": "id",
@@ -236,9 +239,9 @@
       "compositePrimaryKeys": {},
       "uniqueConstraints": {}
     },
-    "public.movie": {
+    "media_schema.movie": {
       "name": "movie",
-      "schema": "",
+      "schema": "media_schema",
       "columns": {
         "id": {
           "name": "id",
@@ -277,6 +280,7 @@
           "name": "movie_media_id_media_id_fk",
           "tableFrom": "movie",
           "tableTo": "media",
+          "schemaTo": "media_schema",
           "columnsFrom": [
             "media_id"
           ],
@@ -332,9 +336,9 @@
       "compositePrimaryKeys": {},
       "uniqueConstraints": {}
     },
-    "public.tv_show": {
+    "media_schema.tv_show": {
       "name": "tv_show",
-      "schema": "",
+      "schema": "media_schema",
       "columns": {
         "id": {
           "name": "id",
@@ -379,6 +383,7 @@
           "name": "tv_show_media_id_media_id_fk",
           "tableFrom": "tv_show",
           "tableTo": "media",
+          "schemaTo": "media_schema",
           "columnsFrom": [
             "media_id"
           ],
@@ -392,9 +397,9 @@
       "compositePrimaryKeys": {},
       "uniqueConstraints": {}
     },
-    "public.user_media": {
+    "media_schema.user_media": {
       "name": "user_media",
-      "schema": "",
+      "schema": "media_schema",
       "columns": {
         "user_id": {
           "name": "user_id",
@@ -411,7 +416,7 @@
         "stage": {
           "name": "stage",
           "type": "stage",
-          "typeSchema": "public",
+          "typeSchema": "media_schema",
           "primaryKey": false,
           "notNull": true
         }
@@ -435,6 +440,7 @@
           "name": "user_media_media_id_media_id_fk",
           "tableFrom": "user_media",
           "tableTo": "media",
+          "schemaTo": "media_schema",
           "columnsFrom": [
             "media_id"
           ],
@@ -531,9 +537,9 @@
         }
       }
     },
-    "public.video_game": {
+    "media_schema.video_game": {
       "name": "video_game",
-      "schema": "",
+      "schema": "media_schema",
       "columns": {
         "id": {
           "name": "id",
@@ -572,6 +578,7 @@
           "name": "video_game_media_id_media_id_fk",
           "tableFrom": "video_game",
           "tableTo": "media",
+          "schemaTo": "media_schema",
           "columnsFrom": [
             "media_id"
           ],
@@ -585,9 +592,9 @@
       "compositePrimaryKeys": {},
       "uniqueConstraints": {}
     },
-    "public.media_to_genres": {
+    "media_schema.media_to_genres": {
       "name": "media_to_genres",
-      "schema": "",
+      "schema": "media_schema",
       "columns": {
         "media_id": {
           "name": "media_id",
@@ -608,6 +615,7 @@
           "name": "media_to_genres_media_id_media_id_fk",
           "tableFrom": "media_to_genres",
           "tableTo": "media",
+          "schemaTo": "media_schema",
           "columnsFrom": [
             "media_id"
           ],
@@ -621,6 +629,7 @@
           "name": "media_to_genres_genre_id_genre_id_fk",
           "tableFrom": "media_to_genres",
           "tableTo": "genre",
+          "schemaTo": "media_schema",
           "columnsFrom": [
             "genre_id"
           ],
@@ -652,9 +661,9 @@
         "google"
       ]
     },
-    "public.stage": {
+    "media_schema.stage": {
       "name": "stage",
-      "schema": "public",
+      "schema": "media_schema",
       "values": [
         "completed",
         "in_progress",
@@ -663,7 +672,9 @@
       ]
     }
   },
-  "schemas": {},
+  "schemas": {
+    "media_schema": "media_schema"
+  },
   "_meta": {
     "columns": {},
     "schemas": {},

@@ -1,7 +1,8 @@
+import { relations } from "drizzle-orm";
 import {
-	boolean,
 	integer,
 	pgEnum,
+	pgSchema,
 	pgTable,
 	primaryKey,
 	serial,
@@ -10,7 +11,6 @@ import {
 } from "drizzle-orm/pg-core";
 
 export const providerEnum = pgEnum("provider", ["github", "google"]);
-export const stageEnum = pgEnum("stage", ["completed", "in_progress", "planned", "abandoned"]);
 
 export const UserTable = pgTable("user", {
 	id: text("id").primaryKey().unique(),
@@ -33,7 +33,18 @@ export const SessionTable = pgTable("session", {
 	}).notNull()
 });
 
-export const UserMediaTable = pgTable(
+// ===== MEDIA =====
+
+export const mediaSchema = pgSchema("media_schema");
+
+export const stageEnum = mediaSchema.enum("stage", [
+	"completed",
+	"in_progress",
+	"planned",
+	"abandoned"
+]);
+
+export const UserMediaTable = mediaSchema.table(
 	"user_media",
 	{
 		userId: text("user_id")
@@ -51,9 +62,7 @@ export const UserMediaTable = pgTable(
 	}
 );
 
-// TODO: add relations
-
-export const MediaTable = pgTable("media", {
+export const MediaTable = mediaSchema.table("media", {
 	id: serial("id").primaryKey(),
 	title: text("title").notNull(),
 	description: text("description").notNull(),
@@ -61,12 +70,35 @@ export const MediaTable = pgTable("media", {
 	imageUrl: text("image_url").notNull()
 });
 
-export const GenreTable = pgTable("genre", {
+export const mediaRelations = relations(MediaTable, ({ many }) => ({
+	mediaToGenres: many(GenreTable)
+}));
+
+export const GenreTable = mediaSchema.table("genre", {
 	id: serial("id").primaryKey(),
 	name: text("name").notNull().unique()
 });
 
-export const MovieTable = pgTable("movie", {
+export const genreRelations = relations(GenreTable, ({ many }) => ({
+	mediaToGenres: many(MediaTable)
+}));
+
+export const mediaToGenres = mediaSchema.table(
+	"media_to_genres",
+	{
+		mediaId: integer("media_id")
+			.notNull()
+			.references(() => MediaTable.id),
+		genreId: integer("genre_id")
+			.notNull()
+			.references(() => GenreTable.id)
+	},
+	(table) => ({
+		pk: primaryKey({ columns: [table.mediaId, table.genreId] })
+	})
+);
+
+export const MovieTable = mediaSchema.table("movie", {
 	id: serial("id").primaryKey(),
 	mediaId: integer("media_id").references(() => MediaTable.id),
 	director: text("director").notNull(),
@@ -74,22 +106,7 @@ export const MovieTable = pgTable("movie", {
 	duration: integer("duration").notNull()
 });
 
-export const MovieGenreTable = pgTable(
-	"movie_genre",
-	{
-		movieId: integer("movie_id").references(() => MovieTable.id),
-		genreId: integer("genre_id").references(() => GenreTable.id),
-		primary_genre: boolean("primary_genre").notNull().default(false)
-	},
-	(table) => {
-		return {
-			// Composite primary key
-			pk: primaryKey({ columns: [table.movieId, table.genreId] })
-		};
-	}
-);
-
-export const TVShowTable = pgTable("tv_show", {
+export const TVShowTable = mediaSchema.table("tv_show", {
 	id: serial("id").primaryKey(),
 	mediaId: integer("media_id").references(() => MediaTable.id),
 	creator: text("creator").notNull(),
@@ -98,22 +115,7 @@ export const TVShowTable = pgTable("tv_show", {
 	episodes: integer("episodes").notNull()
 });
 
-export const TVShowGenreTable = pgTable(
-	"tv_show_genre",
-	{
-		tvShowId: integer("tv_show_id").references(() => TVShowTable.id),
-		genreId: integer("genre_id").references(() => GenreTable.id),
-		primary_genre: boolean("primary_genre").notNull().default(false)
-	},
-	(table) => {
-		return {
-			// Composite primary key
-			pk: primaryKey({ columns: [table.tvShowId, table.genreId] })
-		};
-	}
-);
-
-export const BookTable = pgTable("book", {
+export const BookTable = mediaSchema.table("book", {
 	id: serial("id").primaryKey(),
 	mediaId: integer("media_id").references(() => MediaTable.id),
 	author: text("author").notNull(),
@@ -121,22 +123,7 @@ export const BookTable = pgTable("book", {
 	pages: integer("pages").notNull()
 });
 
-export const BookGenreTable = pgTable(
-	"book_genre",
-	{
-		bookId: integer("book_id").references(() => BookTable.id),
-		genreId: integer("genre_id").references(() => GenreTable.id),
-		primary_genre: boolean("primary_genre").notNull().default(false)
-	},
-	(table) => {
-		return {
-			// Composite primary key
-			pk: primaryKey({ columns: [table.bookId, table.genreId] })
-		};
-	}
-);
-
-export const MangaTable = pgTable("manga", {
+export const MangaTable = mediaSchema.table("manga", {
 	id: serial("id").primaryKey(),
 	mediaId: integer("media_id").references(() => MediaTable.id),
 	author: text("author").notNull(),
@@ -144,22 +131,7 @@ export const MangaTable = pgTable("manga", {
 	chapters: integer("chapters").notNull()
 });
 
-export const MangaGenreTable = pgTable(
-	"manga_genre",
-	{
-		mangaId: integer("manga_id").references(() => MangaTable.id),
-		genreId: integer("genre_id").references(() => GenreTable.id),
-		primary_genre: boolean("primary_genre").notNull().default(false)
-	},
-	(table) => {
-		return {
-			// Composite primary key
-			pk: primaryKey({ columns: [table.mangaId, table.genreId] })
-		};
-	}
-);
-
-export const AnimeTable = pgTable("anime", {
+export const AnimeTable = mediaSchema.table("anime", {
 	id: serial("id").primaryKey(),
 	mediaId: integer("media_id").references(() => MediaTable.id),
 	studio: text("studio").notNull(),
@@ -167,40 +139,10 @@ export const AnimeTable = pgTable("anime", {
 	episodes: integer("episodes").notNull()
 });
 
-export const AnimeGenreTable = pgTable(
-	"anime_genre",
-	{
-		animeId: integer("anime_id").references(() => AnimeTable.id),
-		genreId: integer("genre_id").references(() => GenreTable.id),
-		primary_genre: boolean("primary_genre").notNull().default(false)
-	},
-	(table) => {
-		return {
-			// Composite primary key
-			pk: primaryKey({ columns: [table.animeId, table.genreId] })
-		};
-	}
-);
-
-export const VideoGameTable = pgTable("video_game", {
+export const VideoGameTable = mediaSchema.table("video_game", {
 	id: serial("id").primaryKey(),
 	mediaId: integer("media_id").references(() => MediaTable.id),
 	developer: text("developer").notNull(),
 	publisher: text("publisher").notNull(),
 	platforms: text("platforms").notNull()
 });
-
-export const VideoGameGenreTable = pgTable(
-	"video_game_genre",
-	{
-		videoGameId: integer("video_game_id").references(() => VideoGameTable.id),
-		genreId: integer("genre_id").references(() => GenreTable.id),
-		primary_genre: boolean("primary_genre").notNull().default(false)
-	},
-	(table) => {
-		return {
-			// Composite primary key
-			pk: primaryKey({ columns: [table.videoGameId, table.genreId] })
-		};
-	}
-);
