@@ -5,13 +5,12 @@ import {
 	GOOGLE_CLIENT_SECRET
 } from "$env/static/private";
 import { dev } from "$app/environment";
-import { DrizzlePostgreSQLAdapter } from "@lucia-auth/adapter-drizzle";
+import { PrismaAdapter } from "@lucia-auth/adapter-prisma";
 import { GitHub, Google } from "arctic";
 import { Lucia } from "lucia";
 import { db } from "$lib/db";
-import { UserTable, SessionTable } from "../../db/schema";
 
-const adapter = new DrizzlePostgreSQLAdapter(db, SessionTable, UserTable);
+const adapter = new PrismaAdapter(db.session, db.user);
 
 export const github = new GitHub(GITHUB_CLIENT_ID, GITHUB_CLIENT_SECRET);
 

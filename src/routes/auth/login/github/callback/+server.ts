@@ -3,8 +3,7 @@ import { OAuth2RequestError } from "arctic";
 import { generateIdFromEntropySize } from "lucia";
 import type { RequestEvent } from "@sveltejs/kit";
 import { db } from "$lib/db";
-import { UserTable } from "$lib/db/schema";
-import { and, eq } from "drizzle-orm";
+import { Provider } from "@prisma/client";
 
 export async function GET(event: RequestEvent): Promise<Response> {
 	const code = event.url.searchParams.get("code");
@@ -28,9 +27,11 @@ export async function GET(event: RequestEvent): Promise<Response> {
 
 		const githubUser: GitHubUser = await githubUserResponse.json();
 
-		// Replace this with your own DB client.
-		const existingUser = await db.query.UserTable.findFirst({
-			where: and(eq(UserTable.provider, "github"), eq(UserTable.providerId, githubUser.id))
+		const existingUser = await db.user.findFirst({
+			where: {
+				provider: Provider.github,
+				providerId: githubUser.id
+			}
 		});
 
 		if (existingUser) {
@@ -52,14 +53,16 @@ export async function GET(event: RequestEvent): Promise<Response> {
 
 			if (primary) {
 				const userId = generateIdFromEntropySize(10);
-				await db.insert(UserTable).values({
-					id: userId,
-					provider: "github",
-					providerId: githubUser.id,
-					displayName: githubUser.name,
-					username: githubUser.login,
-					email: primary.email,
-					imageUrl: githubUser.avatar_url
+				await db.user.create({
+					data: {
+						id: userId,
+						provider: Provider.github,
+						providerId: githubUser.id,
+						displayName: githubUser.name,
+						username: githubUser.login,
+						email: primary.email,
+						imageUrl: githubUser.avatar_url
+					}
 				});
 
 				const session = await lucia.createSession(userId, {});

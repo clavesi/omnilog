@@ -1,0 +1,148 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+// Looking for ways to speed up your queries, or scale easily with your serverless or edge functions?
+// Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum Provider {
+  github
+  google
+}
+
+enum Stage {
+  completed
+  in_progress
+  planned
+  abandoned
+}
+
+model User {
+  id          String      @id
+  provider    Provider
+  providerId  Int
+  displayName String
+  username    String      @unique
+  email       String      @unique
+  imageUrl    String?
+  sessions    Session[]
+  UserMedia   UserMedia[]
+}
+
+model Session {
+  id        String   @id
+  userId    String
+  expiresAt DateTime
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+model UserMedia {
+  id      String @id
+  userId  String
+  mediaId Int
+  stage   Stage
+
+  user  User  @relation(fields: [userId], references: [id], onDelete: Cascade)
+  media Media @relation(fields: [mediaId], references: [id], onDelete: Cascade)
+}
+
+model Media {
+  id                  Int    @id @default(autoincrement())
+  title               String
+  description         String
+  date_of_publication Int
+  imageUrl            String
+
+  UserMedia UserMedia[]
+  genres    MediaToGenre[]
+  Movie     Movie?
+  TVShow    TVShow?
+  Book      Book?
+  Manga     Manga?
+  Anime     Anime?
+  VideoGame VideoGame?
+}
+
+model Genre {
+  id    Int            @id @default(autoincrement())
+  name  String         @unique
+  media MediaToGenre[]
+}
+
+model MediaToGenre {
+  mediaId Int
+  media   Media @relation(fields: [mediaId], references: [id], onDelete: Cascade)
+  genreId Int
+  genre   Genre @relation(fields: [genreId], references: [id], onDelete: Cascade)
+
+  @@id([mediaId, genreId])
+}
+
+model Movie {
+  id      Int   @id @default(autoincrement())
+  mediaId Int   @unique
+  media   Media @relation(fields: [mediaId], references: [id], onDelete: Cascade)
+
+  director String
+  studio   String
+  duration Int
+}
+
+model TVShow {
+  id      Int   @id @default(autoincrement())
+  mediaId Int   @unique
+  media   Media @relation(fields: [mediaId], references: [id], onDelete: Cascade)
+
+  creator  String
+  network  String
+  seasons  Int
+  episodes Int
+}
+
+model Book {
+  id      Int   @id @default(autoincrement())
+  mediaId Int   @unique
+  media   Media @relation(fields: [mediaId], references: [id], onDelete: Cascade)
+
+  author    String
+  publisher String
+  pages     Int
+}
+
+model Manga {
+  id      Int   @id @default(autoincrement())
+  mediaId Int   @unique
+  media   Media @relation(fields: [mediaId], references: [id], onDelete: Cascade)
+
+  author   String
+  artist   String
+  chapters Int
+}
+
+model Anime {
+  id      Int   @id @default(autoincrement())
+  mediaId Int   @unique
+  media   Media @relation(fields: [mediaId], references: [id], onDelete: Cascade)
+
+  studio   String
+  seasons  Int
+  episodes Int
+}
+
+model VideoGame {
+  id      Int   @id @default(autoincrement())
+  mediaId Int   @unique
+  media   Media @relation(fields: [mediaId], references: [id], onDelete: Cascade)
+
+  developer String
+  publisher String
+  platforms String
+}
