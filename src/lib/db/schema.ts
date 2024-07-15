@@ -98,6 +98,17 @@ export const mediaToGenres = mediaSchema.table(
 	})
 );
 
+export const mediaToGenresRelations = relations(mediaToGenres, ({ one }) => ({
+	media: one(MediaTable, {
+		fields: [mediaToGenres.mediaId],
+		references: [MediaTable.id]
+	}),
+	genre: one(GenreTable, {
+		fields: [mediaToGenres.genreId],
+		references: [GenreTable.id]
+	})
+}));
+
 export const MovieTable = mediaSchema.table("movie", {
 	id: serial("id").primaryKey(),
 	mediaId: integer("media_id").references(() => MediaTable.id),
