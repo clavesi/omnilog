@@ -19,20 +19,3 @@ Thumbs.db
 # Vite
 vite.config.js.timestamp-*
 vite.config.ts.timestamp-*
-
-# kit .gitignore
-dist
-test-results/
-package-lock.json
-yarn.lock
-/packages/create-svelte/template/CHANGELOG.md
-/packages/package/test/**/package
-/documentation/types.js
-.vercel_build_output
-.cloudflare
-.pnpm-debug.log
-.netlify
-.turbo
-.test-tmp
-symlink-from
-.idea/
