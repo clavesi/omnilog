@@ -23,6 +23,8 @@
 		"@sveltejs/kit": "^2.16.0",
 		"@sveltejs/vite-plugin-svelte": "^5.0.0",
 		"@tailwindcss/vite": "^4.0.0",
+		"@types/node": "^22.13.4",
+		"@types/ws": "^8.5.14",
 		"drizzle-kit": "^0.30.2",
 		"eslint": "^9.18.0",
 		"eslint-config-prettier": "^10.0.1",
@@ -40,7 +42,9 @@
 	},
 	"dependencies": {
 		"@neondatabase/serverless": "^0.10.4",
-		"drizzle-orm": "^0.38.4"
+		"drizzle-orm": "^0.38.4",
+		"pg": "^8.13.3",
+		"ws": "^8.18.0"
 	},
 	"pnpm": {
 		"onlyBuiltDependencies": [
