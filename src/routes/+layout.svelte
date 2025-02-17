@@ -1,25 +1,37 @@
 <script lang="ts">
 	import '../app.css';
+	import '@fontsource/roboto';
 	let { children } = $props();
 </script>
 
-<header class="flex h-20 w-full shrink-0 items-center bg-neutral-900 px-4 text-white md:px-6">
-	<nav class="mr-auto items-center justify-center gap-6 lg:flex">
-		<div>
-			<img
-				class="h-8 w-8"
-				src="https://static.vecteezy.com/system/resources/previews/016/916/479/original/placeholder-icon-design-free-vector.jpg"
-				alt="Logo"
-			/>
+<header class="bg-neutral-900 text-white">
+	<nav class="mx-auto flex h-20 max-w-screen-2xl flex-wrap items-center justify-between">
+		<div class="flex items-center justify-between">
+			<a href="/">
+				<img
+					class="mr-4 h-16 w-16"
+					src="https://static.vecteezy.com/system/resources/previews/016/916/479/original/placeholder-icon-design-free-vector.jpg"
+					alt="Logo"
+				/>
+			</a>
+			<div class="flex items-center justify-between gap-4 font-black uppercase">
+				<a href="/" class="hover:text-stone-300">Movies</a>
+				<a href="/" class="hover:text-stone-300">Shows</a>
+				<a href="/" class="hover:text-stone-300">Anime</a>
+				<a href="/" class="hover:text-stone-300">Manga</a>
+				<a href="/" class="hover:text-stone-300">Books</a>
+				<a href="/" class="hover:text-stone-300">Music</a>
+			</div>
 		</div>
-		<div class="flex justify-between gap-4 uppercase">
-			<a>Movies</a>
-			<a>Shows</a>
-			<a>Anime</a>
-			<a>Manga</a>
-			<a>Books</a>
-			<a>Music</a>
+		<div class="w-full md:block md:w-auto">
+			<a href="/" class="hover:text-stone-300">User</a>
 		</div>
 	</nav>
 </header>
 {@render children()}
+
+<style>
+	:global(body) {
+		font-family: 'Roboto', cursive;
+	}
+</style>

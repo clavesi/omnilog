@@ -45,6 +45,7 @@
 		"vite": "^6.0.0"
 	},
 	"dependencies": {
+		"@fontsource/roboto": "^5.1.1",
 		"@neondatabase/serverless": "^0.10.4",
 		"drizzle-orm": "^0.38.4",
 		"pg": "^8.13.3",
