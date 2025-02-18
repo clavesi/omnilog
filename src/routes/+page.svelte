@@ -1,8 +1,30 @@
 <script lang="ts">
 	import { Button } from '$lib/components/ui/button';
+	import { authClient } from '$lib/auth-client';
+
+	let { data } = $props();
 </script>
 
-<h1>Welcome to SvelteKit</h1>
-<p>Visit <a href="https://svelte.dev/docs/kit">svelte.dev/docs/kit</a> to read the documentation</p>
-
-<Button>Click me!</Button>
+<main class="flex h-[80vh] items-center justify-center">
+	{#if data.user}
+		<p>Welcome, {data.user.name}!</p>
+		<Button
+			variant="outline"
+			size="lg"
+			onclick={async () => {
+				await authClient.signOut();
+			}}>Sign out</Button
+		>
+	{:else}
+		<Button
+			variant="outline"
+			size="lg"
+			onclick={async () => {
+				await authClient.signIn.social({
+					provider: 'github',
+					callbackURL: '/'
+				});
+			}}>Sign in with GitHub</Button
+		>
+	{/if}
+</main>
