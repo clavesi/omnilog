@@ -7,16 +7,22 @@
 
 <main class="flex h-[80vh] items-center justify-center">
 	{#if data.user}
-		<p>Welcome, {data.user.name}!</p>
-		<Button
-			variant="outline"
-			size="lg"
-			onclick={async () => {
-				await authClient.signOut();
-			}}>Sign out</Button
-		>
+		<div class="flex flex-col items-center justify-center">
+			<p>Welcome, {data.user.name}!</p>
+			<Button
+				class="hover:cursor-pointer"
+				variant="outline"
+				size="lg"
+				onclick={async () => {
+					await authClient.signOut();
+					// Page needs to be reloaded to reflect the changes
+					location.reload();
+				}}>Sign out</Button
+			>
+		</div>
 	{:else}
 		<Button
+			class="hover:cursor-pointer"
 			variant="outline"
 			size="lg"
 			onclick={async () => {
