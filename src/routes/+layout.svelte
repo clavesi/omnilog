@@ -30,12 +30,9 @@
 			{#if !session}
 				<a href="/login" class="hover:text-stone-300">Login</a>
 			{:else}
-				<div class="flex flex-col items-center hover:cursor-pointer hover:brightness-75">
-					<a href="/profile">
-						<img class="h-12 w-12 rounded-full" src={session.user.image} alt="User" />
-					</a>
-					{session.user.name}
-				</div>
+				<a href="/profile" class="hover:brightness-75">
+					<img class="h-12 w-12 rounded-full" src={session.user.image} alt="User" />
+				</a>
 			{/if}
 		</div>
 	</nav>
