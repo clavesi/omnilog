@@ -1,6 +1,7 @@
 <script lang="ts">
 	import { Button } from '$lib/components/ui/button';
 	import { authClient } from '$lib/auth-client';
+	import { GithubIcon, LogOut } from 'lucide-svelte';
 
 	let { data } = $props();
 </script>
@@ -17,7 +18,7 @@
 					await authClient.signOut();
 					// Page needs to be reloaded to reflect the changes
 					location.reload();
-				}}>Sign out</Button
+				}}><LogOut />Sign out</Button
 			>
 		</div>
 	{:else}
@@ -30,7 +31,7 @@
 					provider: 'github',
 					callbackURL: '/'
 				});
-			}}>Sign in with GitHub</Button
+			}}><GithubIcon />Sign in with GitHub</Button
 		>
 	{/if}
 </main>

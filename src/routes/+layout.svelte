@@ -1,17 +1,20 @@
 <script lang="ts">
 	import '../app.css';
 	import '@fontsource/roboto';
-	let { children } = $props();
+
+	let { children, data } = $props();
+	let { session } = data;
 </script>
 
 <header class="bg-neutral-900 text-white">
-	<nav class="mx-auto flex h-20 max-w-screen-2xl flex-wrap items-center justify-between">
+	<nav class="mx-auto flex h-20 max-w-screen-xl flex-wrap items-center justify-between">
 		<div class="flex items-center justify-between">
 			<a href="/">
+				<!-- TODO: Get a logo -->
 				<img
 					class="mr-4 h-16 w-16"
 					src="https://static.vecteezy.com/system/resources/previews/016/916/479/original/placeholder-icon-design-free-vector.jpg"
-					alt="Logo"
+					alt="Placeholder Logo"
 				/>
 			</a>
 			<div class="flex items-center justify-between gap-4 font-black uppercase">
@@ -24,7 +27,16 @@
 			</div>
 		</div>
 		<div class="w-full md:block md:w-auto">
-			<a href="/" class="hover:text-stone-300">User</a>
+			{#if !session}
+				<a href="/login" class="hover:text-stone-300">Login</a>
+			{:else}
+				<div class="flex flex-col items-center hover:cursor-pointer hover:brightness-75">
+					<a href="/profile">
+						<img class="h-12 w-12 rounded-full" src={session.user.image} alt="User" />
+					</a>
+					{session.user.name}
+				</div>
+			{/if}
 		</div>
 	</nav>
 </header>
