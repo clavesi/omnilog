@@ -1,18 +1,23 @@
 <script lang="ts">
 	import '../app.css';
 	import '@fontsource/roboto';
+	import { Button } from '$lib/components/ui/button/index.js';
+	import * as DropdownMenu from '$lib/components/ui/dropdown-menu/index.js';
+	import { UserIcon, LogOutIcon } from 'lucide-svelte';
+
+	import { authClient } from '$lib/auth-client';
 
 	let { children, data } = $props();
 	let { session } = data;
 </script>
 
-<header class="bg-neutral-900 text-white">
-	<nav class="mx-auto flex h-20 max-w-screen-xl flex-wrap items-center justify-between">
+<header class="text-white bg-neutral-900">
+	<nav class="flex flex-wrap items-center justify-between h-20 max-w-screen-xl mx-auto">
 		<div class="flex items-center justify-between">
 			<a href="/">
 				<!-- TODO: Get a logo -->
 				<img
-					class="mr-4 h-16 w-16"
+					class="w-16 h-16 mr-4"
 					src="https://static.vecteezy.com/system/resources/previews/016/916/479/original/placeholder-icon-design-free-vector.jpg"
 					alt="Placeholder Logo"
 				/>
@@ -27,12 +32,45 @@
 			</div>
 		</div>
 		<div class="w-full md:block md:w-auto">
-			{#if !session}
-				<a href="/login" class="hover:text-stone-300">Login</a>
+			{#if session}
+				<DropdownMenu.Root>
+					<DropdownMenu.Trigger asChild let:builder>
+						<Button
+							builders={[builder]}
+							class="flex items-center justify-center hover:cursor-pointer hover:brightness-75"
+						>
+							<img class="w-12 h-12 rounded-full" src={session.user.image} alt="User" />
+						</Button>
+					</DropdownMenu.Trigger>
+					<DropdownMenu.Content>
+						<DropdownMenu.Label>My Account</DropdownMenu.Label>
+						<DropdownMenu.Separator />
+						<DropdownMenu.Group>
+							<DropdownMenu.Item>
+								<a href="/profile" class="flex flex-row items-center justify-start w-full h-full">
+									<UserIcon class="w-4 h-4 mr-2" />
+									<span>Profile</span>
+								</a>
+							</DropdownMenu.Item>
+							<DropdownMenu.Item>
+								<a
+									href="#"
+									class="flex flex-row items-center justify-start w-full h-full"
+									onclick={async () => {
+										await authClient.signOut();
+										// Page needs to be reloaded to reflect the changes
+										location.reload();
+									}}
+								>
+									<LogOutIcon class="w-4 h-4 mr-2" />
+									<span>Sign Out</span>
+								</a>
+							</DropdownMenu.Item>
+						</DropdownMenu.Group>
+					</DropdownMenu.Content>
+				</DropdownMenu.Root>
 			{:else}
-				<a href="/profile" class="hover:brightness-75">
-					<img class="h-12 w-12 rounded-full" src={session.user.image} alt="User" />
-				</a>
+				<a href="/login" class="hover:text-stone-300">Login</a>
 			{/if}
 		</div>
 	</nav>
