@@ -1,6 +1,6 @@
 import { betterAuth } from 'better-auth';
 import { drizzleAdapter } from 'better-auth/adapters/drizzle';
-import { db } from '$lib/server/db';
+import db from '$lib/server/db';
 import { GITHUB_CLIENT_ID, GITHUB_CLIENT_SECRET } from '$env/static/private';
 
 export const auth = betterAuth({

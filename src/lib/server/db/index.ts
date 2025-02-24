@@ -1,25 +1,26 @@
-import { drizzle } from 'drizzle-orm/neon-http';
-import { neon, neonConfig } from '@neondatabase/serverless';
+import { drizzle } from 'drizzle-orm/neon-serverless';
+import { Pool, neonConfig } from '@neondatabase/serverless';
 import { env } from '$env/dynamic/private';
 import * as schema from './schema';
-import ws from 'ws';
+import ws, { WebSocket } from 'ws';
 
-if (!env.DATABASE_URL) throw new Error('DATABASE_URL is not set');
+// set default option for all clients
+neonConfig.webSocketConstructor = ws;
+const connectionString =
+    process.env.NODE_ENV === 'production' ? env.DATABASE_URL : env.LOCAL_POSTGRES_URL;
 
-let connectionString = env.DATABASE_URL;
+if (process.env.NODE_ENV === 'production') {
+    neonConfig.webSocketConstructor = WebSocket;
+    neonConfig.poolQueryViaFetch = true;
+} else {
+    neonConfig.wsProxy = (host) => `${host}:5433/v1`;
+    neonConfig.useSecureWebSocket = false;
+    neonConfig.pipelineTLS = false;
+    neonConfig.pipelineConnect = false;
+}
 
-// Configure for local development
-// if (env.NODE_ENV === 'development') {
-// 	connectionString = 'postgres://postgres:postgres@db.localtest.me:5432/main';
-// 	neonConfig.fetchEndpoint = (host) => {
-// 		const [protocol, port] = host === 'db.localtest.me' ? ['http', 4444] : ['https', 443];
-// 		return `${protocol}://${host}:${port}/sql`;
-// 	};
-// 	const connectionStringUrl = new URL(connectionString);
-// 	neonConfig.useSecureWebSocket = connectionStringUrl.hostname !== 'db.localtest.me';
-// 	neonConfig.wsProxy = (host) => (host === 'db.localtest.me' ? `${host}:4444/v2` : `${host}/v2`);
-// }
-// neonConfig.webSocketConstructor = ws;
-
-const sql = neon(connectionString);
-export const db = drizzle(sql, { schema: { ...schema } });
+const pool = new Pool({ connectionString });
+const db = drizzle(pool, { schema });
+export default db;
+// const sql = neon(connectionString);
+// export const db = drizzleHttp({ client: sql, schema: { ...schema } });
