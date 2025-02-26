@@ -1,9 +1,10 @@
 import { betterAuth } from 'better-auth';
 import { drizzleAdapter } from 'better-auth/adapters/drizzle';
 import db from '$lib/server/db';
-import { BETTER_AUTH_URL_PUBLIC, BETTER_AUTH_URL_LOCAL, GITHUB_CLIENT_ID, GITHUB_CLIENT_SECRET, BETTER_AUTH_SECRET } from '$env/static/private';
+import { PUBLIC_BETTER_AUTH_URL_PUBLIC, PUBLIC_BETTER_AUTH_URL_LOCAL } from '$env/static/public';
+import { GITHUB_CLIENT_ID, GITHUB_CLIENT_SECRET, BETTER_AUTH_SECRET } from '$env/static/private';
 
-const BETTER_AUTH_URL = process.env.NODE_ENV == 'production' ? BETTER_AUTH_URL_PUBLIC : BETTER_AUTH_URL_LOCAL;
+const BETTER_AUTH_URL = process.env.NODE_ENV == 'production' ? PUBLIC_BETTER_AUTH_URL_PUBLIC : PUBLIC_BETTER_AUTH_URL_LOCAL;
 
 export const auth = betterAuth({
 	database: drizzleAdapter(db, {
