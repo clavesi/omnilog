@@ -6,7 +6,6 @@
 	import { siGoogle } from 'simple-icons';
 
 	import { authClient } from '$lib/auth-client';
-	const session = authClient.useSession();
 </script>
 
 <div class="flex h-screen flex-col items-center justify-center gap-2">
