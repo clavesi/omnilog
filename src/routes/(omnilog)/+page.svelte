@@ -2,11 +2,11 @@
 	const { data } = $props();
 </script>
 
-<div class="flex h-[calc(100vh-60px)] flex-col items-center justify-center gap-2">
+<div class="flex h-[calc(100vh-60px)] flex-col items-center gap-2 py-4">
 	{#if data.user}
 		<div class="flex flex-col items-center justify-center gap-2">
 			<h1>Hello, <b>{data.user.name}</b>!</h1>
-			<img src={data.user.image} alt="User Avatar" class="h-16 w-16 rounded-full" />
+			<p>Consume anything new recently?</p>
 		</div>
 	{:else}
 		<h1>Welcome to <b>omnilog</b>!</h1>
