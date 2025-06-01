@@ -5,4 +5,6 @@ export async function load({ locals }) {
 	if (!locals.user || !locals.session) {
 		redirect(302, '/sign-in');
 	}
+
+	// TODO: protect this route?
 }

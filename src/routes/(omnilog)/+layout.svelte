@@ -1,4 +1,8 @@
 <script lang="ts">
+	import { Avatar, AvatarImage, AvatarFallback } from '$lib/components/ui/avatar';
+	import { Button } from '$lib/components/ui/button';
+	import { Input } from '$lib/components/ui/input';
+	import * as DropdownMenu from '$lib/components/ui/dropdown-menu/index.js';
 	import {
 		Film,
 		Tv,
@@ -13,10 +17,7 @@
 		Settings
 	} from '@lucide/svelte';
 
-	import { Avatar, AvatarImage, AvatarFallback } from '$lib/components/ui/avatar';
-	import { Button } from '$lib/components/ui/button';
-	import { Input } from '$lib/components/ui/input';
-	import * as DropdownMenu from '$lib/components/ui/dropdown-menu/index.js';
+	import { authClient } from '$lib/auth-client';
 
 	const { data, children } = $props();
 </script>
@@ -92,10 +93,7 @@
 						<DropdownMenu.Content>
 							<DropdownMenu.Group>
 								<DropdownMenu.Item>
-									<a
-										href={`/profile/${data.user.name}`}
-										class="flex h-full w-full items-center gap-2"
-									>
+									<a href={`/profile`} class="flex h-full w-full items-center gap-2">
 										<User />
 										<span>Profile</span>
 									</a>
@@ -107,7 +105,23 @@
 									</a>
 								</DropdownMenu.Item>
 								<DropdownMenu.Separator />
-								<DropdownMenu.Item><LogOut /><span>Sign Out</span></DropdownMenu.Item>
+
+								<DropdownMenu.Item>
+									<button
+										class="flex h-full w-full cursor-pointer items-center gap-2"
+										onclick={async () => {
+											await authClient.signOut({
+												fetchOptions: {
+													onSuccess: () => {
+														window.location.reload();
+													}
+												}
+											});
+										}}
+									>
+										<LogOut />Logout
+									</button>
+								</DropdownMenu.Item>
 							</DropdownMenu.Group>
 						</DropdownMenu.Content>
 					</DropdownMenu.Root>
