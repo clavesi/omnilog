@@ -15,11 +15,14 @@ importers:
         specifier: ^1.2.8
         version: 1.2.8
       drizzle-orm:
-        specifier: ^0.40.0
-        version: 0.40.1(@neondatabase/serverless@0.10.4)(@types/pg@8.11.6)(gel@2.1.0)(kysely@0.28.2)
+        specifier: ^0.40.1
+        version: 0.40.1(@neondatabase/serverless@0.10.4)(@types/pg@8.11.6)(gel@2.1.0)(kysely@0.28.2)(postgres@3.4.7)
       simple-icons:
         specifier: ^14.15.0
         version: 14.15.0
+      ws:
+        specifier: ^8.18.2
+        version: 8.18.2
     devDependencies:
       '@eslint/compat':
         specifier: ^1.2.5
@@ -48,6 +51,9 @@ importers:
       '@types/node':
         specifier: ^20
         version: 20.17.50
+      '@types/ws':
+        specifier: ^8.18.1
+        version: 8.18.1
       autoprefixer:
         specifier: ^10.4.20
         version: 10.4.21(postcss@8.5.3)
@@ -72,6 +78,9 @@ importers:
       globals:
         specifier: ^16.0.0
         version: 16.2.0
+      postgres:
+        specifier: ^3.4.7
+        version: 3.4.7
       prettier:
         specifier: ^3.4.2
         version: 3.5.3
@@ -956,6 +965,9 @@ packages:
   '@types/pg@8.11.6':
     resolution: {integrity: sha512-/2WmmBXHLsfRqzfHW7BNZ8SbYzE8OSk7i3WjFYvfgRHj7S1xj+16Je5fUKv3lVdVzk/zn9TXOqf+avFCFIE0yQ==}
 
+  '@types/ws@8.18.1':
+    resolution: {integrity: sha512-ThVF6DCVhA8kUGy+aazFQ4kXQ7E1Ty7A3ypFOe0IcJV8O/M511G99AW24irKrW56Wt44yG9+ij8FaqoBGkuBXg==}
+
   '@typescript-eslint/eslint-plugin@8.32.1':
     resolution: {integrity: sha512-6u6Plg9nP/J1GRpe/vcjjabo6Uc5YQPAMxsgQyGC/I0RuukiG1wIe3+Vtg3IrSCVJDmqK3j8adrtzXSENRtFgg==}
     engines: {node: ^18.18.0 || ^20.9.0 || >=21.1.0}
@@ -1757,6 +1769,10 @@ packages:
   postgres-range@1.1.4:
     resolution: {integrity: sha512-i/hbxIE9803Alj/6ytL7UHQxRvZkI9O4Sy+J3HGc4F4oo/2eQAjTSNJ0bfxyse3bH0nuVesCk+3IRLaMtG3H6w==}
 
+  postgres@3.4.7:
+    resolution: {integrity: sha512-Jtc2612XINuBjIl/QTWsV5UvE8UHuNblcO3vVADSrKsrc6RqGX6lOW1cEo3CM2v0XG4Nat8nI+YM7/f26VxXLw==}
+    engines: {node: '>=12'}
+
   prelude-ls@1.2.1:
     resolution: {integrity: sha512-vkcDPrRZo1QZLbn5RLGPpg/WmIQ65qoWWhcGKf/b5eplkkarX0m9z8ppCat4mlOqUsWpyNuYgO3VRyrYHSzX5g==}
     engines: {node: '>= 0.8.0'}
@@ -2098,6 +2114,18 @@ packages:
   word-wrap@1.2.5:
     resolution: {integrity: sha512-BN22B5eaMMI9UMtjrGd5g5eCYPpCPDUy0FJXbYsaT5zYxjFOckS53SQDE3pWkVoWpHXVb3BrYcEN4Twa55B5cA==}
     engines: {node: '>=0.10.0'}
+
+  ws@8.18.2:
+    resolution: {integrity: sha512-DMricUmwGZUVr++AEAe2uiVM7UoO9MAVZMDu05UQOaUII0lp+zOzLLU4Xqh/JvTqklB1T4uELaaPBKyjE1r4fQ==}
+    engines: {node: '>=10.0.0'}
+    peerDependencies:
+      bufferutil: ^4.0.1
+      utf-8-validate: '>=5.0.2'
+    peerDependenciesMeta:
+      bufferutil:
+        optional: true
+      utf-8-validate:
+        optional: true
 
   yallist@5.0.0:
     resolution: {integrity: sha512-YgvUTfwqyc7UXVMrB+SImsVYSmTS8X/tSrtdNZMImM+n7+QTriRXyXim0mBrTXNeqzVF0KWGgHPeiyViFFrNDw==}
@@ -2731,6 +2759,10 @@ snapshots:
       pg-protocol: 1.10.0
       pg-types: 4.0.2
 
+  '@types/ws@8.18.1':
+    dependencies:
+      '@types/node': 20.17.50
+
   '@typescript-eslint/eslint-plugin@8.32.1(@typescript-eslint/parser@8.32.1(eslint@9.27.0(jiti@2.4.2))(typescript@5.8.3))(eslint@9.27.0(jiti@2.4.2))(typescript@5.8.3)':
     dependencies:
       '@eslint-community/regexpp': 4.12.1
@@ -2966,12 +2998,13 @@ snapshots:
     transitivePeerDependencies:
       - supports-color
 
-  drizzle-orm@0.40.1(@neondatabase/serverless@0.10.4)(@types/pg@8.11.6)(gel@2.1.0)(kysely@0.28.2):
+  drizzle-orm@0.40.1(@neondatabase/serverless@0.10.4)(@types/pg@8.11.6)(gel@2.1.0)(kysely@0.28.2)(postgres@3.4.7):
     optionalDependencies:
       '@neondatabase/serverless': 0.10.4
       '@types/pg': 8.11.6
       gel: 2.1.0
       kysely: 0.28.2
+      postgres: 3.4.7
 
   electron-to-chromium@1.5.158: {}
 
@@ -3494,6 +3527,8 @@ snapshots:
 
   postgres-range@1.1.4: {}
 
+  postgres@3.4.7: {}
+
   prelude-ls@1.2.1: {}
 
   prettier-plugin-svelte@3.4.0(prettier@3.5.3)(svelte@5.33.4):
@@ -3757,6 +3792,8 @@ snapshots:
       isexe: 3.1.1
 
   word-wrap@1.2.5: {}
+
+  ws@8.18.2: {}
 
   yallist@5.0.0: {}
 
