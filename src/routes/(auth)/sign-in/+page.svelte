@@ -11,6 +11,10 @@
 	import { authClient } from '$lib/auth-client';
 </script>
 
+<svelte:head>
+	<title>Sign In | omnilog</title>
+</svelte:head>
+
 <div class="flex min-h-screen flex-col items-center justify-center bg-gray-50 px-4 py-8">
 	<div class="w-full max-w-md space-y-6">
 		<!-- Logo and branding -->
