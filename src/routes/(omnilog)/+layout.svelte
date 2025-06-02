@@ -19,7 +19,8 @@
 		User,
 		Settings,
 		Moon,
-		Sun
+		Sun,
+		ChevronDown
 	} from '@lucide/svelte';
 
 	// ===== Theme state =====
@@ -69,7 +70,7 @@
 			<div class="flex items-center">
 				<Button
 					href="/"
-					class="text-primary bg-transparent text-2xl font-bold  hover:bg-transparent"
+					class="text-primary bg-transparent text-2xl font-bold hover:bg-transparent"
 				>
 					omnilog
 				</Button>
@@ -102,6 +103,62 @@
 						<Headphones class="h-4 w-4" />
 						<span class="hidden lg:flex">Podcasts</span>
 					</Button>
+				</nav>
+				<nav class="flex md:hidden">
+					<DropdownMenu.Root>
+						<DropdownMenu.Trigger
+							class="hover:bg-muted flex cursor-pointer flex-row items-center gap-2 rounded-md p-2"
+						>
+							<Film class="text-primary w- h-4 " />
+							Media
+							<ChevronDown class="text-muted-foreground h-4 w-4" />
+						</DropdownMenu.Trigger>
+						<DropdownMenu.Content>
+							<DropdownMenu.Group>
+								<DropdownMenu.Item class="cursor-pointer">
+									<a class="flex h-full w-full items-center justify-start gap-2" href="/movies">
+										<Film class="h-4 w-4" />
+										<span>Movies</span>
+									</a>
+								</DropdownMenu.Item>
+								<DropdownMenu.Item class="cursor-pointer">
+									<a class="flex h-full w-full items-center justify-start gap-2" href="/tv">
+										<Tv class="h-4 w-4" />
+										<span>TV</span>
+										<!-- TV, Anime -->
+									</a>
+								</DropdownMenu.Item>
+								<DropdownMenu.Item class="cursor-pointer">
+									<a class="flex h-full w-full items-center justify-start gap-2" href="/books">
+										<Book class="h-4 w-4" />
+										<span>Books</span>
+										<!-- Books, Comics, Manga -->
+									</a>
+								</DropdownMenu.Item>
+
+								<DropdownMenu.Item class="cursor-pointer">
+									<a class="flex h-full w-full items-center justify-start gap-2" href="/games">
+										<Gamepad2 class="h-4 w-4" />
+										<span>Games</span>
+										<!-- Video Games, Board Games, Card Games -->
+									</a>
+								</DropdownMenu.Item>
+								<DropdownMenu.Item class="cursor-pointer">
+									<a class="flex h-full w-full items-center justify-start gap-2" href="/music">
+										<Music class="h-4 w-4" />
+										<span>Music</span>
+										<!-- Albums, Songs, Artists -->
+									</a>
+								</DropdownMenu.Item>
+								<DropdownMenu.Item class="cursor-pointer">
+									<a class="flex h-full w-full items-center justify-start gap-2" href="/podcasts">
+										<Headphones class="h-4 w-4" />
+										<span>Podcasts</span>
+									</a>
+								</DropdownMenu.Item>
+							</DropdownMenu.Group>
+						</DropdownMenu.Content>
+					</DropdownMenu.Root>
 				</nav>
 			</div>
 			<div class="flex items-center space-x-4">
