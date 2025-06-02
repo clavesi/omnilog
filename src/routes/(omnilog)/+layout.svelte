@@ -75,45 +75,33 @@
 					omnilog
 				</Button>
 				<nav class="hidden items-center space-x-2 md:flex">
-					<Button variant="ghost" size="sm" class="flex items-center gap-2">
-						<a href="/movies" class="flex items-center gap-2">
-							<Film class="h-4 w-4" />
-							<span class="hidden lg:flex">Movies</span>
-						</a>
+					<Button href="/movies" variant="ghost" size="sm" class="flex items-center gap-2">
+						<Film class="h-4 w-4" />
+						<span class="hidden lg:flex">Movies</span>
 					</Button>
-					<Button variant="ghost" size="sm" class="flex items-center gap-2">
-						<a href="/tv" class="flex items-center gap-2">
-							<Tv class="h-4 w-4" />
-							<span class="hidden lg:flex">TV</span>
-							<!-- TV, Anime -->
-						</a>
+					<Button href="/tv" variant="ghost" size="sm" class="flex items-center gap-2">
+						<Tv class="h-4 w-4" />
+						<span class="hidden lg:flex">TV</span>
+						<!-- TV, Anime -->
 					</Button>
-					<Button variant="ghost" size="sm" class="flex items-center gap-2">
-						<a href="/books" class="flex items-center gap-2">
-							<Book class="h-4 w-4" />
-							<span class="hidden lg:flex">Books</span>
-							<!-- Books, Comics, Manga -->
-						</a>
+					<Button href="/books" variant="ghost" size="sm" class="flex items-center gap-2">
+						<Book class="h-4 w-4" />
+						<span class="hidden lg:flex">Books</span>
+						<!-- Books, Comics, Manga -->
 					</Button>
-					<Button variant="ghost" size="sm" class="flex items-center gap-2">
-						<a href="/games" class="flex items-center gap-2">
-							<Gamepad2 class="h-4 w-4" />
-							<span class="hidden lg:flex">Games</span>
-							<!-- Video Games, Board Games, Card Games -->
-						</a>
+					<Button href="/games" variant="ghost" size="sm" class="flex items-center gap-2">
+						<Gamepad2 class="h-4 w-4" />
+						<span class="hidden lg:flex">Games</span>
+						<!-- Video Games, Board Games, Card Games -->
 					</Button>
-					<Button variant="ghost" size="sm" class="flex items-center gap-2">
-						<a href="/music" class="flex items-center gap-2">
-							<Music class="h-4 w-4" />
-							<span class="hidden lg:flex">Music</span>
-							<!-- Albums, Songs, Artists -->
-						</a>
+					<Button href="/music" variant="ghost" size="sm" class="flex items-center gap-2">
+						<Music class="h-4 w-4" />
+						<span class="hidden lg:flex">Music</span>
+						<!-- Albums, Songs, Artists -->
 					</Button>
-					<Button variant="ghost" size="sm" class="flex items-center gap-2">
-						<a href="/podcasts" class="flex items-center gap-2">
-							<Headphones class="h-4 w-4" />
-							<span class="hidden lg:flex">Podcasts</span>
-						</a>
+					<Button href="podcasts" variant="ghost" size="sm" class="flex items-center gap-2">
+						<Headphones class="h-4 w-4" />
+						<span class="hidden lg:flex">Podcasts</span>
 					</Button>
 				</nav>
 				<nav class="flex md:hidden">
