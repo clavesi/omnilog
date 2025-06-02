@@ -62,56 +62,61 @@
 			<!-- Sidebar Navigation -->
 			<div class="space-y-1">
 				<nav class="flex flex-col space-y-1">
-					<button
+					<Button
 						onclick={() => setActiveTab('profile')}
-						class="flex w-full items-center justify-start rounded-md px-3 py-2 text-sm transition-colors {activeTab ===
+						variant="ghost"
+						class="flex w-full cursor-pointer items-center justify-start rounded-md px-3 py-2 text-sm transition-colors {activeTab ===
 						'profile'
 							? 'bg-accent text-accent-foreground'
 							: 'hover:bg-accent hover:text-accent-foreground'}"
 					>
-						<User class="mr-2 h-4 w-4" />
+						<User class=" h-4 w-4" />
 						Profile
-					</button>
-					<button
+					</Button>
+					<Button
 						onclick={() => setActiveTab('account')}
-						class="flex w-full items-center justify-start rounded-md px-3 py-2 text-sm transition-colors {activeTab ===
+						variant="ghost"
+						class="flex w-full cursor-pointer items-center justify-start rounded-md px-3 py-2 text-sm transition-colors {activeTab ===
 						'account'
 							? 'bg-accent text-accent-foreground'
 							: 'hover:bg-accent hover:text-accent-foreground'}"
 					>
-						<Shield class="mr-2 h-4 w-4" />
+						<Shield class="h-4 w-4" />
 						Account
-					</button>
-					<button
+					</Button>
+					<Button
 						onclick={() => setActiveTab('appearance')}
-						class="flex w-full items-center justify-start rounded-md px-3 py-2 text-sm transition-colors {activeTab ===
+						variant="ghost"
+						class="flex w-full cursor-pointer items-center justify-start rounded-md px-3 py-2 text-sm transition-colors {activeTab ===
 						'appearance'
 							? 'bg-accent text-accent-foreground'
 							: 'hover:bg-accent hover:text-accent-foreground'}"
 					>
-						<Palette class="mr-2 h-4 w-4" />
+						<Palette class="h-4 w-4" />
 						Appearance
-					</button>
-					<button
+					</Button>
+					<Button
 						onclick={() => setActiveTab('notifications')}
-						class="flex w-full items-center justify-start rounded-md px-3 py-2 text-sm transition-colors {activeTab ===
+						variant="ghost"
+						class="flex w-full cursor-pointer items-center justify-start rounded-md px-3 py-2 text-sm transition-colors {activeTab ===
 						'notifications'
 							? 'bg-accent text-accent-foreground'
 							: 'hover:bg-accent hover:text-accent-foreground'}"
 					>
-						<Bell class="mr-2 h-4 w-4" />
+						<Bell class="h-4 w-4" />
 						Notifications
-					</button>
-					<button
+					</Button>
+					<Button
 						onclick={() => setActiveTab('privacy')}
-						class="flex w-full items-center justify-start rounded-md px-3 py-2 text-sm transition-colors {activeTab ===
+						variant="ghost"
+						class="flex w-full cursor-pointer items-center justify-start rounded-md px-3 py-2 text-sm transition-colors {activeTab ===
 						'privacy'
 							? 'bg-accent text-accent-foreground'
 							: 'hover:bg-accent hover:text-accent-foreground'}"
 					>
-						<Globe class="mr-2 h-4 w-4" />
+						<Globe class="h-4 w-4" />
 						Privacy
-					</button>
+					</Button>
 				</nav>
 			</div>
 
