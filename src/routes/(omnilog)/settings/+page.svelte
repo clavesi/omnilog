@@ -18,12 +18,11 @@
 	// State for active tab
 	let activeTab = $state('profile');
 
-	const { user } = $props();
+	const { data } = $props();
 	// Form state
-	let username = $state(user.name);
-	let email = $state(user.email);
-	let fullName = $state(user.fullName);
-	let bio = $state(user.bio);
+	let username = $state(data.user.name);
+	let email = $state(data.user.email);
+	let bio = $state(data.user.name);
 
 	// Notification settings
 	let emailNotifications = $state(true);
@@ -38,7 +37,7 @@
 	function handleSubmit(event: Event) {
 		event.preventDefault();
 		// In a real app, this would call an API to update the user profile
-		console.log('Saving profile changes:', { username, email, fullName, bio });
+		console.log('Saving profile changes:', { username, email, bio });
 		// Show success message or handle errors
 	}
 
@@ -135,10 +134,10 @@
 									<div class="flex items-center gap-4">
 										<Avatar class="h-24 w-24">
 											<AvatarImage
-												src={userData.avatar || '/placeholder.svg'}
-												alt={userData.username}
+												src={data.user.image || '/placeholder.svg'}
+												alt={data.user.name}
 											/>
-											<AvatarFallback>{userData.initials}</AvatarFallback>
+											<AvatarFallback>{data.user.name[0]}</AvatarFallback>
 										</Avatar>
 										<div class="flex flex-col gap-2">
 											<Button variant="outline" type="button" class="flex items-center gap-2">
@@ -157,12 +156,6 @@
 									<p class="text-muted-foreground text-xs">
 										This is your public display name. It can be your real name or a pseudonym.
 									</p>
-								</div>
-
-								<!-- Full Name -->
-								<div class="flex flex-col gap-2">
-									<Label for="fullName">Full Name</Label>
-									<Input id="fullName" bind:value={fullName} />
 								</div>
 
 								<!-- Email -->

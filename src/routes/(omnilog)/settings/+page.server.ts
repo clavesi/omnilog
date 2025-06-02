@@ -6,7 +6,5 @@ export async function load({ locals }) {
 		redirect(302, '/sign-in');
 	}
 
-	return {
-		user: await getUserByUsername(locals.user.name)
-	};
+	return { user: locals.user };
 }
