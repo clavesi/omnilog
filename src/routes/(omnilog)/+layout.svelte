@@ -110,7 +110,7 @@
 							class="hover:bg-muted flex cursor-pointer flex-row items-center gap-2 rounded-md p-2"
 						>
 							<Film class="text-primary w- h-4 " />
-							Media
+							Explore
 							<ChevronDown class="text-muted-foreground h-4 w-4" />
 						</DropdownMenu.Trigger>
 						<DropdownMenu.Content>
