@@ -1,6 +1,6 @@
 import { pgTable, text, timestamp, boolean } from 'drizzle-orm/pg-core';
 
-export const userTable = pgTable('user', {
+export const usersTable = pgTable('user', {
 	id: text('id').primaryKey(),
 	name: text('name').notNull(),
 	email: text('email').notNull().unique(),
@@ -13,12 +13,10 @@ export const userTable = pgTable('user', {
 		.notNull(),
 	updatedAt: timestamp('updated_at')
 		.$defaultFn(() => /* @__PURE__ */ new Date())
-		.notNull(),
-	username: text('username').unique(),
-	displayUsername: text('display_username')
+		.notNull()
 });
 
-export const sessionTable = pgTable('session', {
+export const sessionsTable = pgTable('session', {
 	id: text('id').primaryKey(),
 	expiresAt: timestamp('expires_at').notNull(),
 	token: text('token').notNull().unique(),
@@ -28,16 +26,16 @@ export const sessionTable = pgTable('session', {
 	userAgent: text('user_agent'),
 	userId: text('user_id')
 		.notNull()
-		.references(() => userTable.id, { onDelete: 'cascade' })
+		.references(() => usersTable.id, { onDelete: 'cascade' })
 });
 
-export const accountTable = pgTable('account', {
+export const accountsTable = pgTable('account', {
 	id: text('id').primaryKey(),
 	accountId: text('account_id').notNull(),
 	providerId: text('provider_id').notNull(),
 	userId: text('user_id')
 		.notNull()
-		.references(() => userTable.id, { onDelete: 'cascade' }),
+		.references(() => usersTable.id, { onDelete: 'cascade' }),
 	accessToken: text('access_token'),
 	refreshToken: text('refresh_token'),
 	idToken: text('id_token'),
@@ -49,7 +47,7 @@ export const accountTable = pgTable('account', {
 	updatedAt: timestamp('updated_at').notNull()
 });
 
-export const verificationTable = pgTable('verification', {
+export const verificationsTable = pgTable('verification', {
 	id: text('id').primaryKey(),
 	identifier: text('identifier').notNull(),
 	value: text('value').notNull(),
@@ -58,5 +56,5 @@ export const verificationTable = pgTable('verification', {
 	updatedAt: timestamp('updated_at').$defaultFn(() => /* @__PURE__ */ new Date())
 });
 
-export type InsertUser = typeof userTable.$inferInsert;
-export type SelectUser = typeof userTable.$inferSelect;
+export type InsertUser = typeof usersTable.$inferInsert;
+export type SelectUser = typeof usersTable.$inferSelect;

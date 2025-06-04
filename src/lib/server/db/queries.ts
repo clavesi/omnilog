@@ -1,7 +1,7 @@
 import { eq } from 'drizzle-orm';
 import { db } from './index';
 import type { SelectUser } from './schema';
-import { userTable } from './schema';
+import { usersTable } from './schema';
 
 export async function getUserByUsername(name: SelectUser['name']): Promise<
 	Array<{
@@ -11,9 +11,9 @@ export async function getUserByUsername(name: SelectUser['name']): Promise<
 	}>
 > {
 	const result = await db
-		.select({ id: userTable.id, name: userTable.name, image: userTable.image })
-		.from(userTable)
-		.where(eq(userTable.name, name));
+		.select({ id: usersTable.id, name: usersTable.name, image: usersTable.image })
+		.from(usersTable)
+		.where(eq(usersTable.name, name));
 	return result.map((row) => ({
 		id: typeof row.id === 'string' ? parseInt(row.id, 10) : row.id,
 		name: row.name,
