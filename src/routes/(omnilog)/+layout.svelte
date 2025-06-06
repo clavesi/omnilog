@@ -49,21 +49,6 @@
 	const { data, children } = $props();
 </script>
 
-<!-- Prevent flash of unstyled content -->
-<svelte:head>
-	<script>
-		try {
-			if (
-				localStorage.getItem('theme') === 'dark' ||
-				(!localStorage.getItem('theme') &&
-					window.matchMedia('(prefers-color-scheme: dark)').matches)
-			) {
-				document.documentElement.classList.add('dark');
-			}
-		} catch (e) {}
-	</script>
-</svelte:head>
-
 <header class="bg-background/95 sticky border-b">
 	<div class=" mx-auto px-4 py-3">
 		<div class="flex items-center justify-between">

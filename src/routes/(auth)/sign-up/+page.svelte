@@ -1,19 +1,17 @@
 <script lang="ts">
 	import * as Card from '$lib/components/ui/card/index.js';
 	import { Button } from '$lib/components/ui/button';
-	// import { Input } from '$lib/components/ui/input';
-	// import { Label } from '$lib/components/ui/label';
-	// import { Checkbox } from '$lib/components/ui/checkbox';
-	// import { Separator } from '$lib/components/ui/separator';
+	import { Input } from '$lib/components/ui/input';
+	import { Label } from '$lib/components/ui/label';
+	import { Separator } from '$lib/components/ui/separator';
 	import { Github, Film, ArrowLeft } from '@lucide/svelte';
 	import { siGoogle } from 'simple-icons';
-
 	import { authClient } from '$lib/auth-client';
 </script>
 
 <svelte:head>
-	<title>Sign In | omnilog</title>
-	<meta name="description" content="Sign in to your omnilog account" />
+	<title>Sign Up | omnilog</title>
+	<meta name="description" content="Create your omnilog account" />
 </svelte:head>
 
 <div class="bg-background flex min-h-screen flex-col items-center justify-center px-4 py-8">
@@ -24,66 +22,64 @@
 				<Film class="text-primary-foreground h-6 w-6" />
 			</div>
 			<h1 class="text-primary text-2xl font-bold">omnilog</h1>
-			<p class="text-muted-foreground">Track, rate, and discover your favorite media</p>
+			<p class="text-muted-foreground">Create your account to track, rate, and discover media</p>
 		</div>
 
 		<!-- Sign In Card -->
 		<Card.Root class="w-full shadow-md">
 			<Card.Header class="space-y-1">
-				<Card.Title class="text-center text-xl">Sign in to your account</Card.Title>
+				<Card.Title class="text-center text-xl">Sign up</Card.Title>
 				<Card.Description class="text-center">
-					Access your omnilog account to track, rate, and discover media.
+					Join the community to track, rate, and discover media.
 				</Card.Description>
 			</Card.Header>
 			<Card.Content class="space-y-4">
-				<!-- Email/Username Input -->
-				<!-- <div class="space-y-2">
-					<Label for="email">Email or Username</Label>
+				<!-- Username Input -->
+				<div class="space-y-2">
+					<Label for="email">Username</Label>
+					<Input type="email" id="email" placeholder="example" disabled></Input>
+				</div>
+
+				<!-- Email Input -->
+				<div class="space-y-2">
+					<Label for="email">Email</Label>
 					<Input type="email" id="email" placeholder="name@example.com" disabled></Input>
-				</div> -->
+				</div>
 
 				<!-- Password Input -->
-				<!-- <div class="space-y-2">
-					<div class="flex items-center justify-between">
+				<div class="space-y-2">
+					<div class="flex items-center">
 						<Label for="password">Password</Label>
-						<a href="/forgot-password" class="text-primary text-sm font-medium hover:underline">
-							Forgot password?
-						</a>
 					</div>
 					<Input id="password" type="password" disabled />
-				</div> -->
+				</div>
 
-				<!-- Remember Me  -->
-				<!-- <div class="flex items-center space-x-2">
-					<Checkbox id="remember" class="cursor-pointer" />
-					<Label for="remember" class="text-sm leading-none font-medium">Remember me</Label>
-				</div> -->
-
-				<!--  Sign In Button -->
-				<!-- <Button class="w-full cursor-pointer" type="submit">Sign In</Button> -->
+				<!--  Sign Up Button -->
+				<Button class="w-full cursor-pointer" type="submit">Sign Up</Button>
 
 				<!-- OAuth Separator -->
-				<!-- <div class="relative">
+				<div class="relative">
 					<div class="absolute inset-0 flex items-center">
 						<Separator class="w-full" />
 					</div>
 					<div class="relative flex justify-center text-xs uppercase">
 						<span class="bg-card text-muted-foreground px-2">Or continue with</span>
 					</div>
-				</div> -->
+				</div>
 
 				<!-- OAuth Options -->
 				<div class="grid grid-cols-2 gap-4">
 					<Button
 						class="w-full cursor-pointer"
+						type="button"
 						onclick={() => authClient.signIn.social({ provider: 'github', callbackURL: '/' })}
 					>
 						<Github class="h-5 w-5" />
-						Sign in with GitHub
+						Sign up with GitHub
 					</Button>
-
 					<Button
 						class="w-full cursor-pointer"
+						type="button"
 						onclick={() => authClient.signIn.social({ provider: 'google', callbackURL: '/' })}
 					>
 						<svg
@@ -96,16 +92,15 @@
 							<title>Google</title>
 							<path d={siGoogle.path} />
 						</svg>
-						Sign in with Google
+						Sign up with Google
 					</Button>
 				</div>
 			</Card.Content>
 			<Card.Footer class="flex flex-col space-y-4">
 				<div class="text-center text-sm">
-					Don't have an account?{' '}
-					<a href="sign-up" class="text-primary font-medium underline">Sign Up</a>
+					Already have an account?{' '}
+					<a href="sign-in" class="text-primary font-medium underline">Sign In</a>
 				</div>
-
 				<div class="text-center text-sm">
 					<a
 						href="/"
