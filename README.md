@@ -26,4 +26,14 @@ In addition to `dev`, you can run the following scripts:
 
 - `build` - Builds the application for production.
 - `start` - Starts the production server.
-- `lint` - Lints the codebase using ESLint.
+- `lint` - Lints the codebase using Biome.
+- `format` - Formats the codebase using Biome.
+- `lint-format` - Lints and formats the codebase using Biome.
+
+## Stack
+
+- [Next.js](https://nextjs.org) - The React framework for production.
+- [Tailwind CSS](https://tailwindcss.com) - A utility-first CSS framework.
+- [TypeScript](https://www.typescriptlang.org) - A strongly typed programming language that builds on JavaScript.
+- [Biome](https://biomejs.dev) - An all-in-one code linter and formatter.
+- [shadcn/ui](https://ui.shadcn.com) - A collection of accessible and customizable UI components built with Radix UI and Tailwind CSS.
