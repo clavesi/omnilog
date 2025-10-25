@@ -37,3 +37,6 @@ In addition to `dev`, you can run the following scripts:
 - [TypeScript](https://www.typescriptlang.org) - A strongly typed programming language that builds on JavaScript.
 - [Biome](https://biomejs.dev) - An all-in-one code linter and formatter.
 - [shadcn/ui](https://ui.shadcn.com) - A collection of accessible and customizable UI components built with Radix UI and Tailwind CSS.
+- [Supabase](https://supabase.com) - An open-source Firebase alternative for backend services.
+- [Drizzle ORM](https://orm.drizzle.team) - A TypeScript ORM for SQL databases.
+- [Better Auth](https://better-auth.com) - An authentication solution for modern web applications.
