@@ -1,7 +1,7 @@
-import { requireAuth } from "@/lib/session";
-import { Button } from "@/components/ui/button";
-import { SignOutButton } from "@/components/auth/sign-out-button";
 import type { Metadata } from "next";
+import { SignOutButton } from "@/components/auth/sign-out-button";
+import { Button } from "@/components/ui/button";
+import { requireAuth } from "@/lib/session";
 
 export const metadata: Metadata = {
 	title: "Dashboard",

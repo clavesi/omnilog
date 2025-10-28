@@ -21,9 +21,9 @@ import { auth } from "@/lib/auth";
  * ```
  */
 export async function getSession() {
-    return await auth.api.getSession({
-        headers: await headers(),
-    });
+	return await auth.api.getSession({
+		headers: await headers(),
+	});
 }
 
 /**
@@ -44,11 +44,11 @@ export async function getSession() {
  * ```
  */
 export async function requireAuth() {
-    const session = await getSession();
+	const session = await getSession();
 
-    if (!session) {
-        throw new Error("Unauthorized - Please sign in");
-    }
+	if (!session) {
+		throw new Error("Unauthorized - Please sign in");
+	}
 
-    return session;
+	return session;
 }

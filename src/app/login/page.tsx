@@ -1,8 +1,8 @@
-import { getSession } from "@/lib/session";
-import { redirect } from "next/navigation";
-import { SignInButton } from "@/components/auth/sign-in-button";
 import type { Metadata } from "next";
 import Link from "next/link";
+import { redirect } from "next/navigation";
+import { SignInButton } from "@/components/auth/sign-in-button";
+import { getSession } from "@/lib/session";
 
 export const metadata: Metadata = {
 	title: "Login",

@@ -1,8 +1,8 @@
 "use client";
 
+import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { authClient } from "@/lib/auth-client";
-import { useState } from "react";
 
 export function SignInButton() {
 	const [isLoading, setIsLoading] = useState(false);

@@ -1,7 +1,7 @@
-import { getSession } from "@/lib/session";
+import Link from "next/link";
 import { redirect } from "next/navigation";
 import { Button } from "@/components/ui/button";
-import Link from "next/link";
+import { getSession } from "@/lib/session";
 
 export default async function Home() {
 	const session = await getSession();
