@@ -1,7 +1,12 @@
-import { createAuthClient } from "better-auth/react"
-export const authClient = createAuthClient({
-	/** The base URL of the server (optional if you're using the same domain) */
-	baseURL: "http://localhost:3000"
-})
+import "dotenv/config";
+import { createAuthClient } from "better-auth/react";
 
-export const { signIn, signUp, useSession } = authClient;
+// If in production, use the public URL, otherwise use the local URL
+const url =
+    process.env.NODE_ENV === "production"
+        ? process.env.URL_PUBLIC
+        : process.env.URL_LOCAL;
+
+export const authClient = createAuthClient({
+    baseURL: url,
+});
