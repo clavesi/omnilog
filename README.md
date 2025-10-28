@@ -40,3 +40,4 @@ In addition to `dev`, you can run the following scripts:
 - [Supabase](https://supabase.com) - An open-source Firebase alternative for backend services.
 - [Drizzle ORM](https://orm.drizzle.team) - A TypeScript ORM for SQL databases.
 - [Better Auth](https://better-auth.com) - An authentication solution for modern web applications.
+- [Husky](https://typicode.github.io/husky) - A tool for managing Git hooks and [lint-staged](https://github.com/okonet/lint-staged) integration.
