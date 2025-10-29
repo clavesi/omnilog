@@ -15,6 +15,15 @@ This file documents the AI agents and Model Context Protocol (MCP) tooling that 
 - UI
   - Tailwind + shadcn-style components are referenced (component code under `src/components`).
 
+- Paths & Project Structure
+  - Path alias: `@/*` maps to `./src/*` (configured in `tsconfig.json`). Use `@/` prefix for imports from `src/`.
+  - Next.js App Router structure: Pages and routes are in `src/app/` (e.g., `src/app/page.tsx`, `src/app/dashboard/page.tsx`).
+  - API routes: Use `src/app/api/` directory (e.g., `src/app/api/auth/[...all]/route.ts`).
+  - Components: `src/components/` for reusable components, `src/components/ui/` for shadcn/ui components.
+  - Utilities: `src/lib/` for shared utilities, helpers, and configurations.
+  - shadcn/ui aliases (from `components.json`): `@/components`, `@/components/ui`, `@/lib/utils`, `@/lib`, `@/hooks`.
+  - Database migrations: `supabase/migrations/` (managed by drizzle-kit).
+
 - Useful Context7 MCP IDs for this project:
   - Next.js: `/vercel/next.js`
   - React: `/reactjs/react.dev`
