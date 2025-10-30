@@ -1,0 +1,27 @@
+# Project Structure & Patterns
+
+## Paths & Project Structure
+
+- Path alias: `@/*` maps to `./src/*` (configured in `tsconfig.json`). Use `@/` prefix for imports from `src/`.
+- Next.js App Router structure: Pages and routes are in `src/app/` (e.g., `src/app/page.tsx`, `src/app/dashboard/page.tsx`).
+- API routes: Use `src/app/api/` directory. Catch-all routes use `[...all]` syntax:
+  - `src/app/api/auth/[...all]/route.ts` - Better Auth catch-all route handler that handles all `/api/auth/*` requests (sign-in, sign-up, sign-out, OAuth callbacks, etc.). Exports `GET` and `POST` handlers via `toNextJsHandler(auth)`.
+- Components:
+  - `src/components/` for reusable components (e.g., `src/components/auth/sign-in-button.tsx`).
+  - `src/components/ui/` for shadcn/ui components (e.g., `src/components/ui/button.tsx`).
+- Utilities (`src/lib/`):
+  - `src/lib/auth.ts` - Server-side Better Auth configuration (exports `auth` instance).
+  - `src/lib/auth-client.ts` - Client-side auth helper (exports `authClient` created with `createAuthClient`).
+  - `src/lib/db.ts` - Database connection setup (exports `db` Drizzle instance and `client` postgres connection).
+  - `src/lib/schema.ts` - Drizzle database schema definitions (tables, relations, etc.).
+  - `src/lib/session.ts` - Server-side session helpers (`getSession()`, `requireAuth()` for Server Components, Server Actions, and route handlers).
+  - `src/lib/utils.ts` - General utilities (e.g., `cn()` function for merging Tailwind classes).
+- shadcn/ui aliases (from `components.json`): `@/components`, `@/components/ui`, `@/lib/utils`, `@/lib`, `@/hooks`.
+- Database migrations: `supabase/migrations/` (managed by drizzle-kit).
+
+## Next.js App Router Patterns
+
+- **Server Components** (default): No directive needed. Use for pages, layouts, and components that don't need interactivity. Can directly use `await` and access database/server-only code.
+- **Client Components**: Add `"use client"` directive at the top of the file. Required for components that use React hooks (`useState`, `useEffect`, etc.), event handlers (`onClick`, etc.), or browser APIs.
+- **Server Actions**: Use `"use server"` directive. Can be defined in separate files or inline at the top of the file. Use `requireAuth()` from `@/lib/session` for authenticated actions.
+- Pages are Server Components by default (e.g., `src/app/dashboard/page.tsx`). Import Client Components as needed.
