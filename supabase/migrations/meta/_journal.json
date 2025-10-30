@@ -8,6 +8,13 @@
 			"when": 1761373144459,
 			"tag": "0000_dark_sally_floyd",
 			"breakpoints": true
+		},
+		{
+			"idx": 1,
+			"version": "7",
+			"when": 1761805830806,
+			"tag": "0001_brief_eternity",
+			"breakpoints": true
 		}
 	]
 }

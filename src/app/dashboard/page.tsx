@@ -1,6 +1,9 @@
+import { eq } from "drizzle-orm";
 import type { Metadata } from "next";
-import { SignOutButton } from "@/components/auth/sign-out-button";
+import { redirect } from "next/navigation";
 import { Button } from "@/components/ui/button";
+import { db } from "@/lib/db";
+import { user } from "@/lib/schema";
 import { requireAuth } from "@/lib/session";
 
 export const metadata: Metadata = {
@@ -11,19 +14,23 @@ export const metadata: Metadata = {
 export default async function DashboardPage() {
 	const session = await requireAuth();
 
-	return (
-		<div className="min-h-screen bg-background">
-			{/* Header */}
-			<header className="border-b">
-				<div className="container mx-auto flex h-16 items-center justify-between px-4">
-					<h1 className="text-xl font-bold">OmniLog</h1>
-					<SignOutButton />
-				</div>
-			</header>
+	// Check if user needs to set up username
+	const existingUser = await db
+		.select()
+		.from(user)
+		.where(eq(user.id, session.user.id))
+		.limit(1);
 
+	if (existingUser.length > 0 && !existingUser[0].username) {
+		// User needs to set up username, redirect to setup page
+		redirect("/setup/username");
+	}
+
+	return (
+		<div className="min-h-screen w-full bg-background">
 			{/* Main Content */}
-			<main className="container mx-auto px-4 py-8">
-				<div className="mx-auto max-w-4xl space-y-8">
+			<main className="container mx-auto px-4 py-8 w-full">
+				<div className="w-full max-w-7xl mx-auto space-y-8">
 					{/* Welcome Section */}
 					<div className="rounded-lg border bg-card p-6">
 						<h2 className="text-2xl font-bold">

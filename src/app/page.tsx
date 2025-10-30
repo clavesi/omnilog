@@ -12,22 +12,7 @@ export default async function Home() {
 	}
 
 	return (
-		<div className="flex min-h-screen flex-col">
-			{/* Header */}
-			<header className="border-b">
-				<div className="container mx-auto flex h-16 items-center justify-between px-4">
-					<h1 className="text-xl font-bold">OmniLog</h1>
-					<div className="flex gap-2">
-						<Button variant="ghost" asChild>
-							<Link href="/login">Sign In</Link>
-						</Button>
-						<Button asChild>
-							<Link href="/signup">Sign Up</Link>
-						</Button>
-					</div>
-				</div>
-			</header>
-
+		<div className="flex min-h-screen flex-col w-full">
 			{/* Hero Section */}
 			<main className="flex flex-1 items-center justify-center">
 				<div className="container mx-auto px-4 text-center">
