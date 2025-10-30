@@ -1,3 +1,7 @@
+---
+description: Technology stack, authentication, database, UI framework, code quality standards, and environment variables for OmniLog
+alwaysApply: false
+---
 # Tech Stack & Configuration
 
 ## Auth

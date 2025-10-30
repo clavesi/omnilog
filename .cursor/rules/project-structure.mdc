@@ -1,3 +1,7 @@
+---
+description: Project structure, file paths, import aliases, and Next.js App Router patterns for OmniLog
+alwaysApply: false
+---
 # Project Structure & Patterns
 
 ## Paths & Project Structure
