@@ -76,8 +76,8 @@ export function EmailSignUpForm() {
 				return;
 			}
 
-			// Username is set during sign-up, go to dashboard
-			router.push("/dashboard");
+			// Username is set during sign-up, go to homepage
+			router.push("/");
 		} catch (_err) {
 			setError("An unexpected error occurred");
 			setIsLoading(false);

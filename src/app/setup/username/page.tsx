@@ -27,8 +27,8 @@ export default async function UsernameSetupPage() {
 		.limit(1);
 
 	if (existingUser.length > 0 && existingUser[0].username) {
-		// User already has a username, redirect to dashboard
-		redirect("/dashboard");
+		// User already has a username, redirect to homepage
+		redirect("/");
 	}
 
 	return (

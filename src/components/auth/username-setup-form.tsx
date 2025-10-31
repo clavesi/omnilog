@@ -37,8 +37,8 @@ export function UsernameSetupForm() {
 				return;
 			}
 
-			// Success! Redirect to dashboard
-			router.push("/dashboard");
+			// Success! Redirect to homepage
+			router.push("/");
 		} catch (_err) {
 			setError("An unexpected error occurred");
 			setIsLoading(false);

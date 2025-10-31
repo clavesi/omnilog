@@ -11,7 +11,7 @@ export async function Navbar() {
 		<header className="border-b w-full bg-background">
 			<div className="container mx-auto flex h-16 items-center justify-between px-4 w-full">
 				<h1 className="text-xl font-bold">
-					<Link href={session ? "/dashboard" : "/"}>OmniLog</Link>
+					<Link href="/">OmniLog</Link>
 				</h1>
 				<div className="flex items-center gap-2">
 					<ThemeToggle />

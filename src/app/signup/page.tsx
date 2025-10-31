@@ -15,9 +15,9 @@ export const metadata: Metadata = {
 export default async function SignUpPage() {
 	const session = await getSession();
 
-	// If already logged in, redirect to dashboard
+	// If already logged in, redirect to homepage
 	if (session) {
-		redirect("/dashboard");
+		redirect("/");
 	}
 
 	return (

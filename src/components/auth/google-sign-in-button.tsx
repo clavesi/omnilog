@@ -18,9 +18,9 @@ export function GoogleSignInButton() {
 				try {
 					await authClient.signIn.social({
 						provider: "google",
-						callbackURL: "/dashboard",
+						callbackURL: "/",
 						errorCallbackURL: "/login?error=auth-failed",
-						newUserCallbackURL: "/dashboard",
+						newUserCallbackURL: "/",
 					});
 				} catch (error) {
 					console.error("Sign in error:", error);

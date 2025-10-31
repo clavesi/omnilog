@@ -47,7 +47,7 @@ export function EmailSignInForm() {
 				}
 			}
 
-			router.push("/dashboard");
+			router.push("/");
 		} catch (_err) {
 			setError("An unexpected error occurred");
 			setIsLoading(false);
