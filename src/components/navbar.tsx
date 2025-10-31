@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { SignOutButton } from "@/components/auth/sign-out-button";
+import { UserMenu } from "@/components/auth/user-menu";
 import { ThemeToggle } from "@/components/theme-toggle";
 import { Button } from "@/components/ui/button";
 import { getSession } from "@/lib/session";
@@ -16,7 +16,13 @@ export async function Navbar() {
 				<div className="flex items-center gap-2">
 					<ThemeToggle />
 					{session ? (
-						<SignOutButton />
+						<UserMenu
+							user={{
+								name: session.user.name,
+								email: session.user.email,
+								image: session.user.image ?? null,
+							}}
+						/>
 					) : (
 						<>
 							<Button variant="ghost" asChild>
