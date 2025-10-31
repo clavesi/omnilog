@@ -2,8 +2,8 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { redirect } from "next/navigation";
 import { EmailSignUpForm } from "@/components/auth/email-sign-up-form";
+import { GitHubSignUpButton } from "@/components/auth/github-sign-up-button";
 import { GoogleSignUpButton } from "@/components/auth/google-sign-up-button";
-import { SignUpButton } from "@/components/auth/sign-up-button";
 import { BackButton } from "@/components/back-button";
 import { getSession } from "@/lib/session";
 
@@ -35,7 +35,7 @@ export default async function SignUpPage() {
 					{/* Social Sign-Up */}
 					<div className="space-y-3">
 						<GoogleSignUpButton />
-						<SignUpButton />
+						<GitHubSignUpButton />
 					</div>
 
 					<div className="relative">

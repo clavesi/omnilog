@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { SignOutButton } from "@/components/auth/sign-out-button";
+import { ThemeToggle } from "@/components/theme-toggle";
 import { Button } from "@/components/ui/button";
 import { getSession } from "@/lib/session";
 
@@ -12,18 +13,21 @@ export async function Navbar() {
 				<h1 className="text-xl font-bold">
 					<Link href={session ? "/dashboard" : "/"}>OmniLog</Link>
 				</h1>
-				{session ? (
-					<SignOutButton />
-				) : (
-					<div className="flex gap-2">
-						<Button variant="ghost" asChild>
-							<Link href="/login">Sign In</Link>
-						</Button>
-						<Button asChild>
-							<Link href="/signup">Sign Up</Link>
-						</Button>
-					</div>
-				)}
+				<div className="flex items-center gap-2">
+					<ThemeToggle />
+					{session ? (
+						<SignOutButton />
+					) : (
+						<>
+							<Button variant="ghost" asChild>
+								<Link href="/login">Sign In</Link>
+							</Button>
+							<Button asChild>
+								<Link href="/signup">Sign Up</Link>
+							</Button>
+						</>
+					)}
+				</div>
 			</div>
 		</header>
 	);

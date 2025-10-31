@@ -2,8 +2,8 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { redirect } from "next/navigation";
 import { EmailSignInForm } from "@/components/auth/email-sign-in-form";
+import { GitHubSignInButton } from "@/components/auth/github-sign-in-button";
 import { GoogleSignInButton } from "@/components/auth/google-sign-in-button";
-import { SignInButton } from "@/components/auth/sign-in-button";
 import { BackButton } from "@/components/back-button";
 import { getSession } from "@/lib/session";
 
@@ -35,7 +35,7 @@ export default async function LoginPage() {
 					{/* Social Sign-In */}
 					<div className="space-y-3">
 						<GoogleSignInButton />
-						<SignInButton />
+						<GitHubSignInButton />
 					</div>
 
 					<div className="relative">

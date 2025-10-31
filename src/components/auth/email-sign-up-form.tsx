@@ -4,6 +4,7 @@ import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { authClient } from "@/lib/auth-client";
+import { useUsernameCheck } from "./use-username-check";
 
 export function EmailSignUpForm() {
 	const [isLoading, setIsLoading] = useState(false);
@@ -11,15 +12,14 @@ export function EmailSignUpForm() {
 	const [username, setUsername] = useState("");
 	const [email, setEmail] = useState("");
 	const [password, setPassword] = useState("");
-	const [, setIsCheckingUsername] = useState(false);
 	const [, setIsCheckingEmail] = useState(false);
-	const [usernameStatus, setUsernameStatus] = useState<
-		"idle" | "checking" | "available" | "taken" | "invalid"
-	>("idle");
 	const [emailStatus, setEmailStatus] = useState<
 		"idle" | "checking" | "available" | "taken" | "invalid"
 	>("idle");
 	const router = useRouter();
+
+	const { usernameStatus, setUsernameStatus, checkUsername } =
+		useUsernameCheck();
 
 	const checkEmail = async (value: string) => {
 		if (!value || !value.includes("@")) {
@@ -50,52 +50,24 @@ export function EmailSignUpForm() {
 		}
 	};
 
-	const checkUsername = async (value: string) => {
-		if (!value || value.length < 3) {
-			setUsernameStatus("invalid");
-			return;
-		}
-
-		// Validate format
-		if (!/^[a-z0-9_-]{3,20}$/i.test(value)) {
-			setUsernameStatus("invalid");
-			return;
-		}
-
-		setIsCheckingUsername(true);
-		setUsernameStatus("checking");
-
-		try {
-			const response = await fetch("/api/username/check", {
-				method: "POST",
-				headers: { "Content-Type": "application/json" },
-				body: JSON.stringify({ username: value }),
-			});
-
-			const data = await response.json();
-			setUsernameStatus(data.available ? "available" : "taken");
-		} catch (_err) {
-			setUsernameStatus("idle");
-		} finally {
-			setIsCheckingUsername(false);
-		}
-	};
-
 	const handleSubmit = async (e: React.FormEvent) => {
 		e.preventDefault();
 		setError(null);
 		setIsLoading(true);
 
+		// Validate username is available before proceeding
+		if (!username || usernameStatus !== "available") {
+			setError("Please choose an available username");
+			setIsLoading(false);
+			return;
+		}
+
 		try {
-			// Note: Better Auth's signUp.email might not accept username directly
-			// We'll handle it in the hook or separately
-			// Use username as name since Better Auth requires a name field
 			const { error: signUpError } = await authClient.signUp.email({
 				email,
 				password,
-				name: username, // Use username as the name
-				// @ts-expect-error - Better Auth might not type username, but we'll handle it
-				username,
+				name: username, // Better Auth requires a name field, using username
+				username, // Username plugin will auto-set displayUsername to match
 			});
 
 			if (signUpError) {
@@ -104,27 +76,8 @@ export function EmailSignUpForm() {
 				return;
 			}
 
-			// Set username if provided and available
-			if (username && usernameStatus === "available") {
-				try {
-					const updateResponse = await fetch("/api/username/update", {
-						method: "POST",
-						headers: { "Content-Type": "application/json" },
-						body: JSON.stringify({ username }),
-					});
-
-					if (updateResponse.ok) {
-						// Username set successfully, go to dashboard
-						router.push("/dashboard");
-						return;
-					}
-				} catch (_err) {
-					// Fall through to setup page if username update fails
-				}
-			}
-
-			// If username wasn't set or failed, redirect to setup
-			router.push("/setup/username");
+			// Username is set during sign-up, go to dashboard
+			router.push("/dashboard");
 		} catch (_err) {
 			setError("An unexpected error occurred");
 			setIsLoading(false);
@@ -155,7 +108,7 @@ export function EmailSignUpForm() {
 					placeholder="johndoe"
 					minLength={3}
 					maxLength={20}
-					pattern="[a-z0-9_-]{3,20}"
+					pattern="[a-z0-9_.]{3,20}"
 				/>
 				{usernameStatus === "checking" && (
 					<p className="text-sm text-muted-foreground mt-1">Checking...</p>
@@ -168,7 +121,7 @@ export function EmailSignUpForm() {
 				)}
 				{usernameStatus === "invalid" && username.length > 0 && (
 					<p className="text-sm text-red-600 mt-1">
-						Username must be 3-20 characters (letters, numbers, _, -)
+						Username must be 3-20 characters (letters, numbers, _, .)
 					</p>
 				)}
 			</div>

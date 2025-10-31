@@ -3,47 +3,17 @@
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
+import { authClient } from "@/lib/auth-client";
+import { useUsernameCheck } from "./use-username-check";
 
 export function UsernameSetupForm() {
 	const [username, setUsername] = useState("");
 	const [isLoading, setIsLoading] = useState(false);
 	const [error, setError] = useState<string | null>(null);
-	const [, setIsCheckingUsername] = useState(false);
-	const [usernameStatus, setUsernameStatus] = useState<
-		"idle" | "checking" | "available" | "taken" | "invalid"
-	>("idle");
 	const router = useRouter();
 
-	const checkUsername = async (value: string) => {
-		if (!value || value.length < 3) {
-			setUsernameStatus("invalid");
-			return;
-		}
-
-		// Validate format
-		if (!/^[a-z0-9_-]{3,20}$/i.test(value)) {
-			setUsernameStatus("invalid");
-			return;
-		}
-
-		setIsCheckingUsername(true);
-		setUsernameStatus("checking");
-
-		try {
-			const response = await fetch("/api/username/check", {
-				method: "POST",
-				headers: { "Content-Type": "application/json" },
-				body: JSON.stringify({ username: value }),
-			});
-
-			const data = await response.json();
-			setUsernameStatus(data.available ? "available" : "taken");
-		} catch (_err) {
-			setUsernameStatus("idle");
-		} finally {
-			setIsCheckingUsername(false);
-		}
-	};
+	const { usernameStatus, setUsernameStatus, checkUsername } =
+		useUsernameCheck();
 
 	const handleSubmit = async (e: React.FormEvent) => {
 		e.preventDefault();
@@ -57,15 +27,12 @@ export function UsernameSetupForm() {
 		}
 
 		try {
-			const response = await fetch("/api/username/update", {
-				method: "POST",
-				headers: { "Content-Type": "application/json" },
-				body: JSON.stringify({ username }),
+			const { error: updateError } = await authClient.updateUser({
+				username, // Better Auth will auto-set displayUsername to match
 			});
 
-			if (!response.ok) {
-				const data = await response.json();
-				setError(data.error || "Failed to set username");
+			if (updateError) {
+				setError(updateError.message || "Failed to set username");
 				setIsLoading(false);
 				return;
 			}
@@ -102,7 +69,7 @@ export function UsernameSetupForm() {
 					placeholder="johndoe"
 					minLength={3}
 					maxLength={20}
-					pattern="[a-z0-9_-]{3,20}"
+					pattern="[a-z0-9_.]{3,20}"
 				/>
 				{usernameStatus === "checking" && (
 					<p className="text-sm text-muted-foreground mt-1">Checking...</p>
@@ -115,7 +82,7 @@ export function UsernameSetupForm() {
 				)}
 				{usernameStatus === "invalid" && username.length > 0 && (
 					<p className="text-sm text-red-600 mt-1">
-						Username must be 3-20 characters (letters, numbers, _, -)
+						Username must be 3-20 characters (letters, numbers, _, .)
 					</p>
 				)}
 				<p className="text-sm text-muted-foreground mt-1">

@@ -4,7 +4,7 @@ import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { authClient } from "@/lib/auth-client";
 
-export function SignInButton() {
+export function GitHubSignInButton() {
 	const [isLoading, setIsLoading] = useState(false);
 
 	return (

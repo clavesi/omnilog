@@ -1,6 +1,7 @@
 import "dotenv/config";
 import { betterAuth } from "better-auth";
 import { drizzleAdapter } from "better-auth/adapters/drizzle";
+import { username } from "better-auth/plugins";
 import { db } from "@/lib/db"; // your drizzle instance
 import * as schema from "@/lib/schema"; // your drizzle schema
 
@@ -9,15 +10,6 @@ export const auth = betterAuth({
 		provider: "pg",
 		schema: schema,
 	}),
-	user: {
-		additionalFields: {
-			username: {
-				type: "string",
-				required: false,
-				input: true,
-			},
-		},
-	},
 	emailAndPassword: {
 		enabled: true,
 		requireEmailVerification: false, // Set to true if you want email verification
@@ -33,4 +25,10 @@ export const auth = betterAuth({
 			clientSecret: process.env.GITHUB_CLIENT_SECRET!,
 		},
 	},
+	plugins: [
+		username({
+			minUsernameLength: 3,
+			maxUsernameLength: 20,
+		}),
+	],
 });

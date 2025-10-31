@@ -21,36 +21,30 @@ export function EmailSignInForm() {
 			// Determine if identifier is email or username
 			const isEmail = identifier.includes("@");
 
-			let email: string;
 			if (isEmail) {
-				email = identifier;
-			} else {
-				// Look up email by username via API
-				const lookupResponse = await fetch("/api/auth/lookup-email", {
-					method: "POST",
-					headers: { "Content-Type": "application/json" },
-					body: JSON.stringify({ identifier }),
+				// Sign in with email
+				const { error: signInError } = await authClient.signIn.email({
+					email: identifier,
+					password,
 				});
 
-				if (!lookupResponse.ok) {
-					setError("Invalid username or email");
+				if (signInError) {
+					setError(signInError.message || "Failed to sign in");
 					setIsLoading(false);
 					return;
 				}
+			} else {
+				// Sign in with username using Better Auth username plugin
+				const { error: signInError } = await authClient.signIn.username({
+					username: identifier,
+					password,
+				});
 
-				const lookupData = await lookupResponse.json();
-				email = lookupData.email;
-			}
-
-			const { error: signInError } = await authClient.signIn.email({
-				email,
-				password,
-			});
-
-			if (signInError) {
-				setError(signInError.message || "Failed to sign in");
-				setIsLoading(false);
-				return;
+				if (signInError) {
+					setError(signInError.message || "Failed to sign in");
+					setIsLoading(false);
+					return;
+				}
 			}
 
 			router.push("/dashboard");

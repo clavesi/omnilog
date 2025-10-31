@@ -26,6 +26,8 @@ export default async function DashboardPage() {
 		redirect("/setup/username");
 	}
 
+	const userUsername = existingUser[0]?.username || session.user.email;
+
 	return (
 		<div className="min-h-screen w-full bg-background">
 			{/* Main Content */}
@@ -34,7 +36,7 @@ export default async function DashboardPage() {
 					{/* Welcome Section */}
 					<div className="rounded-lg border bg-card p-6">
 						<h2 className="text-2xl font-bold">
-							Welcome back, {session.user.name || session.user.email}!
+							Welcome back, {userUsername}!
 						</h2>
 						<p className="mt-2 text-muted-foreground">
 							Here's what's happening with your account today.

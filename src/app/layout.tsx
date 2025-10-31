@@ -3,6 +3,7 @@ import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
 import { Navbar } from "@/components/navbar";
 import { NavbarVisibility } from "@/components/navbar-visibility";
+import { ThemeProvider } from "@/components/theme-provider";
 
 const geistSans = Geist({
 	variable: "--font-geist-sans",
@@ -25,16 +26,23 @@ export default async function RootLayout({
 	children: React.ReactNode;
 }>) {
 	return (
-		<html lang="en" className="w-full">
+		<html lang="en" className="w-full" suppressHydrationWarning>
 			<body
 				className={`${geistSans.variable} ${geistMono.variable} antialiased w-full`}
 			>
-				<NavbarVisibility>
-					<Navbar />
-				</NavbarVisibility>
-				<main className="flex flex-col min-h-screen w-full bg-neutral-100 dark:bg-gray-900">
-					{children}
-				</main>
+				<ThemeProvider
+					attribute="class"
+					defaultTheme="system"
+					enableSystem
+					disableTransitionOnChange
+				>
+					<NavbarVisibility>
+						<Navbar />
+					</NavbarVisibility>
+					<main className="flex flex-col min-h-screen w-full bg-background">
+						{children}
+					</main>
+				</ThemeProvider>
 			</body>
 		</html>
 	);
