@@ -1,43 +1,75 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# OmniLog
+
+A Next.js application with PostgreSQL database, authentication, and modern UI components.
 
 ## Getting Started
 
-First, run the development server:
+### Prerequisites
 
-```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
-```
+- Node.js and pnpm (or npm/yarn)
+- Docker (for local database)
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+### Setup
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+1. **Install dependencies:**
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+   ```bash
+   pnpm install
+   ```
 
-## Other Scripts
+2. **Start the local database:**
 
-In addition to `dev`, you can run the following scripts:
+   ```bash
+   docker-compose up -d
+   ```
 
-- `build` - Builds the application for production.
-- `start` - Starts the production server.
-- `lint` - Lints the codebase using Biome.
-- `format` - Formats the codebase using Biome.
-- `lint-format` - Lints and formats the codebase using Biome.
+3. **Configure environment variables:**
+
+   Create a `.env.local` file with:
+
+   ```env
+   DATABASE_URL=postgresql://omnilog:omnilog_dev_password@localhost:5432/omnilog
+   URL_LOCAL=http://localhost:3000
+   URL_PUBLIC=https://your-production-domain.com
+   GITHUB_CLIENT_ID=your_github_client_id
+   GITHUB_CLIENT_SECRET=your_github_client_secret
+   GOOGLE_CLIENT_ID=your_google_client_id
+   GOOGLE_CLIENT_SECRET=your_google_client_secret
+   ```
+
+4. **Run database migrations:**
+
+   ```bash
+   pnpm db:migrate
+   ```
+
+5. **Start the development server:**
+
+   ```bash
+   pnpm dev
+   ```
+
+   Open [http://localhost:3000](http://localhost:3000) to view the app.
+
+## Database Commands
+
+- `pnpm db:generate` - Generate migration files from schema changes
+- `pnpm db:migrate` - Run pending migrations
+- `pnpm db:push` - Push schema changes directly (dev only)
+
+## Scripts
+
+- `pnpm dev` - Start development server
+- `pnpm build` - Build for production
+- `pnpm start` - Start production server
+- `pnpm lint-format` - Lint and format code
 
 ## Stack
 
-- [Next.js](https://nextjs.org) - The React framework for production.
-- [Tailwind CSS](https://tailwindcss.com) - A utility-first CSS framework.
-- [TypeScript](https://www.typescriptlang.org) - A strongly typed programming language that builds on JavaScript.
-- [Biome](https://biomejs.dev) - An all-in-one code linter and formatter.
-- [shadcn/ui](https://ui.shadcn.com) - A collection of accessible and customizable UI components built with Radix UI and Tailwind CSS.
-- [Supabase](https://supabase.com) - An open-source Firebase alternative for backend services.
-- [Drizzle ORM](https://orm.drizzle.team) - A TypeScript ORM for SQL databases.
-- [Better Auth](https://better-auth.com) - An authentication solution for modern web applications.
-- [Husky](https://typicode.github.io/husky) - A tool for managing Git hooks and [lint-staged](https://github.com/okonet/lint-staged) integration.
+- [Next.js](https://nextjs.org) - React framework
+- [Tailwind CSS](https://tailwindcss.com) - Utility-first CSS
+- [TypeScript](https://www.typescriptlang.org) - Type safety
+- [Drizzle ORM](https://orm.drizzle.team) - TypeScript ORM
+- [Better Auth](https://better-auth.com) - Authentication
+- [shadcn/ui](https://ui.shadcn.com) - UI components
+- [Biome](https://biomejs.dev) - Linting and formatting
