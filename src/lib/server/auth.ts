@@ -168,7 +168,7 @@ export function encodeSessionPublicJSON(session: {
 // --- App middleware ---
 export function requireUser(event: RequestEvent) {
     if (!event.locals.user) {
-        throw redirect(302, "/login");
+        redirect(302, "/login");
     }
-    return event.locals.user;
+    return event.locals.user!;
 }
