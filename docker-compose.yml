@@ -1,0 +1,21 @@
+services:
+    db:
+        image: postgres:17
+        container_name: omnilog-db
+        restart: unless-stopped
+        environment:
+            POSTGRES_USER: omnilog
+            POSTGRES_PASSWORD: devpassword
+            POSTGRES_DB: omnilog
+        ports:
+            - "5432:5432"
+        volumes:
+            - omnilog-data:/var/lib/postgresql/data
+        healthcheck:
+            test: ["CMD-SHELL", "pg_isready -U omnilog -d omnilog"]
+            interval: 5s
+            timeout: 5s
+            retries: 5
+
+volumes:
+    omnilog-data:
