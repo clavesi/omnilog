@@ -1,345 +1,315 @@
 {
-  "id": "e068776a-47c3-4593-966d-6851881b1e3d",
-  "prevId": "6a2fba27-3372-4057-ba79-eb5ecdbab513",
-  "version": "7",
-  "dialect": "postgresql",
-  "tables": {
-    "public.entries": {
-      "name": "entries",
-      "schema": "",
-      "columns": {
-        "id": {
-          "name": "id",
-          "type": "uuid",
-          "primaryKey": true,
-          "notNull": true,
-          "default": "gen_random_uuid()"
-        },
-        "user_id": {
-          "name": "user_id",
-          "type": "uuid",
-          "primaryKey": false,
-          "notNull": true
-        },
-        "media_id": {
-          "name": "media_id",
-          "type": "uuid",
-          "primaryKey": false,
-          "notNull": true
-        },
-        "rating": {
-          "name": "rating",
-          "type": "integer",
-          "primaryKey": false,
-          "notNull": false
-        },
-        "review": {
-          "name": "review",
-          "type": "text",
-          "primaryKey": false,
-          "notNull": false
-        },
-        "consumed_at": {
-          "name": "consumed_at",
-          "type": "timestamp",
-          "primaryKey": false,
-          "notNull": false
-        },
-        "created_at": {
-          "name": "created_at",
-          "type": "timestamp",
-          "primaryKey": false,
-          "notNull": true,
-          "default": "now()"
-        }
-      },
-      "indexes": {},
-      "foreignKeys": {
-        "entries_user_id_users_id_fk": {
-          "name": "entries_user_id_users_id_fk",
-          "tableFrom": "entries",
-          "tableTo": "users",
-          "columnsFrom": [
-            "user_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
-          "onDelete": "cascade",
-          "onUpdate": "no action"
-        },
-        "entries_media_id_media_id_fk": {
-          "name": "entries_media_id_media_id_fk",
-          "tableFrom": "entries",
-          "tableTo": "media",
-          "columnsFrom": [
-            "media_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
-          "onDelete": "no action",
-          "onUpdate": "no action"
-        }
-      },
-      "compositePrimaryKeys": {},
-      "uniqueConstraints": {},
-      "policies": {},
-      "checkConstraints": {},
-      "isRLSEnabled": false
-    },
-    "public.follows": {
-      "name": "follows",
-      "schema": "",
-      "columns": {
-        "follower_id": {
-          "name": "follower_id",
-          "type": "uuid",
-          "primaryKey": false,
-          "notNull": true
-        },
-        "following_id": {
-          "name": "following_id",
-          "type": "uuid",
-          "primaryKey": false,
-          "notNull": true
-        },
-        "created_at": {
-          "name": "created_at",
-          "type": "timestamp",
-          "primaryKey": false,
-          "notNull": true,
-          "default": "now()"
-        }
-      },
-      "indexes": {},
-      "foreignKeys": {
-        "follows_follower_id_users_id_fk": {
-          "name": "follows_follower_id_users_id_fk",
-          "tableFrom": "follows",
-          "tableTo": "users",
-          "columnsFrom": [
-            "follower_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
-          "onDelete": "cascade",
-          "onUpdate": "no action"
-        },
-        "follows_following_id_users_id_fk": {
-          "name": "follows_following_id_users_id_fk",
-          "tableFrom": "follows",
-          "tableTo": "users",
-          "columnsFrom": [
-            "following_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
-          "onDelete": "cascade",
-          "onUpdate": "no action"
-        }
-      },
-      "compositePrimaryKeys": {
-        "follows_follower_id_following_id_pk": {
-          "name": "follows_follower_id_following_id_pk",
-          "columns": [
-            "follower_id",
-            "following_id"
-          ]
-        }
-      },
-      "uniqueConstraints": {},
-      "policies": {},
-      "checkConstraints": {},
-      "isRLSEnabled": false
-    },
-    "public.media": {
-      "name": "media",
-      "schema": "",
-      "columns": {
-        "id": {
-          "name": "id",
-          "type": "uuid",
-          "primaryKey": true,
-          "notNull": true,
-          "default": "gen_random_uuid()"
-        },
-        "media_type": {
-          "name": "media_type",
-          "type": "media_type",
-          "typeSchema": "public",
-          "primaryKey": false,
-          "notNull": true
-        },
-        "external_source": {
-          "name": "external_source",
-          "type": "text",
-          "primaryKey": false,
-          "notNull": true
-        },
-        "external_id": {
-          "name": "external_id",
-          "type": "text",
-          "primaryKey": false,
-          "notNull": true
-        },
-        "title": {
-          "name": "title",
-          "type": "text",
-          "primaryKey": false,
-          "notNull": true
-        },
-        "release_date": {
-          "name": "release_date",
-          "type": "timestamp",
-          "primaryKey": false,
-          "notNull": false
-        },
-        "cover_url": {
-          "name": "cover_url",
-          "type": "text",
-          "primaryKey": false,
-          "notNull": false
-        },
-        "metadata": {
-          "name": "metadata",
-          "type": "jsonb",
-          "primaryKey": false,
-          "notNull": false
-        },
-        "last_fetched_at": {
-          "name": "last_fetched_at",
-          "type": "timestamp",
-          "primaryKey": false,
-          "notNull": false,
-          "default": "now()"
-        }
-      },
-      "indexes": {},
-      "foreignKeys": {},
-      "compositePrimaryKeys": {},
-      "uniqueConstraints": {},
-      "policies": {},
-      "checkConstraints": {},
-      "isRLSEnabled": false
-    },
-    "public.task": {
-      "name": "task",
-      "schema": "",
-      "columns": {
-        "id": {
-          "name": "id",
-          "type": "serial",
-          "primaryKey": true,
-          "notNull": true
-        },
-        "title": {
-          "name": "title",
-          "type": "text",
-          "primaryKey": false,
-          "notNull": true
-        },
-        "priority": {
-          "name": "priority",
-          "type": "integer",
-          "primaryKey": false,
-          "notNull": true,
-          "default": 1
-        }
-      },
-      "indexes": {},
-      "foreignKeys": {},
-      "compositePrimaryKeys": {},
-      "uniqueConstraints": {},
-      "policies": {},
-      "checkConstraints": {},
-      "isRLSEnabled": false
-    },
-    "public.users": {
-      "name": "users",
-      "schema": "",
-      "columns": {
-        "id": {
-          "name": "id",
-          "type": "uuid",
-          "primaryKey": true,
-          "notNull": true,
-          "default": "gen_random_uuid()"
-        },
-        "username": {
-          "name": "username",
-          "type": "text",
-          "primaryKey": false,
-          "notNull": true
-        },
-        "email": {
-          "name": "email",
-          "type": "text",
-          "primaryKey": false,
-          "notNull": true
-        },
-        "password_hash": {
-          "name": "password_hash",
-          "type": "text",
-          "primaryKey": false,
-          "notNull": true
-        },
-        "created_at": {
-          "name": "created_at",
-          "type": "timestamp",
-          "primaryKey": false,
-          "notNull": true,
-          "default": "now()"
-        }
-      },
-      "indexes": {},
-      "foreignKeys": {},
-      "compositePrimaryKeys": {},
-      "uniqueConstraints": {
-        "users_username_unique": {
-          "name": "users_username_unique",
-          "nullsNotDistinct": false,
-          "columns": [
-            "username"
-          ]
-        },
-        "users_email_unique": {
-          "name": "users_email_unique",
-          "nullsNotDistinct": false,
-          "columns": [
-            "email"
-          ]
-        }
-      },
-      "policies": {},
-      "checkConstraints": {},
-      "isRLSEnabled": false
-    }
-  },
-  "enums": {
-    "public.media_type": {
-      "name": "media_type",
-      "schema": "public",
-      "values": [
-        "movie",
-        "tv",
-        "book",
-        "game",
-        "album",
-        "anime"
-      ]
-    }
-  },
-  "schemas": {},
-  "sequences": {},
-  "roles": {},
-  "policies": {},
-  "views": {},
-  "_meta": {
-    "columns": {},
-    "schemas": {},
-    "tables": {}
-  }
+	"id": "e068776a-47c3-4593-966d-6851881b1e3d",
+	"prevId": "6a2fba27-3372-4057-ba79-eb5ecdbab513",
+	"version": "7",
+	"dialect": "postgresql",
+	"tables": {
+		"public.entries": {
+			"name": "entries",
+			"schema": "",
+			"columns": {
+				"id": {
+					"name": "id",
+					"type": "uuid",
+					"primaryKey": true,
+					"notNull": true,
+					"default": "gen_random_uuid()"
+				},
+				"user_id": {
+					"name": "user_id",
+					"type": "uuid",
+					"primaryKey": false,
+					"notNull": true
+				},
+				"media_id": {
+					"name": "media_id",
+					"type": "uuid",
+					"primaryKey": false,
+					"notNull": true
+				},
+				"rating": {
+					"name": "rating",
+					"type": "integer",
+					"primaryKey": false,
+					"notNull": false
+				},
+				"review": {
+					"name": "review",
+					"type": "text",
+					"primaryKey": false,
+					"notNull": false
+				},
+				"consumed_at": {
+					"name": "consumed_at",
+					"type": "timestamp",
+					"primaryKey": false,
+					"notNull": false
+				},
+				"created_at": {
+					"name": "created_at",
+					"type": "timestamp",
+					"primaryKey": false,
+					"notNull": true,
+					"default": "now()"
+				}
+			},
+			"indexes": {},
+			"foreignKeys": {
+				"entries_user_id_users_id_fk": {
+					"name": "entries_user_id_users_id_fk",
+					"tableFrom": "entries",
+					"tableTo": "users",
+					"columnsFrom": ["user_id"],
+					"columnsTo": ["id"],
+					"onDelete": "cascade",
+					"onUpdate": "no action"
+				},
+				"entries_media_id_media_id_fk": {
+					"name": "entries_media_id_media_id_fk",
+					"tableFrom": "entries",
+					"tableTo": "media",
+					"columnsFrom": ["media_id"],
+					"columnsTo": ["id"],
+					"onDelete": "no action",
+					"onUpdate": "no action"
+				}
+			},
+			"compositePrimaryKeys": {},
+			"uniqueConstraints": {},
+			"policies": {},
+			"checkConstraints": {},
+			"isRLSEnabled": false
+		},
+		"public.follows": {
+			"name": "follows",
+			"schema": "",
+			"columns": {
+				"follower_id": {
+					"name": "follower_id",
+					"type": "uuid",
+					"primaryKey": false,
+					"notNull": true
+				},
+				"following_id": {
+					"name": "following_id",
+					"type": "uuid",
+					"primaryKey": false,
+					"notNull": true
+				},
+				"created_at": {
+					"name": "created_at",
+					"type": "timestamp",
+					"primaryKey": false,
+					"notNull": true,
+					"default": "now()"
+				}
+			},
+			"indexes": {},
+			"foreignKeys": {
+				"follows_follower_id_users_id_fk": {
+					"name": "follows_follower_id_users_id_fk",
+					"tableFrom": "follows",
+					"tableTo": "users",
+					"columnsFrom": ["follower_id"],
+					"columnsTo": ["id"],
+					"onDelete": "cascade",
+					"onUpdate": "no action"
+				},
+				"follows_following_id_users_id_fk": {
+					"name": "follows_following_id_users_id_fk",
+					"tableFrom": "follows",
+					"tableTo": "users",
+					"columnsFrom": ["following_id"],
+					"columnsTo": ["id"],
+					"onDelete": "cascade",
+					"onUpdate": "no action"
+				}
+			},
+			"compositePrimaryKeys": {
+				"follows_follower_id_following_id_pk": {
+					"name": "follows_follower_id_following_id_pk",
+					"columns": ["follower_id", "following_id"]
+				}
+			},
+			"uniqueConstraints": {},
+			"policies": {},
+			"checkConstraints": {},
+			"isRLSEnabled": false
+		},
+		"public.media": {
+			"name": "media",
+			"schema": "",
+			"columns": {
+				"id": {
+					"name": "id",
+					"type": "uuid",
+					"primaryKey": true,
+					"notNull": true,
+					"default": "gen_random_uuid()"
+				},
+				"media_type": {
+					"name": "media_type",
+					"type": "media_type",
+					"typeSchema": "public",
+					"primaryKey": false,
+					"notNull": true
+				},
+				"external_source": {
+					"name": "external_source",
+					"type": "text",
+					"primaryKey": false,
+					"notNull": true
+				},
+				"external_id": {
+					"name": "external_id",
+					"type": "text",
+					"primaryKey": false,
+					"notNull": true
+				},
+				"title": {
+					"name": "title",
+					"type": "text",
+					"primaryKey": false,
+					"notNull": true
+				},
+				"release_date": {
+					"name": "release_date",
+					"type": "timestamp",
+					"primaryKey": false,
+					"notNull": false
+				},
+				"cover_url": {
+					"name": "cover_url",
+					"type": "text",
+					"primaryKey": false,
+					"notNull": false
+				},
+				"metadata": {
+					"name": "metadata",
+					"type": "jsonb",
+					"primaryKey": false,
+					"notNull": false
+				},
+				"last_fetched_at": {
+					"name": "last_fetched_at",
+					"type": "timestamp",
+					"primaryKey": false,
+					"notNull": false,
+					"default": "now()"
+				}
+			},
+			"indexes": {},
+			"foreignKeys": {},
+			"compositePrimaryKeys": {},
+			"uniqueConstraints": {},
+			"policies": {},
+			"checkConstraints": {},
+			"isRLSEnabled": false
+		},
+		"public.task": {
+			"name": "task",
+			"schema": "",
+			"columns": {
+				"id": {
+					"name": "id",
+					"type": "serial",
+					"primaryKey": true,
+					"notNull": true
+				},
+				"title": {
+					"name": "title",
+					"type": "text",
+					"primaryKey": false,
+					"notNull": true
+				},
+				"priority": {
+					"name": "priority",
+					"type": "integer",
+					"primaryKey": false,
+					"notNull": true,
+					"default": 1
+				}
+			},
+			"indexes": {},
+			"foreignKeys": {},
+			"compositePrimaryKeys": {},
+			"uniqueConstraints": {},
+			"policies": {},
+			"checkConstraints": {},
+			"isRLSEnabled": false
+		},
+		"public.users": {
+			"name": "users",
+			"schema": "",
+			"columns": {
+				"id": {
+					"name": "id",
+					"type": "uuid",
+					"primaryKey": true,
+					"notNull": true,
+					"default": "gen_random_uuid()"
+				},
+				"username": {
+					"name": "username",
+					"type": "text",
+					"primaryKey": false,
+					"notNull": true
+				},
+				"email": {
+					"name": "email",
+					"type": "text",
+					"primaryKey": false,
+					"notNull": true
+				},
+				"password_hash": {
+					"name": "password_hash",
+					"type": "text",
+					"primaryKey": false,
+					"notNull": true
+				},
+				"created_at": {
+					"name": "created_at",
+					"type": "timestamp",
+					"primaryKey": false,
+					"notNull": true,
+					"default": "now()"
+				}
+			},
+			"indexes": {},
+			"foreignKeys": {},
+			"compositePrimaryKeys": {},
+			"uniqueConstraints": {
+				"users_username_unique": {
+					"name": "users_username_unique",
+					"nullsNotDistinct": false,
+					"columns": ["username"]
+				},
+				"users_email_unique": {
+					"name": "users_email_unique",
+					"nullsNotDistinct": false,
+					"columns": ["email"]
+				}
+			},
+			"policies": {},
+			"checkConstraints": {},
+			"isRLSEnabled": false
+		}
+	},
+	"enums": {
+		"public.media_type": {
+			"name": "media_type",
+			"schema": "public",
+			"values": ["movie", "tv", "book", "game", "album", "anime"]
+		}
+	},
+	"schemas": {},
+	"sequences": {},
+	"roles": {},
+	"policies": {},
+	"views": {},
+	"_meta": {
+		"columns": {},
+		"schemas": {},
+		"tables": {}
+	}
 }

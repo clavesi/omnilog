@@ -1,8 +1,8 @@
+import type { RequestEvent } from "@sveltejs/kit";
+import { redirect } from "@sveltejs/kit";
 import { eq } from "drizzle-orm";
 import { db } from "./db";
 import { sessions, users } from "./db/schema";
-import { redirect } from "@sveltejs/kit";
-import type { RequestEvent } from "@sveltejs/kit";
 
 const SECOND_IN_MS = 1000;
 const MINUTE_IN_MS = 60 * SECOND_IN_MS;
@@ -170,5 +170,5 @@ export function requireUser(event: RequestEvent) {
     if (!event.locals.user) {
         redirect(302, "/login");
     }
-    return event.locals.user!;
+    return event.locals.user;
 }
