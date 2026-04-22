@@ -1,3 +1,4 @@
+import { relations, sql } from "drizzle-orm";
 import {
 	type AnyPgColumn,
 	boolean,
@@ -16,7 +17,6 @@ import {
 	uniqueIndex,
 	uuid,
 } from "drizzle-orm/pg-core";
-import { relations, sql } from "drizzle-orm";
 
 // ============================================================================
 // TYPES
