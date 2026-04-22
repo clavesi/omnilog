@@ -1,9 +1,9 @@
 // src/routes/media/[slug]/+page.server.ts
 import { error } from "@sveltejs/kit";
 import { eq } from "drizzle-orm";
-import type { PageServerLoad } from "./$types";
 import { db } from "$lib/server/db";
-import { mediaItems, mediaMetadata, mediaGenres, genres } from "$lib/server/db/schema";
+import { genres, mediaGenres, mediaItems, mediaMetadata } from "$lib/server/db/schema";
+import type { PageServerLoad } from "./$types";
 
 export const load: PageServerLoad = async ({ params }) => {
 	const [item] = await db.select().from(mediaItems).where(eq(mediaItems.slug, params.slug)).limit(1);

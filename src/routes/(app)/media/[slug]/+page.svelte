@@ -1,11 +1,11 @@
 <script lang="ts">
-	import { isMetadataType } from "$lib/media-types";
-	let { data } = $props();
+import { isMetadataType } from "$lib/media-types";
 
-	const { item, metadata, genres } = data;
-	const year = item.releaseDate ? item.releaseDate.slice(0, 4) : null;
-	const averageRatingNum =
-		item.averageRating != null ? Number.parseFloat(item.averageRating) : NaN;
+let { data } = $props();
+
+const { item, metadata, genres } = data;
+const year = item.releaseDate ? item.releaseDate.slice(0, 4) : null;
+const averageRatingNum = item.averageRating != null ? Number.parseFloat(item.averageRating) : NaN;
 </script>
 
 <article class="media">

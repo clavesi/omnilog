@@ -1,6 +1,6 @@
 import { json } from "@sveltejs/kit";
-import type { RequestHandler } from "./$types";
 import { searchMoviesAndTv } from "$lib/server/tmdb";
+import type { RequestHandler } from "./$types";
 
 export const GET: RequestHandler = async ({ url }) => {
 	const q = url.searchParams.get("q")?.trim() ?? "";

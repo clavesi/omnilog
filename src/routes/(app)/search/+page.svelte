@@ -1,62 +1,62 @@
 <!-- src/routes/search/+page.svelte -->
 <script lang="ts">
-	import { enhance } from "$app/forms";
-	import type { TmdbSearchHit } from "$lib/server/tmdb";
-	import { tmdbImage } from "$lib/tmdb-image";
+import { enhance } from "$app/forms";
+import type { TmdbSearchHit } from "$lib/server/tmdb";
+import { tmdbImage } from "$lib/tmdb-image";
 
-	let query = $state("");
-	let results = $state<TmdbSearchHit[]>([]);
-	let loading = $state(false);
-	let error = $state<string | null>(null);
-	let importing = $state<string | null>(null); // `${type}-${id}` of item being imported
+let query = $state("");
+let results = $state<TmdbSearchHit[]>([]);
+let loading = $state(false);
+let error = $state<string | null>(null);
+let importing = $state<string | null>(null); // `${type}-${id}` of item being imported
 
-	let debounceTimer: ReturnType<typeof setTimeout> | undefined;
-	let abortController: AbortController | undefined;
+let debounceTimer: ReturnType<typeof setTimeout> | undefined;
+let abortController: AbortController | undefined;
 
-	function onInput() {
-		clearTimeout(debounceTimer);
-		error = null;
-		abortController?.abort();
+function onInput() {
+	clearTimeout(debounceTimer);
+	error = null;
+	abortController?.abort();
 
-		if (query.trim().length < 2) {
-			results = [];
-			loading = false;
-			return;
-		}
-
-		loading = true;
-		debounceTimer = setTimeout(runSearch, 250);
+	if (query.trim().length < 2) {
+		results = [];
+		loading = false;
+		return;
 	}
 
-	async function runSearch() {
-		const q = query.trim();
-		if (q.length < 2) return;
+	loading = true;
+	debounceTimer = setTimeout(runSearch, 250);
+}
 
-		abortController = new AbortController();
+async function runSearch() {
+	const q = query.trim();
+	if (q.length < 2) return;
 
-		try {
-			const res = await fetch(`/api/search?q=${encodeURIComponent(q)}`, {
-				signal: abortController.signal,
-			});
-			const data = await res.json();
-			results = data.results ?? [];
-		} catch (err) {
-			if (err instanceof Error && err.name === "AbortError") return;
-			error = "Search failed";
-			results = [];
-		} finally {
-			loading = false;
-		}
+	abortController = new AbortController();
+
+	try {
+		const res = await fetch(`/api/search?q=${encodeURIComponent(q)}`, {
+			signal: abortController.signal,
+		});
+		const data = await res.json();
+		results = data.results ?? [];
+	} catch (err) {
+		if (err instanceof Error && err.name === "AbortError") return;
+		error = "Search failed";
+		results = [];
+	} finally {
+		loading = false;
 	}
+}
 
-	function titleOf(hit: TmdbSearchHit): string {
-		return hit.type === "movie" ? hit.title : hit.name;
-	}
+function titleOf(hit: TmdbSearchHit): string {
+	return hit.type === "movie" ? hit.title : hit.name;
+}
 
-	function yearOf(hit: TmdbSearchHit): string {
-		const d = hit.type === "movie" ? hit.release_date : hit.first_air_date;
-		return d ? d.slice(0, 4) : "";
-	}
+function yearOf(hit: TmdbSearchHit): string {
+	const d = hit.type === "movie" ? hit.release_date : hit.first_air_date;
+	return d ? d.slice(0, 4) : "";
+}
 </script>
 
 <div class="search">

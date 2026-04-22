@@ -17,8 +17,10 @@ import {
 	uniqueIndex,
 	uuid,
 } from "drizzle-orm/pg-core";
+
 export * from "../../media-types";
-import { type MediaMetadata, EMPTY_METADATA } from "../../media-types";
+
+import { EMPTY_METADATA, type MediaMetadata } from "../../media-types";
 
 // ============================================================================
 // TYPES
