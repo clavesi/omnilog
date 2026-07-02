@@ -17,7 +17,8 @@ A SvelteKit app for discovering and logging media.
 
 - **Node.js** 24.x (see `engines` in `package.json`)
 - **pnpm** (lockfile: `pnpm-lock.yaml`)
-- A **PostgreSQL** database (e.g. [Neon](https://neon.tech/); use a direct URL for migrations if your provider distinguishes pooled vs direct connections)
+- **Local dev:** [Docker](https://www.docker.com/) (Postgres via `docker-compose.yml`)
+- **Production:** a hosted **PostgreSQL** database (e.g. [Neon](https://neon.tech/); use a direct URL for migrations if your provider distinguishes pooled vs direct connections)
 
 ## Setup
 
@@ -29,16 +30,26 @@ A SvelteKit app for discovering and logging media.
 
 2. **Environment**
 
-   Copy `.env.example` to `.env` and fill in the values documented there. At minimum you need database URLs:
+   Copy `.env.example` to `.env` and fill in production values (Neon URLs, TMDB key, etc.).
+
+   Local development uses `.env.development`, which points at the Docker Postgres defined in `docker-compose.yml`. Vite loads it automatically when you run `pnpm dev`; you do not need to change `.env` for local work.
 
    | Variable | Purpose |
    |----------|---------|
    | `DATABASE_URL` | PostgreSQL connection string (app runtime) |
    | `DIRECT_DATABASE_URL` | Non-pooled URL for Drizzle migrations/push (recommended for Neon) |
 
-3. **Database schema**
+3. **Local database**
 
-   Push or migrate the schema (Drizzle reads `DATABASE_URL` / `DIRECT_DATABASE_URL` from the environment):
+   Start Postgres:
+
+   ```sh
+   pnpm db:up
+   ```
+
+4. **Database schema**
+
+   Push or migrate the schema against the local database:
 
    ```sh
    pnpm db:push
