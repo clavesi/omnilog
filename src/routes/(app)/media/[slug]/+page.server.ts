@@ -1,4 +1,3 @@
-// src/routes/media/[slug]/+page.server.ts
 import { error } from "@sveltejs/kit";
 import { eq } from "drizzle-orm";
 import { db } from "$lib/server/db";

@@ -1,4 +1,3 @@
-// src/routes/search/+page.server.ts
 import { fail, redirect } from "@sveltejs/kit";
 import { eq } from "drizzle-orm";
 import { db } from "$lib/server/db";

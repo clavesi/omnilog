@@ -1,4 +1,3 @@
-<!-- src/routes/search/+page.svelte -->
 <script lang="ts">
 import { enhance } from "$app/forms";
 import type { TmdbSearchHit } from "$lib/server/tmdb";

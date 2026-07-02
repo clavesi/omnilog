@@ -307,12 +307,12 @@ export const usersRelations = relations(users, ({ many }) => ({
 	statuses: many(userMediaStatus),
 }));
 
-// export const sessionsRelations = relations(sessions, ({ one }) => ({
-// 	user: one(users, {
-// 		fields: [sessions.userId],
-// 		references: [users.id],
-// 	}),
-// }));
+export const sessionsRelations = relations(sessions, ({ one }) => ({
+	user: one(users, {
+		fields: [sessions.userId],
+		references: [users.id],
+	}),
+}));
 
 export const mediaItemsRelations = relations(mediaItems, ({ many, one }) => ({
 	externalIds: many(mediaExternalIds),
