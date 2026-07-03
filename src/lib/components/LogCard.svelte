@@ -1,59 +1,57 @@
 <script lang="ts">
-	import StaticStars from "./StaticStars.svelte";
+import StaticStars from "./StaticStars.svelte";
 
-	type LogCardData = {
-		id: string;
-		rating: number | null;
-		reviewTitle: string | null;
-		reviewBody: string | null;
-		containsSpoilers: boolean;
-		isRewatch: boolean;
-		loggedAt: string | null;
-		createdAt: string | Date;
-		mediaSlug: string;
-		mediaTitle: string;
-		mediaCoverUrl: string | null;
-		username?: string;
-	};
+type LogCardData = {
+	id: string;
+	rating: number | null;
+	reviewTitle: string | null;
+	reviewBody: string | null;
+	containsSpoilers: boolean;
+	isRewatch: boolean;
+	loggedAt: string | null;
+	createdAt: string | Date;
+	mediaSlug: string;
+	mediaTitle: string;
+	mediaCoverUrl: string | null;
+	username?: string;
+};
 
-	type Props = {
-		log: LogCardData;
-		showMediaInfo?: boolean;
-		isOwner?: boolean;
-		onDelete?: (logId: string) => void;
-	};
+type Props = {
+	log: LogCardData;
+	showMediaInfo?: boolean;
+	isOwner?: boolean;
+	onDelete?: (logId: string) => void;
+};
 
-	let { log, showMediaInfo = true, isOwner = false, onDelete }: Props = $props();
+let { log, showMediaInfo = true, isOwner = false, onDelete }: Props = $props();
 
-	let revealSpoilers = $state(false);
+let revealSpoilers = $state(false);
 
-	const displayDate = $derived.by(() => {
-		const d =
-			log.loggedAt ??
-			(typeof log.createdAt === "string" ? log.createdAt : log.createdAt.toISOString());
-		return new Date(d).toLocaleDateString(undefined, {
-			year: "numeric",
-			month: "short",
-			day: "numeric",
-		});
+const displayDate = $derived.by(() => {
+	const d = log.loggedAt ?? (typeof log.createdAt === "string" ? log.createdAt : log.createdAt.toISOString());
+	return new Date(d).toLocaleDateString(undefined, {
+		year: "numeric",
+		month: "short",
+		day: "numeric",
 	});
+});
 
-	let deleting = $state(false);
+let deleting = $state(false);
 
-	async function handleDelete() {
-		if (!confirm("Delete this log? This can't be undone.")) return;
-		deleting = true;
-		try {
-			const res = await fetch(`/api/logs/${log.id}`, { method: "DELETE" });
-			if (res.ok) {
-				onDelete?.(log.id);
-			} else {
-				alert("Failed to delete log");
-			}
-		} finally {
-			deleting = false;
+async function handleDelete() {
+	if (!confirm("Delete this log? This can't be undone.")) return;
+	deleting = true;
+	try {
+		const res = await fetch(`/api/logs/${log.id}`, { method: "DELETE" });
+		if (res.ok) {
+			onDelete?.(log.id);
+		} else {
+			alert("Failed to delete log");
 		}
+	} finally {
+		deleting = false;
 	}
+}
 </script>
 
 <article class="log-card" class:deleting>

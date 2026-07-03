@@ -1,8 +1,8 @@
 import { error } from "@sveltejs/kit";
 import { desc, eq } from "drizzle-orm";
-import type { PageServerLoad } from "./$types";
 import { db } from "$lib/server/db";
-import { mediaItems, mediaMetadata, mediaGenres, genres, logs, users } from "$lib/server/db/schema";
+import { genres, logs, mediaGenres, mediaItems, mediaMetadata, users } from "$lib/server/db/schema";
+import type { PageServerLoad } from "./$types";
 
 export const load: PageServerLoad = async ({ params, locals }) => {
 	const [item] = await db.select().from(mediaItems).where(eq(mediaItems.slug, params.slug)).limit(1);

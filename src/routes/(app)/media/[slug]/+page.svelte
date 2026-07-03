@@ -1,24 +1,22 @@
 <script lang="ts">
-	import LogCard from "$lib/components/LogCard.svelte";
+import LogCard from "$lib/components/LogCard.svelte";
 
-	import { isMetadataType } from "$lib/media-types";
+import { isMetadataType } from "$lib/media-types";
 
-	let { data } = $props();
+let { data } = $props();
 
-	const item = $derived(data.item);
-	const metadata = $derived(data.metadata);
-	const genres = $derived(data.genres);
-	const year = $derived(item.releaseDate ? item.releaseDate.slice(0, 4) : null);
-	const averageRatingNum = $derived(
-		item.averageRating != null ? Number.parseFloat(item.averageRating) : NaN,
-	);
+const item = $derived(data.item);
+const metadata = $derived(data.metadata);
+const genres = $derived(data.genres);
+const year = $derived(item.releaseDate ? item.releaseDate.slice(0, 4) : null);
+const averageRatingNum = $derived(item.averageRating != null ? Number.parseFloat(item.averageRating) : NaN);
 
-	let deletedLogIds = $state(new Set<string>());
-	const visibleLogs = $derived(data.logs.filter((l) => !deletedLogIds.has(l.id)));
+let deletedLogIds = $state(new Set<string>());
+const visibleLogs = $derived(data.logs.filter((l) => !deletedLogIds.has(l.id)));
 
-	function handleDeleted(logId: string) {
-		deletedLogIds = new Set([...deletedLogIds, logId]);
-	}
+function handleDeleted(logId: string) {
+	deletedLogIds = new Set([...deletedLogIds, logId]);
+}
 </script>
 
 <article class="media">

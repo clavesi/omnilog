@@ -1,9 +1,9 @@
-import { and, eq } from "drizzle-orm";
 import { error, json } from "@sveltejs/kit";
-import type { RequestHandler } from "./$types";
+import { and, eq } from "drizzle-orm";
 import { db } from "$lib/server/db";
 import { logs } from "$lib/server/db/schema";
 import { recomputeAggregate } from "$lib/server/media-aggregate";
+import type { RequestHandler } from "./$types";
 
 export const DELETE: RequestHandler = async ({ params, locals }) => {
 	if (!locals.user) throw error(401, "Not logged in");

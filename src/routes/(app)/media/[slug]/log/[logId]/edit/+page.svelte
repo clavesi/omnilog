@@ -1,24 +1,24 @@
 <script lang="ts">
-	import { enhance } from "$app/forms";
-	import StarRating from "$lib/components/StarRating.svelte";
+import { enhance } from "$app/forms";
+import StarRating from "$lib/components/StarRating.svelte";
 
-	let { data, form } = $props();
+let { data, form } = $props();
 
-	// svelte-ignore state_referenced_locally
-	let rating = $state<number | null>(data.log.rating);
-	// svelte-ignore state_referenced_locally
-	let loggedAt = $state(data.log.loggedAt ?? "");
-	// svelte-ignore state_referenced_locally
-	let reviewBody = $state(data.log.reviewBody ?? "");
-	// svelte-ignore state_referenced_locally
-	let reviewTitle = $state(data.log.reviewTitle ?? "");
-	// svelte-ignore state_referenced_locally
-	let containsSpoilers = $state(data.log.containsSpoilers);
-	// svelte-ignore state_referenced_locally
-	let showReview = $state(!!data.log.reviewBody);
-	let submitting = $state(false);
+// svelte-ignore state_referenced_locally
+let rating = $state<number | null>(data.log.rating);
+// svelte-ignore state_referenced_locally
+let loggedAt = $state(data.log.loggedAt ?? "");
+// svelte-ignore state_referenced_locally
+let reviewBody = $state(data.log.reviewBody ?? "");
+// svelte-ignore state_referenced_locally
+let reviewTitle = $state(data.log.reviewTitle ?? "");
+// svelte-ignore state_referenced_locally
+let containsSpoilers = $state(data.log.containsSpoilers);
+// svelte-ignore state_referenced_locally
+let showReview = $state(!!data.log.reviewBody);
+let submitting = $state(false);
 
-	const year = $derived(data.item.releaseDate ? data.item.releaseDate.slice(0, 4) : null);
+const year = $derived(data.item.releaseDate ? data.item.releaseDate.slice(0, 4) : null);
 </script>
 
 <main class="log-page">

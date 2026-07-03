@@ -1,15 +1,15 @@
 <!-- src/routes/u/[username]/+page.svelte -->
 <script lang="ts">
-	import LogCard from "$lib/components/LogCard.svelte";
+import LogCard from "$lib/components/LogCard.svelte";
 
-	let { data } = $props();
+let { data } = $props();
 
-	let deletedLogIds = $state(new Set<string>());
-	let visibleLogs = $derived(data.logs.filter((l) => !deletedLogIds.has(l.id)));
+let deletedLogIds = $state(new Set<string>());
+let visibleLogs = $derived(data.logs.filter((l) => !deletedLogIds.has(l.id)));
 
-	function handleDeleted(logId: string) {
-		deletedLogIds = new Set([...deletedLogIds, logId]);
-	}
+function handleDeleted(logId: string) {
+	deletedLogIds = new Set([...deletedLogIds, logId]);
+}
 </script>
 
 <main class="profile">

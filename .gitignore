@@ -26,3 +26,6 @@ vite.config.ts.timestamp-*
 # Personal markdown files
 MVP.md
 STACK.md
+
+# I need to approve-build for esbuild but then the pnpm-workspace breaks Vercel, so just ignore
+pnpm-workspace.yaml

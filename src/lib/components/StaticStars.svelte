@@ -2,23 +2,22 @@
 Read-only version of StarRating - no buttons, no hover, just renders a value.
 -->
 <script lang="ts">
-	type Props = {
-		value: number | null; // 1-10 scale
-		size?: number;
-	};
+type Props = {
+	value: number | null; // 1-10 scale
+	size?: number;
+};
 
-	let { value, size = 18 }: Props = $props();
+let { value, size = 18 }: Props = $props();
 
-	function fillPercent(position: number): number {
-		if (value === null) return 0;
-		const full = position * 2;
-		if (value >= full) return 100;
-		if (value === full - 1) return 50;
-		return 0;
-	}
+function fillPercent(position: number): number {
+	if (value === null) return 0;
+	const full = position * 2;
+	if (value >= full) return 100;
+	if (value === full - 1) return 50;
+	return 0;
+}
 
-	const STAR_PATH =
-		"M12 2 L15 9 L22 10 L17 14.5 L18.5 21.5 L12 17.5 L5.5 21.5 L7 14.5 L2 10 L9 9 Z";
+const STAR_PATH = "M12 2 L15 9 L22 10 L17 14.5 L18.5 21.5 L12 17.5 L5.5 21.5 L7 14.5 L2 10 L9 9 Z";
 </script>
 
 {#if value !== null}

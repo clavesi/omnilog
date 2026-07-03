@@ -1,10 +1,10 @@
 import { error, fail, redirect } from "@sveltejs/kit";
 import { eq } from "drizzle-orm";
-import type { Actions, PageServerLoad } from "./$types";
+import { requireUser } from "$lib/server/auth";
 import { db } from "$lib/server/db";
 import { logs, mediaItems } from "$lib/server/db/schema";
-import { requireUser } from "$lib/server/auth";
 import { recomputeAggregate } from "$lib/server/media-aggregate";
+import type { Actions, PageServerLoad } from "./$types";
 
 export const load: PageServerLoad = async (event) => {
 	const user = requireUser(event);

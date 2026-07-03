@@ -1,8 +1,8 @@
 import { error } from "@sveltejs/kit";
 import { desc, eq } from "drizzle-orm";
-import type { PageServerLoad } from "./$types";
 import { db } from "$lib/server/db";
 import { logs, mediaItems, users } from "$lib/server/db/schema";
+import type { PageServerLoad } from "./$types";
 
 export const load: PageServerLoad = async ({ params, locals }) => {
 	const [profileUser] = await db
