@@ -9,13 +9,13 @@ let { form, data }: { form: ActionData; data: PageData } = $props();
 	<title>Sign up · Omnilog</title>
 </svelte:head>
 
-<div class="auth-page">
+<div class="mx-auto my-16 max-w-[400px] px-4">
 	<h1>Create your account</h1>
 
-	<form method="post" use:enhance>
+	<form method="post" use:enhance class="mt-6 flex flex-col gap-4">
 		<input type="hidden" name="next" value={data.next} />
 
-		<label>
+		<label class="flex flex-col gap-1 text-sm">
 			Email
 			<input
 				type="email"
@@ -23,10 +23,11 @@ let { form, data }: { form: ActionData; data: PageData } = $props();
 				value={form?.email ?? ""}
 				required
 				autocomplete="email"
+				class="rounded border border-gray-300 p-2 text-base"
 			/>
 		</label>
 
-		<label>
+		<label class="flex flex-col gap-1 text-sm">
 			Username
 			<input
 				type="text"
@@ -36,10 +37,11 @@ let { form, data }: { form: ActionData; data: PageData } = $props();
 				autocomplete="username"
 				minlength="3"
 				maxlength="31"
+				class="rounded border border-gray-300 p-2 text-base"
 			/>
 		</label>
 
-		<label>
+		<label class="flex flex-col gap-1 text-sm">
 			Password
 			<input
 				type="password"
@@ -47,50 +49,16 @@ let { form, data }: { form: ActionData; data: PageData } = $props();
 				required
 				autocomplete="new-password"
 				minlength="8"
+				class="rounded border border-gray-300 p-2 text-base"
 			/>
 		</label>
 
 		{#if form?.message}
-			<p class="error">{form.message}</p>
+			<p class="m-0 text-[#b00020]">{form.message}</p>
 		{/if}
 
-		<button type="submit">Sign up</button>
+		<button type="submit" class="cursor-pointer p-2.5 text-base">Sign up</button>
 	</form>
 
 	<p>Already have an account? <a href="/login?next={data.next}">Log in</a></p>
 </div>
-
-<style>
-	.auth-page {
-		max-width: 400px;
-		margin: 4rem auto;
-		padding: 0 1rem;
-	}
-	form {
-		display: flex;
-		flex-direction: column;
-		gap: 1rem;
-		margin-top: 1.5rem;
-	}
-	label {
-		display: flex;
-		flex-direction: column;
-		gap: 0.25rem;
-		font-size: 0.9rem;
-	}
-	input {
-		padding: 0.5rem;
-		font-size: 1rem;
-		border: 1px solid #ccc;
-		border-radius: 4px;
-	}
-	button {
-		padding: 0.6rem;
-		font-size: 1rem;
-		cursor: pointer;
-	}
-	.error {
-		color: #b00020;
-		margin: 0;
-	}
-</style>

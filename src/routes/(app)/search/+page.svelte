@@ -58,30 +58,32 @@ function yearOf(hit: TmdbSearchHit): string {
 }
 </script>
 
-<div class="search">
+<div class="mx-auto my-8 max-w-[640px] px-4">
 	<input
 		type="search"
 		bind:value={query}
 		oninput={onInput}
 		placeholder="Search movies and TV shows..."
 		autocomplete="off"
+		class="w-full rounded-lg border border-gray-300 px-4 py-3 text-base"
 	/>
 
 	{#if loading}
-		<p class="hint">Searching...</p>
+		<p class="mt-4 text-gray-500">Searching...</p>
 	{:else if error}
-		<p class="hint error">{error}</p>
+		<p class="mt-4 text-red-600">{error}</p>
 	{:else if query.length >= 2 && results.length === 0}
-		<p class="hint">No results.</p>
+		<p class="mt-4 text-gray-500">No results.</p>
 	{/if}
 
-	<ul class="results">
+	<ul class="m-0 mt-4 list-none p-0">
 		{#each results as hit (`${hit.type}-${hit.id}`)}
 			{@const itemKey = `${hit.type}-${hit.id}`}
-			<li>
+			<li class="m-0">
 				<form
 					method="POST"
 					action="?/pickResult"
+					class="m-0"
 					use:enhance={() => {
 						importing = itemKey;
 						return async ({ update }) => {
@@ -92,22 +94,30 @@ function yearOf(hit: TmdbSearchHit): string {
 				>
 					<input type="hidden" name="type" value={hit.type} />
 					<input type="hidden" name="tmdbId" value={hit.id} />
-					<button type="submit" class="result-btn" disabled={importing === itemKey}>
+					<button
+						type="submit"
+						class="flex w-full cursor-pointer items-center gap-3 rounded-lg border-none bg-transparent p-2 text-left font-[inherit] text-inherit hover:bg-gray-100 disabled:cursor-wait disabled:opacity-60"
+						disabled={importing === itemKey}
+					>
 						{#if hit.poster_path}
-							<img src={tmdbImage(hit.poster_path, "w185")} alt="" />
+							<img
+								src={tmdbImage(hit.poster_path, "w185")}
+								alt=""
+								class="h-[69px] w-[46px] shrink-0 rounded object-cover"
+							/>
 						{:else}
-							<div class="poster-placeholder"></div>
+							<div class="h-[69px] w-[46px] shrink-0 rounded bg-gray-200"></div>
 						{/if}
-						<div class="meta">
-							<span class="title">{titleOf(hit)}</span>
-							<span class="subtitle">
+						<div class="flex flex-1 flex-col">
+							<span class="font-medium">{titleOf(hit)}</span>
+							<span class="text-sm text-gray-500">
 								{hit.type === "movie" ? "Movie" : "TV"}
 								{#if yearOf(hit)}
 									· {yearOf(hit)}{/if}
 							</span>
 						</div>
 						{#if importing === itemKey}
-							<span class="loading">Importing...</span>
+							<span class="text-sm text-gray-500 italic">Importing...</span>
 						{/if}
 					</button>
 				</form>
@@ -115,83 +125,3 @@ function yearOf(hit: TmdbSearchHit): string {
 		{/each}
 	</ul>
 </div>
-
-<style>
-	.search {
-		max-width: 640px;
-		margin: 2rem auto;
-		padding: 0 1rem;
-	}
-	input[type="search"] {
-		width: 100%;
-		padding: 0.75rem 1rem;
-		font-size: 1rem;
-		border: 1px solid #ccc;
-		border-radius: 0.5rem;
-	}
-	.hint {
-		color: #666;
-		margin-top: 1rem;
-	}
-	.hint.error {
-		color: #c33;
-	}
-	.results {
-		list-style: none;
-		padding: 0;
-		margin: 1rem 0 0;
-	}
-	.results li {
-		margin: 0;
-	}
-	.results form {
-		margin: 0;
-	}
-	.result-btn {
-		display: flex;
-		gap: 0.75rem;
-		align-items: center;
-		width: 100%;
-		padding: 0.5rem;
-		background: none;
-		border: none;
-		border-radius: 0.5rem;
-		cursor: pointer;
-		text-align: left;
-		font: inherit;
-		color: inherit;
-	}
-	.result-btn:hover:not(:disabled) {
-		background: #f0f0f0;
-	}
-	.result-btn:disabled {
-		opacity: 0.6;
-		cursor: wait;
-	}
-	.result-btn img,
-	.poster-placeholder {
-		width: 46px;
-		height: 69px;
-		object-fit: cover;
-		background: #eee;
-		border-radius: 0.25rem;
-		flex-shrink: 0;
-	}
-	.meta {
-		display: flex;
-		flex-direction: column;
-		flex: 1;
-	}
-	.title {
-		font-weight: 500;
-	}
-	.subtitle {
-		color: #666;
-		font-size: 0.875rem;
-	}
-	.loading {
-		color: #666;
-		font-size: 0.875rem;
-		font-style: italic;
-	}
-</style>

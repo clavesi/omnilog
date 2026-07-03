@@ -26,31 +26,34 @@ function fillPercent(position: number): number {
 const STAR_PATH = "M12 2 L15 9 L22 10 L17 14.5 L18.5 21.5 L12 17.5 L5.5 21.5 L7 14.5 L2 10 L9 9 Z";
 </script>
 
-<div class="rating" style="--star-size: {size}px;">
+<div class="flex flex-wrap items-center gap-3">
     <input type="hidden" {name} {id} value={value ?? ""} />
 
     <div
-        class="stars"
+        class="inline-flex gap-0.5"
         role="radiogroup"
         aria-label="Rating"
         tabindex="0"
         onmouseleave={() => (hover = null)}
     >
         {#each [1, 2, 3, 4, 5] as position (position)}
-            <div class="star-wrapper">
-                <!-- Empty star (gray background) -->
+            <div class="relative" style="width: {size}px; height: {size}px;">
                 <svg
-                    class="star star-bg"
+                    class="block fill-gray-300"
+                    style="width: {size}px; height: {size}px;"
                     viewBox="0 0 24 24"
                     aria-hidden="true"
                 >
                     <path d={STAR_PATH} />
                 </svg>
 
-                <!-- Fill overlay (clipped to 0/50/100% width) -->
-                <div class="fill" style="width: {fillPercent(position)}%">
+                <div
+                    class="pointer-events-none absolute top-0 left-0 h-full overflow-hidden transition-[width] duration-75 ease-linear"
+                    style="width: {fillPercent(position)}%"
+                >
                     <svg
-                        class="star star-fill"
+                        class="block fill-amber-500"
+                        style="width: {size}px; height: {size}px;"
                         viewBox="0 0 24 24"
                         aria-hidden="true"
                     >
@@ -58,19 +61,17 @@ const STAR_PATH = "M12 2 L15 9 L22 10 L17 14.5 L18.5 21.5 L12 17.5 L5.5 21.5 L7 
                     </svg>
                 </div>
 
-                <!-- Left half click zone -->
                 <button
                     type="button"
-                    class="click-zone left"
+                    class="absolute top-0 left-0 h-full w-1/2 cursor-pointer border-none bg-transparent p-0"
                     aria-label="{position - 0.5} stars"
                     onmouseenter={() => (hover = position * 2 - 1)}
                     onclick={() => setRating(position * 2 - 1)}
                 ></button>
 
-                <!-- Right half click zone -->
                 <button
                     type="button"
-                    class="click-zone right"
+                    class="absolute top-0 left-1/2 h-full w-1/2 cursor-pointer border-none bg-transparent p-0"
                     aria-label="{position} stars"
                     onmouseenter={() => (hover = position * 2)}
                     onclick={() => setRating(position * 2)}
@@ -79,7 +80,7 @@ const STAR_PATH = "M12 2 L15 9 L22 10 L17 14.5 L18.5 21.5 L12 17.5 L5.5 21.5 L7 
         {/each}
     </div>
 
-    <span class="value">
+    <span class="min-w-[4.5rem] text-sm text-gray-600">
         {#if displayValue > 0}
             {(displayValue / 2).toFixed(1)} / 5
         {:else}
@@ -88,78 +89,12 @@ const STAR_PATH = "M12 2 L15 9 L22 10 L17 14.5 L18.5 21.5 L12 17.5 L5.5 21.5 L7 
     </span>
 
     {#if value !== null}
-        <button type="button" class="clear" onclick={() => (value = null)}
-            >Clear</button
+        <button
+            type="button"
+            class="cursor-pointer border-none bg-transparent text-[0.8125rem] text-gray-500 underline hover:text-gray-800"
+            onclick={() => (value = null)}
         >
+            Clear
+        </button>
     {/if}
 </div>
-
-<style>
-    .rating {
-        display: flex;
-        align-items: center;
-        gap: 0.75rem;
-        flex-wrap: wrap;
-    }
-    .stars {
-        display: inline-flex;
-        gap: 2px;
-    }
-    .star-wrapper {
-        position: relative;
-        width: var(--star-size);
-        height: var(--star-size);
-    }
-    .star {
-        width: var(--star-size);
-        height: var(--star-size);
-        display: block;
-    }
-    .star-bg {
-        fill: #d1d5db;
-    }
-    .fill {
-        position: absolute;
-        top: 0;
-        left: 0;
-        height: 100%;
-        overflow: hidden;
-        pointer-events: none;
-        transition: width 0.05s ease;
-    }
-    .star-fill {
-        fill: #f59e0b;
-    }
-    .click-zone {
-        position: absolute;
-        top: 0;
-        height: 100%;
-        width: 50%;
-        background: transparent;
-        border: none;
-        cursor: pointer;
-        padding: 0;
-    }
-    .click-zone.left {
-        left: 0;
-    }
-    .click-zone.right {
-        left: 50%;
-    }
-    .value {
-        color: #555;
-        font-size: 0.875rem;
-        min-width: 4.5rem;
-    }
-    .clear {
-        background: none;
-        border: none;
-        color: #888;
-        font-size: 0.8125rem;
-        cursor: pointer;
-        text-decoration: underline;
-    }
-    .clear:hover {
-        color: #333;
-    }
-</style>

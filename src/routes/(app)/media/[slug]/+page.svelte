@@ -19,29 +19,32 @@ function handleDeleted(logId: string) {
 }
 </script>
 
-<article class="media">
+<article class="mx-auto my-8 max-w-[900px] px-4">
 	{#if item.backdropImageUrl}
-		<div class="backdrop" style="background-image: url({item.backdropImageUrl})"></div>
+		<div
+			class="mb-6 h-60 rounded-lg bg-cover bg-center"
+			style="background-image: url({item.backdropImageUrl})"
+		></div>
 	{/if}
 
-	<div class="body">
+	<div class="grid grid-cols-1 gap-6 sm:grid-cols-[200px_1fr]">
 		{#if item.coverImageUrl}
-			<img class="poster" src={item.coverImageUrl} alt="" />
+			<img class="w-full rounded-lg sm:max-w-[200px]" src={item.coverImageUrl} alt="" />
 		{/if}
 
-		<div class="info">
-			<h1>
+		<div>
+			<h1 class="mb-2">
 				{item.title}
 				{#if year}
-					<span class="year">({year})</span>{/if}
+					<span class="font-normal text-gray-500">({year})</span>{/if}
 			</h1>
 
 			{#if metadata && isMetadataType(metadata, "movie") && metadata.tagline}
-				<p class="tagline">{metadata.tagline}</p>
+				<p class="mb-4 text-gray-500 italic">{metadata.tagline}</p>
 			{/if}
 
-			<ul class="facts">
-				<li class="type-tag">{item.mediaType}</li>
+			<ul class="m-0 mb-3 flex list-none flex-wrap gap-4 p-0 text-sm text-gray-500">
+				<li class="rounded bg-gray-200 px-2 py-0.5 capitalize">{item.mediaType}</li>
 
 				{#if metadata && isMetadataType(metadata, "movie") && metadata.runtime}
 					<li>{metadata.runtime} min</li>
@@ -68,7 +71,7 @@ function handleDeleted(logId: string) {
 				{/if}
 
 				{#if Number.isFinite(averageRatingNum)}
-					<li class="rating">
+					<li class="font-medium text-gray-800">
 						★ {(averageRatingNum / 2).toFixed(1)} ({item.ratingCount}
 						rating{item.ratingCount === 1 ? "" : "s"})
 					</li>
@@ -76,25 +79,30 @@ function handleDeleted(logId: string) {
 			</ul>
 
 			{#if genres.length}
-				<ul class="genres">
+				<ul class="m-0 mb-4 flex list-none flex-wrap gap-2 p-0">
 					{#each genres as g (g.slug)}
-						<li>{g.name}</li>
+						<li class="rounded-full bg-gray-100 px-2.5 py-1 text-[0.8125rem] text-gray-700">{g.name}</li>
 					{/each}
 				</ul>
 			{/if}
 
 			{#if item.description}
-				<p class="description">{item.description}</p>
+				<p class="mb-6 leading-relaxed">{item.description}</p>
 			{/if}
 
-			<div class="actions">
-				<a href="/media/{item.slug}/log" class="log-btn">Log this</a>
+			<div>
+				<a
+					href="/media/{item.slug}/log"
+					class="inline-block cursor-pointer rounded-lg border-none bg-blue-600 px-6 py-3 text-base text-white no-underline hover:bg-blue-700"
+				>
+					Log this
+				</a>
 			</div>
 
-			<section class="logs-section">
-				<h2>Logs & Reviews</h2>
+			<section class="mt-12 border-t border-gray-200 pt-6">
+				<h2 class="mb-4 text-lg">Logs & Reviews</h2>
 				{#if visibleLogs.length === 0}
-					<p class="empty">No one has logged this yet. Be the first!</p>
+					<p class="text-gray-500">No one has logged this yet. Be the first!</p>
 				{:else}
 					{#each visibleLogs as log (log.id)}
 						<LogCard
@@ -109,113 +117,3 @@ function handleDeleted(logId: string) {
 		</div>
 	</div>
 </article>
-
-<style>
-	.media {
-		max-width: 900px;
-		margin: 2rem auto;
-		padding: 0 1rem;
-	}
-	.backdrop {
-		height: 240px;
-		background-size: cover;
-		background-position: center;
-		border-radius: 0.5rem;
-		margin-bottom: 1.5rem;
-	}
-	.body {
-		display: grid;
-		grid-template-columns: 200px 1fr;
-		gap: 1.5rem;
-	}
-	.poster {
-		width: 100%;
-		border-radius: 0.5rem;
-	}
-	h1 {
-		margin: 0 0 0.5rem;
-	}
-	.year {
-		color: #666;
-		font-weight: 400;
-	}
-	.tagline {
-		font-style: italic;
-		color: #666;
-		margin: 0 0 1rem;
-	}
-	.facts {
-		list-style: none;
-		padding: 0;
-		margin: 0 0 0.75rem;
-		display: flex;
-		gap: 1rem;
-		flex-wrap: wrap;
-		color: #666;
-		font-size: 0.875rem;
-	}
-	.type-tag {
-		text-transform: capitalize;
-		background: #eee;
-		padding: 0.125rem 0.5rem;
-		border-radius: 0.25rem;
-	}
-	.rating {
-		color: #333;
-		font-weight: 500;
-	}
-	.genres {
-		list-style: none;
-		padding: 0;
-		margin: 0 0 1rem;
-		display: flex;
-		gap: 0.5rem;
-		flex-wrap: wrap;
-	}
-	.genres li {
-		background: #f3f4f6;
-		padding: 0.25rem 0.625rem;
-		border-radius: 999px;
-		font-size: 0.8125rem;
-		color: #444;
-	}
-	.description {
-		line-height: 1.6;
-		margin-bottom: 1.5rem;
-	}
-	.log-btn {
-		display: inline-block;
-		padding: 0.75rem 1.5rem;
-		font-size: 1rem;
-		background: #2563eb;
-		color: white;
-		text-decoration: none;
-		border: none;
-		border-radius: 0.5rem;
-		cursor: pointer;
-	}
-	.log-btn:hover {
-		background: #1d4ed8;
-	}
-	@media (max-width: 600px) {
-		.body {
-			grid-template-columns: 1fr;
-		}
-		.poster {
-			max-width: 200px;
-		}
-	}
-
-	.logs-section {
-		margin-top: 3rem;
-		border-top: 1px solid #eee;
-		padding-top: 1.5rem;
-	}
-	.logs-section h2 {
-		font-size: 1.125rem;
-		margin: 0 0 1rem;
-	}
-	.empty {
-		color: #888;
-	}
-</style>

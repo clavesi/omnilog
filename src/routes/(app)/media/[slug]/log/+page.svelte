@@ -21,17 +21,17 @@ $effect(() => {
 const year = $derived(data.item.releaseDate ? data.item.releaseDate.slice(0, 4) : null);
 </script>
 
-<main class="log-page">
-    <header class="header">
+<main class="mx-auto my-8 max-w-[600px] px-4">
+    <header class="mb-8 flex items-center gap-4">
         {#if data.item.coverImageUrl}
-            <img class="poster" src={data.item.coverImageUrl} alt="" />
+            <img class="h-24 w-16 rounded object-cover" src={data.item.coverImageUrl} alt="" />
         {/if}
         <div>
-            <p class="eyebrow">{data.hasPriorLog ? "Logging again" : "Log"}</p>
-            <h1>
+            <p class="mb-1 text-xs tracking-wider text-gray-500 uppercase">{data.hasPriorLog ? "Logging again" : "Log"}</p>
+            <h1 class="m-0 text-2xl">
                 {data.item.title}
                 {#if year}
-                    <span class="year">({year})</span>{/if}
+                    <span class="font-normal text-gray-500">({year})</span>{/if}
             </h1>
         </div>
     </header>
@@ -46,39 +46,40 @@ const year = $derived(data.item.releaseDate ? data.item.releaseDate.slice(0, 4) 
             };
         }}
     >
-        <section class="field">
-            <label class="label" for="rating">Rating</label>
+        <section class="mb-6">
+            <label class="mb-2 block font-medium" for="rating">Rating</label>
             <StarRating bind:value={rating} id="rating" />
         </section>
 
-        <section class="field">
-            <label class="label" for="loggedAt">Watched on</label>
+        <section class="mb-6">
+            <label class="mb-2 block font-medium" for="loggedAt">Watched on</label>
             <input
                 type="date"
                 id="loggedAt"
                 name="loggedAt"
                 bind:value={loggedAt}
                 max={today}
+                class="w-full rounded-md border border-gray-300 px-3 py-2 font-[inherit]"
             />
         </section>
 
-        <section class="field">
+        <section class="mb-6">
             {#if !showReview}
                 <button
                     type="button"
-                    class="add-review"
+                    class="w-full cursor-pointer rounded-md border border-dashed border-gray-300 px-4 py-3 text-gray-600 hover:bg-gray-100"
                     onclick={() => (showReview = true)}
                 >
                     + Add a review
                 </button>
             {:else}
-                <label class="label" for="reviewBody">Review</label>
+                <label class="mb-2 block font-medium" for="reviewBody">Review</label>
                 <input
                     type="text"
                     name="reviewTitle"
                     placeholder="Title (optional)"
                     bind:value={reviewTitle}
-                    class="title-input"
+                    class="mb-2 w-full rounded-md border border-gray-300 px-3 py-2 font-[inherit]"
                 />
                 <textarea
                     id="reviewBody"
@@ -86,8 +87,9 @@ const year = $derived(data.item.releaseDate ? data.item.releaseDate.slice(0, 4) 
                     rows="6"
                     placeholder="Your thoughts..."
                     bind:value={reviewBody}
+                    class="mt-2 w-full resize-y rounded-md border border-gray-300 px-3 py-2 font-[inherit]"
                 ></textarea>
-                <label class="checkbox">
+                <label class="mt-3 flex items-center gap-2 text-sm text-gray-700">
                     <input
                         type="checkbox"
                         name="containsSpoilers"
@@ -99,128 +101,18 @@ const year = $derived(data.item.releaseDate ? data.item.releaseDate.slice(0, 4) 
         </section>
 
         {#if form?.error}
-            <p class="error">{form.error}</p>
+            <p class="mb-4 text-red-600">{form.error}</p>
         {/if}
 
-        <div class="actions">
-            <a href="/media/{data.item.slug}" class="cancel">Cancel</a>
-            <button type="submit" class="submit" disabled={submitting}>
+        <div class="flex items-center justify-end gap-3">
+            <a href="/media/{data.item.slug}" class="px-4 py-2.5 text-gray-500 no-underline hover:text-gray-800">Cancel</a>
+            <button
+                type="submit"
+                class="cursor-pointer rounded-md border-none bg-blue-600 px-6 py-2.5 font-[inherit] text-white hover:bg-blue-700 disabled:cursor-wait disabled:opacity-60"
+                disabled={submitting}
+            >
                 {submitting ? "Saving..." : "Save log"}
             </button>
         </div>
     </form>
 </main>
-
-<style>
-    .log-page {
-        max-width: 600px;
-        margin: 2rem auto;
-        padding: 0 1rem;
-    }
-    .header {
-        display: flex;
-        gap: 1rem;
-        margin-bottom: 2rem;
-        align-items: center;
-    }
-    .poster {
-        width: 64px;
-        height: 96px;
-        object-fit: cover;
-        border-radius: 0.25rem;
-    }
-    .eyebrow {
-        text-transform: uppercase;
-        font-size: 0.75rem;
-        letter-spacing: 0.05em;
-        color: #666;
-        margin: 0 0 0.25rem;
-    }
-    h1 {
-        margin: 0;
-        font-size: 1.5rem;
-    }
-    .year {
-        color: #666;
-        font-weight: 400;
-    }
-    .field {
-        margin-bottom: 1.5rem;
-    }
-    .label {
-        display: block;
-        font-weight: 500;
-        margin-bottom: 0.5rem;
-    }
-    input[type="date"],
-    textarea,
-    .title-input {
-        width: 100%;
-        padding: 0.5rem 0.75rem;
-        font: inherit;
-        border: 1px solid #ccc;
-        border-radius: 0.375rem;
-    }
-    textarea {
-        resize: vertical;
-        font-family: inherit;
-        margin-top: 0.5rem;
-    }
-    .title-input {
-        margin-bottom: 0.5rem;
-    }
-    .checkbox {
-        display: flex;
-        align-items: center;
-        gap: 0.5rem;
-        margin-top: 0.75rem;
-        font-size: 0.875rem;
-        color: #444;
-    }
-    .add-review {
-        background: none;
-        border: 1px dashed #ccc;
-        padding: 0.75rem 1rem;
-        border-radius: 0.375rem;
-        color: #555;
-        cursor: pointer;
-        width: 100%;
-    }
-    .add-review:hover {
-        background: #f5f5f5;
-    }
-    .error {
-        color: #c33;
-        margin-bottom: 1rem;
-    }
-    .actions {
-        display: flex;
-        gap: 0.75rem;
-        justify-content: flex-end;
-        align-items: center;
-    }
-    .cancel {
-        color: #666;
-        text-decoration: none;
-        padding: 0.625rem 1rem;
-    }
-    .cancel:hover {
-        color: #333;
-    }
-    .submit {
-        padding: 0.625rem 1.5rem;
-        font: inherit;
-        background: #2563eb;
-        color: white;
-        border: none;
-        border-radius: 0.375rem;
-        cursor: pointer;
-    }
-    .submit:hover:not(:disabled) {
-        background: #1d4ed8;
-    }
-    .submit:disabled {
-        opacity: 0.6;
-        cursor: wait;
-    }
-</style>

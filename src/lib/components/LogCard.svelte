@@ -54,59 +54,64 @@ async function handleDelete() {
 }
 </script>
 
-<article class="log-card" class:deleting>
-	<div class="row">
+<article class="border-b border-gray-200 py-4 transition-opacity duration-150" class:opacity-50={deleting}>
+	<div class="flex gap-4">
 		{#if showMediaInfo}
-			<a href="/media/{log.mediaSlug}" class="poster-link">
+			<a href="/media/{log.mediaSlug}" class="shrink-0">
 				{#if log.mediaCoverUrl}
-					<img src={log.mediaCoverUrl} alt="" class="poster" />
+					<img src={log.mediaCoverUrl} alt="" class="h-[69px] w-[46px] rounded bg-gray-200 object-cover" />
 				{:else}
-					<div class="poster-placeholder"></div>
+					<div class="h-[69px] w-[46px] rounded bg-gray-200"></div>
 				{/if}
 			</a>
 		{/if}
 
-		<div class="content">
-			<div class="meta-row">
+		<div class="min-w-0 flex-1">
+			<div class="flex flex-wrap items-center gap-2.5">
 				{#if showMediaInfo}
-					<a href="/media/{log.mediaSlug}" class="media-title">{log.mediaTitle}</a>
+					<a href="/media/{log.mediaSlug}" class="font-semibold text-inherit no-underline hover:underline">{log.mediaTitle}</a>
 				{:else if log.username}
-					<a href="/u/{log.username}" class="author">{log.username}</a>
+					<a href="/u/{log.username}" class="font-semibold text-blue-600 no-underline hover:underline">{log.username}</a>
 				{/if}
 				{#if log.rating !== null}
 					<StaticStars value={log.rating} size={16} />
 				{/if}
 				{#if log.isRewatch}
-					<span class="badge">Rewatch</span>
+					<span class="rounded-full bg-indigo-50 px-2 py-0.5 text-[0.6875rem] text-indigo-700">Rewatch</span>
 				{/if}
 			</div>
 
-			<time class="date">{displayDate}</time>
+			<time class="mt-0.5 block text-[0.8125rem] text-gray-500">{displayDate}</time>
 
 			{#if log.reviewBody}
-				<div class="review">
+				<div class="mt-2">
 					{#if log.reviewTitle}
-						<h3 class="review-title">{log.reviewTitle}</h3>
+						<h3 class="mb-1 text-[0.9375rem]">{log.reviewTitle}</h3>
 					{/if}
 
 					{#if log.containsSpoilers && !revealSpoilers}
 						<button
 							type="button"
-							class="spoiler-reveal"
+							class="cursor-pointer rounded border border-dashed border-gray-300 bg-gray-100 px-3 py-2 text-sm text-gray-500"
 							onclick={() => (revealSpoilers = true)}
 						>
 							Contains spoilers — click to reveal
 						</button>
 					{:else}
-						<p class="review-body">{log.reviewBody}</p>
+						<p class="m-0 leading-normal whitespace-pre-wrap text-gray-800">{log.reviewBody}</p>
 					{/if}
 				</div>
 			{/if}
 
 			{#if isOwner}
-				<div class="owner-actions">
-					<a href="/media/{log.mediaSlug}/log/{log.id}/edit">Edit</a>
-					<button type="button" onclick={handleDelete} disabled={deleting}>
+				<div class="mt-2 flex gap-3 text-[0.8125rem]">
+					<a href="/media/{log.mediaSlug}/log/{log.id}/edit" class="text-blue-600 no-underline hover:underline">Edit</a>
+					<button
+						type="button"
+						class="cursor-pointer border-none bg-transparent p-0 text-[0.8125rem] text-red-600 hover:underline"
+						onclick={handleDelete}
+						disabled={deleting}
+					>
 						{deleting ? "Deleting..." : "Delete"}
 					</button>
 				</div>
@@ -114,114 +119,3 @@ async function handleDelete() {
 		</div>
 	</div>
 </article>
-
-<style>
-	.log-card {
-		border-bottom: 1px solid #eee;
-		padding: 1rem 0;
-		transition: opacity 0.15s ease;
-	}
-	.log-card.deleting {
-		opacity: 0.5;
-	}
-	.row {
-		display: flex;
-		gap: 1rem;
-	}
-	.poster-link {
-		flex-shrink: 0;
-	}
-	.poster,
-	.poster-placeholder {
-		width: 46px;
-		height: 69px;
-		object-fit: cover;
-		border-radius: 0.25rem;
-		background: #eee;
-	}
-	.content {
-		flex: 1;
-		min-width: 0;
-	}
-	.meta-row {
-		display: flex;
-		align-items: center;
-		gap: 0.625rem;
-		flex-wrap: wrap;
-	}
-	.media-title {
-		font-weight: 600;
-		text-decoration: none;
-		color: inherit;
-	}
-	.media-title:hover {
-		text-decoration: underline;
-	}
-	.author {
-		font-weight: 600;
-		text-decoration: none;
-		color: #2563eb;
-	}
-	.author:hover {
-		text-decoration: underline;
-	}
-	.badge {
-		font-size: 0.6875rem;
-		background: #eef2ff;
-		color: #4338ca;
-		padding: 0.125rem 0.5rem;
-		border-radius: 999px;
-	}
-	.date {
-		display: block;
-		color: #888;
-		font-size: 0.8125rem;
-		margin-top: 0.125rem;
-	}
-	.review {
-		margin-top: 0.5rem;
-	}
-	.review-title {
-		font-size: 0.9375rem;
-		margin: 0 0 0.25rem;
-	}
-	.review-body {
-		white-space: pre-wrap;
-		line-height: 1.5;
-		color: #333;
-		margin: 0;
-	}
-	.spoiler-reveal {
-		background: #f5f5f5;
-		border: 1px dashed #ccc;
-		border-radius: 0.25rem;
-		padding: 0.5rem 0.75rem;
-		font-size: 0.875rem;
-		color: #666;
-		cursor: pointer;
-	}
-	.owner-actions {
-		display: flex;
-		gap: 0.75rem;
-		margin-top: 0.5rem;
-		font-size: 0.8125rem;
-	}
-	.owner-actions a {
-		color: #2563eb;
-		text-decoration: none;
-	}
-	.owner-actions a:hover {
-		text-decoration: underline;
-	}
-	.owner-actions button {
-		background: none;
-		border: none;
-		color: #c33;
-		cursor: pointer;
-		padding: 0;
-		font-size: inherit;
-	}
-	.owner-actions button:hover {
-		text-decoration: underline;
-	}
-</style>
