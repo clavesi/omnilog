@@ -6,11 +6,20 @@ import { db } from "$lib/server/db";
 import { users } from "$lib/server/db/schema";
 import type { Actions, PageServerLoad } from "./$types";
 
+// Only allow redirecting to a same-site relative path.
+function safeNextPath(raw: string | null): string {
+	if (!raw) return "/feed";
+	if (!raw.startsWith("/") || raw.startsWith("//")) return "/feed";
+	return raw;
+}
+
 // If already logged in, bounce them to the app.
 export const load: PageServerLoad = (event) => {
+	const next = safeNextPath(event.url.searchParams.get("next"));
 	if (event.locals.user) {
-		redirect(302, "/feed");
+		redirect(302, next);
 	}
+	return { next };
 };
 
 export const actions: Actions = {
@@ -19,6 +28,8 @@ export const actions: Actions = {
 		const email = formData.get("email");
 		const username = formData.get("username");
 		const password = formData.get("password");
+		const nextRaw = formData.get("next");
+		const next = safeNextPath(typeof nextRaw === "string" ? nextRaw : null);
 
 		// Keep email/username on failure so the form doesn't blank out
 		const formValues = {
@@ -76,6 +87,6 @@ export const actions: Actions = {
 		const session = await createSession(user.id);
 		setSessionTokenCookie(event, session.token);
 
-		redirect(303, "/feed");
+		redirect(303, next);
 	},
 };

@@ -5,8 +5,14 @@ import { mediaItems } from "$lib/server/db/schema";
 import { importMovie, importTv } from "$lib/server/tmdb";
 
 export const actions = {
-	pickResult: async ({ request }) => {
-		const form = await request.formData();
+	pickResult: async (event) => {
+		// Anonymous visitors can search and browse, but importing writes to
+		// the DB — require login before that happens.
+		if (!event.locals.user) {
+			redirect(302, "/login?next=/search");
+		}
+
+		const form = await event.request.formData();
 		const type = form.get("type");
 		const tmdbIdRaw = form.get("tmdbId");
 		const tmdbId = Number(tmdbIdRaw);
@@ -34,6 +40,6 @@ export const actions = {
 			return fail(500, { error: "Import succeeded but lookup failed" });
 		}
 
-		throw redirect(303, `/media/${item.slug}`);
+		redirect(303, `/media/${item.slug}`);
 	},
 };

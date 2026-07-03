@@ -1,8 +1,8 @@
 <script lang="ts">
-import type { Snippet } from "svelte";
-import type { LayoutData } from "./$types";
+	import type { Snippet } from "svelte";
+	import type { LayoutData } from "./$types";
 
-let { data, children }: { data: LayoutData; children: Snippet } = $props();
+	let { data, children }: { data: LayoutData; children: Snippet } = $props();
 </script>
 
 <header>
@@ -21,10 +21,13 @@ let { data, children }: { data: LayoutData; children: Snippet } = $props();
 			</svg>
 		</a>
 		<a href="/feed">Feed</a>
-		<a href="/profile">Profile</a>
-		<form method="post" action="/logout">
-			<button type="submit">Log out</button>
-		</form>
+		{#if data.user}
+			<a href="/u/{data.user.username}" class="nav-link">{data.user.username}</a>
+			<a href="/logout" class="nav-link">Log out</a>
+		{:else}
+			<a href="/login" class="nav-link">Log in</a>
+			<a href="/signup" class="nav-link signup">Sign up</a>
+		{/if}
 	</nav>
 </header>
 
@@ -49,17 +52,6 @@ let { data, children }: { data: LayoutData; children: Snippet } = $props();
 		display: flex;
 		gap: 1rem;
 		align-items: center;
-	}
-	nav form {
-		display: inline;
-	}
-	nav button {
-		background: none;
-		border: none;
-		cursor: pointer;
-		color: inherit;
-		font: inherit;
-		padding: 0;
 	}
 	.icon-link {
 		display: flex;

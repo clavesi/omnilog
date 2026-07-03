@@ -1,80 +1,77 @@
 <script lang="ts">
-import { enhance } from "$app/forms";
-import type { ActionData } from "./$types";
+	import { enhance } from "$app/forms";
+	import type { ActionData, PageData } from "./$types";
 
-let { form }: { form: ActionData } = $props();
+	let { form, data }: { form: ActionData; data: PageData } = $props();
 </script>
 
 <svelte:head>
-    <title>Log in · Omnilog</title>
+	<title>Log in · Omnilog</title>
 </svelte:head>
 
 <div class="auth-page">
-    <h1>Welcome back</h1>
+	<h1>Welcome back</h1>
 
-    <form method="post" use:enhance>
-        <label>
-            Email
-            <input
-                type="email"
-                name="email"
-                value={form?.email ?? ""}
-                required
-                autocomplete="email"
-            />
-        </label>
+	<form method="post" use:enhance>
+		<input type="hidden" name="next" value={data.next} />
 
-        <label>
-            Password
-            <input
-                type="password"
-                name="password"
-                required
-                autocomplete="current-password"
-            />
-        </label>
+		<label>
+			Email
+			<input
+				type="email"
+				name="email"
+				value={form?.email ?? ""}
+				required
+				autocomplete="email"
+			/>
+		</label>
 
-        {#if form?.message}
-            <p class="error">{form.message}</p>
-        {/if}
+		<label>
+			Password
+			<input type="password" name="password" required autocomplete="current-password" />
+		</label>
 
-        <button type="submit">Log in</button>
-    </form>
+		{#if form?.message}
+			<p class="error">{form.message}</p>
+		{/if}
 
-    <p>Don't have an account? <a href="/signup">Sign up</a></p>
+		<button type="submit">Log in</button>
+	</form>
+
+	<p>Don't have an account? <a href="/signup?next={data.next}">Sign up</a></p>
 </div>
 
 <style>
-    .auth-page {
-        max-width: 400px;
-        margin: 4rem auto;
-        padding: 0 1rem;
-    }
-    form {
-        display: flex;
-        flex-direction: column;
-        gap: 1rem;
-        margin-top: 1.5rem;
-    }
-    label {
-        display: flex;
-        flex-direction: column;
-        gap: 0.25rem;
-        font-size: 0.9rem;
-    }
-    input {
-        padding: 0.5rem;
-        font-size: 1rem;
-        border: 1px solid #ccc;
-        border-radius: 4px;
-    }
-    button {
-        padding: 0.6rem;
-        font-size: 1rem;
-        cursor: pointer;
-    }
-    .error {
-        color: #b00020;
-        margin: 0;
-    }
+	.auth-page {
+		max-width: 400px;
+		margin: 4rem auto;
+		padding: 0 1rem;
+	}
+	form {
+		display: flex;
+		flex-direction: column;
+		gap: 1rem;
+		margin-top: 1.5rem;
+	}
+	label {
+		display: flex;
+		flex-direction: column;
+		gap: 0.25rem;
+		font-size: 0.9rem;
+	}
+	input {
+		padding: 0.5rem;
+		font-size: 1rem;
+		border: 1px solid #ccc;
+		border-radius: 4px;
+	}
+	button {
+		padding: 0.6rem;
+		font-size: 1rem;
+		cursor: pointer;
+	}
+	.error {
+		color: #b00020;
+		margin: 0;
+	}
 </style>
