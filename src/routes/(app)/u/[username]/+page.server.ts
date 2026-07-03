@@ -1,5 +1,5 @@
 import { error } from "@sveltejs/kit";
-import { desc, eq } from "drizzle-orm";
+import { and, desc, eq } from "drizzle-orm";
 import { db } from "$lib/server/db";
 import { logs, mediaItems, users } from "$lib/server/db/schema";
 import type { PageServerLoad } from "./$types";
@@ -18,6 +18,8 @@ export const load: PageServerLoad = async ({ params, locals }) => {
 
 	if (!profileUser) throw error(404, "User not found");
 
+	const isOwnProfile = locals.user?.id === profileUser.id;
+
 	const rows = await db
 		.select({
 			id: logs.id,
@@ -34,11 +36,11 @@ export const load: PageServerLoad = async ({ params, locals }) => {
 		})
 		.from(logs)
 		.innerJoin(mediaItems, eq(logs.mediaItemId, mediaItems.id))
-		.where(eq(logs.userId, profileUser.id))
+		.where(
+			isOwnProfile ? eq(logs.userId, profileUser.id) : and(eq(logs.userId, profileUser.id), eq(logs.isPublic, true)),
+		)
 		.orderBy(desc(logs.createdAt))
 		.limit(50);
-
-	const isOwnProfile = locals.user?.id === profileUser.id;
 
 	return {
 		profileUser,

@@ -244,6 +244,8 @@ export const logs = pgTable(
 		// for this target. Denormalized so the UI can cheaply show "1st watch"
 		// vs "3rd watch". Set by app code on insert.
 		isRewatch: boolean("is_rewatch").notNull().default(false),
+		// True if this log is visible to everyone, not just the user.
+		isPublic: boolean("is_public").notNull().default(true),
 
 		createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
 		updatedAt: timestamp("updated_at", { withTimezone: true }).notNull().defaultNow(),
@@ -266,6 +268,7 @@ export const logs = pgTable(
 		// Common lookup: "show me user's logs for this item, newest first"
 		index("logs_user_item_idx").on(t.userId, t.mediaItemId),
 		index("logs_user_part_idx").on(t.userId, t.mediaPartId),
+		index("logs_public_created_at_idx").on(t.isPublic, t.createdAt),
 	],
 );
 

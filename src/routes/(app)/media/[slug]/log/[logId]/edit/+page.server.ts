@@ -56,6 +56,7 @@ export const actions: Actions = {
 		const reviewBodyRaw = form.get("reviewBody");
 		const reviewTitleRaw = form.get("reviewTitle");
 		const containsSpoilers = form.get("containsSpoilers") === "on";
+		const isPublic = form.get("isPublic") === "on";
 
 		let rating: number | null = null;
 		if (ratingRaw && ratingRaw !== "") {
@@ -95,6 +96,7 @@ export const actions: Actions = {
 				reviewTitle,
 				reviewBody,
 				containsSpoilers: containsSpoilers && reviewBody !== null,
+				isPublic,
 				updatedAt: new Date(),
 			})
 			.where(eq(logs.id, params.logId));

@@ -50,6 +50,7 @@ export const actions: Actions = {
 		const reviewBodyRaw = form.get("reviewBody");
 		const reviewTitleRaw = form.get("reviewTitle");
 		const containsSpoilers = form.get("containsSpoilers") === "on";
+		const isPublic = form.get("isPublic") === "on";
 
 		const [item] = await db
 			.select({ id: mediaItems.id })
@@ -111,6 +112,7 @@ export const actions: Actions = {
 			reviewBody,
 			containsSpoilers: containsSpoilers && reviewBody !== null,
 			isRewatch,
+			isPublic,
 		});
 
 		await recomputeAggregate(item.id);

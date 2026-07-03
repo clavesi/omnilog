@@ -1,5 +1,5 @@
 import { error } from "@sveltejs/kit";
-import { desc, eq } from "drizzle-orm";
+import { and, desc, eq, or } from "drizzle-orm";
 import { db } from "$lib/server/db";
 import { genres, logs, mediaGenres, mediaItems, mediaMetadata, users } from "$lib/server/db/schema";
 import type { PageServerLoad } from "./$types";
@@ -17,6 +17,7 @@ export const load: PageServerLoad = async ({ params, locals }) => {
 		.innerJoin(genres, eq(mediaGenres.genreId, genres.id))
 		.where(eq(mediaGenres.mediaItemId, item.id));
 
+	const currentUserId = locals.user?.id ?? null;
 	// Recent logs for this item, across all users, newest first.
 	const recentLogs = await db
 		.select({
@@ -27,13 +28,19 @@ export const load: PageServerLoad = async ({ params, locals }) => {
 			reviewBody: logs.reviewBody,
 			containsSpoilers: logs.containsSpoilers,
 			isRewatch: logs.isRewatch,
+			isPublic: logs.isPublic,
 			loggedAt: logs.loggedAt,
 			createdAt: logs.createdAt,
 			username: users.username,
 		})
 		.from(logs)
 		.innerJoin(users, eq(logs.userId, users.id))
-		.where(eq(logs.mediaItemId, item.id))
+		.where(
+			and(
+				eq(logs.mediaItemId, item.id),
+				currentUserId ? or(eq(logs.isPublic, true), eq(logs.userId, currentUserId)) : eq(logs.isPublic, true),
+			),
+		)
 		.orderBy(desc(logs.createdAt))
 		.limit(20);
 

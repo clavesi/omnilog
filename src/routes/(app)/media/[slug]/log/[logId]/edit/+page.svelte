@@ -17,6 +17,8 @@ let containsSpoilers = $state(data.log.containsSpoilers);
 // svelte-ignore state_referenced_locally
 let showReview = $state(!!data.log.reviewBody);
 let submitting = $state(false);
+// svelte-ignore state_referenced_locally
+let isPublic = $state(data.log.isPublic);
 
 const year = $derived(data.item.releaseDate ? data.item.releaseDate.slice(0, 4) : null);
 </script>
@@ -50,6 +52,13 @@ const year = $derived(data.item.releaseDate ? data.item.releaseDate.slice(0, 4) 
 			<label class="mb-2 block font-medium" for="rating">Rating</label>
 			<StarRating bind:value={rating} id="rating" />
 		</section>
+
+		<div>
+			<label class="flex items-center gap-2 text-sm">
+				<input type="checkbox" name="isPublic" value="on" bind:checked={isPublic} />
+				Public — visible to others
+			</label>
+		</div>
 
 		<section class="mb-6">
 			<label class="mb-2 block font-medium" for="loggedAt">Watched on</label>
@@ -105,7 +114,10 @@ const year = $derived(data.item.releaseDate ? data.item.releaseDate.slice(0, 4) 
 		{/if}
 
 		<div class="flex items-center justify-end gap-3">
-			<a href="/media/{data.item.slug}" class="px-4 py-2.5 text-gray-500 no-underline hover:text-gray-800">Cancel</a>
+			<a
+				href="/media/{data.item.slug}"
+				class="px-4 py-2.5 text-gray-500 no-underline hover:text-gray-800">Cancel</a
+			>
 			<button
 				type="submit"
 				class="cursor-pointer rounded-md border-none bg-blue-600 px-6 py-2.5 font-[inherit] text-white hover:bg-blue-700 disabled:cursor-wait disabled:opacity-60"

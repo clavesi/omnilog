@@ -8,6 +8,7 @@ type LogCardData = {
 	reviewBody: string | null;
 	containsSpoilers: boolean;
 	isRewatch: boolean;
+	isPublic: boolean;
 	loggedAt: string | null;
 	createdAt: string | Date;
 	mediaSlug: string;
@@ -19,11 +20,12 @@ type LogCardData = {
 type Props = {
 	log: LogCardData;
 	showMediaInfo?: boolean;
+	showAuthor?: boolean;
 	isOwner?: boolean;
 	onDelete?: (logId: string) => void;
 };
 
-let { log, showMediaInfo = true, isOwner = false, onDelete }: Props = $props();
+let { log, showMediaInfo = true, showAuthor = false, isOwner = false, onDelete }: Props = $props();
 
 let revealSpoilers = $state(false);
 
@@ -54,12 +56,19 @@ async function handleDelete() {
 }
 </script>
 
-<article class="border-b border-gray-200 py-4 transition-opacity duration-150" class:opacity-50={deleting}>
+<article
+	class="border-b border-gray-200 py-4 transition-opacity duration-150"
+	class:opacity-50={deleting}
+>
 	<div class="flex gap-4">
 		{#if showMediaInfo}
 			<a href="/media/{log.mediaSlug}" class="shrink-0">
 				{#if log.mediaCoverUrl}
-					<img src={log.mediaCoverUrl} alt="" class="h-[69px] w-[46px] rounded bg-gray-200 object-cover" />
+					<img
+						src={log.mediaCoverUrl}
+						alt=""
+						class="h-[69px] w-[46px] rounded bg-gray-200 object-cover"
+					/>
 				{:else}
 					<div class="h-[69px] w-[46px] rounded bg-gray-200"></div>
 				{/if}
@@ -69,15 +78,33 @@ async function handleDelete() {
 		<div class="min-w-0 flex-1">
 			<div class="flex flex-wrap items-center gap-2.5">
 				{#if showMediaInfo}
-					<a href="/media/{log.mediaSlug}" class="font-semibold text-inherit no-underline hover:underline">{log.mediaTitle}</a>
-				{:else if log.username}
-					<a href="/u/{log.username}" class="font-semibold text-blue-600 no-underline hover:underline">{log.username}</a>
+					<a
+						href="/media/{log.mediaSlug}"
+						class="font-semibold text-inherit no-underline hover:underline"
+						>{log.mediaTitle}</a
+					>
+				{/if}
+				{#if showAuthor && log.username}
+					<a
+						href="/u/{log.username}"
+						class="font-semibold text-blue-600 no-underline hover:underline"
+						>{log.username}</a
+					>
 				{/if}
 				{#if log.rating !== null}
 					<StaticStars value={log.rating} size={16} />
 				{/if}
 				{#if log.isRewatch}
-					<span class="rounded-full bg-indigo-50 px-2 py-0.5 text-[0.6875rem] text-indigo-700">Rewatch</span>
+					<span
+						class="rounded-full bg-indigo-50 px-2 py-0.5 text-[0.6875rem] text-indigo-700"
+						>Rewatch</span
+					>
+				{/if}
+				{#if isOwner && !log.isPublic}
+					<span
+						class="rounded-full bg-gray-100 px-2 py-0.5 text-[0.6875rem] text-gray-500"
+						>Private</span
+					>
 				{/if}
 			</div>
 
@@ -98,14 +125,19 @@ async function handleDelete() {
 							Contains spoilers — click to reveal
 						</button>
 					{:else}
-						<p class="m-0 leading-normal whitespace-pre-wrap text-gray-800">{log.reviewBody}</p>
+						<p class="m-0 leading-normal whitespace-pre-wrap text-gray-800">
+							{log.reviewBody}
+						</p>
 					{/if}
 				</div>
 			{/if}
 
 			{#if isOwner}
 				<div class="mt-2 flex gap-3 text-[0.8125rem]">
-					<a href="/media/{log.mediaSlug}/log/{log.id}/edit" class="text-blue-600 no-underline hover:underline">Edit</a>
+					<a
+						href="/media/{log.mediaSlug}/log/{log.id}/edit"
+						class="text-blue-600 no-underline hover:underline">Edit</a
+					>
 					<button
 						type="button"
 						class="cursor-pointer border-none bg-transparent p-0 text-[0.8125rem] text-red-600 hover:underline"

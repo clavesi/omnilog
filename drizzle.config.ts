@@ -2,7 +2,9 @@ import { resolve } from "node:path";
 import { config } from "dotenv";
 import { defineConfig } from "drizzle-kit";
 
-if (process.env.NODE_ENV !== "production") {
+if (process.env.DRIZZLE_TARGET === "remote") {
+	config({ path: resolve(".env"), override: true });
+} else if (process.env.NODE_ENV !== "production") {
 	config({ path: resolve(".env.development"), override: true });
 }
 
@@ -11,6 +13,7 @@ if (!databaseUrl) throw new Error("DATABASE_URL is not set");
 
 export default defineConfig({
 	schema: "./src/lib/server/db/schema.ts",
+	out: "./drizzle",
 	dialect: "postgresql",
 	dbCredentials: {
 		url: databaseUrl,
