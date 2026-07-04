@@ -1,16 +1,14 @@
-import { and, eq } from "drizzle-orm";
 import { TMDB_API_KEY } from "$env/static/private";
 import { db } from "$lib/server/db";
 import {
-	genres,
 	type MovieMetadata,
 	mediaExternalIds,
-	mediaGenres,
 	mediaItems,
 	mediaMetadata,
 	type TvMetadata,
 } from "$lib/server/db/schema";
 import { findPossibleDuplicate, PossibleDuplicateError } from "$lib/server/dedupe";
+import { buildSlug, findExistingMediaId, linkGenres } from "$lib/server/media-import";
 
 const TMDB_BASE = "https://api.themoviedb.org/3";
 const TMDB_IMAGE = "https://image.tmdb.org/t/p";
@@ -386,53 +384,4 @@ export async function importTv(tmdbId: number, options?: { allowDuplicate?: bool
 
 		return mediaItemId;
 	});
-}
-
-// ============================================================================
-// Shared import helpers
-// ============================================================================
-
-/**
- * Movies are keyed as "movie:<id>" and TV as "tv:<id>" within the tmdb source.
- * TMDB reuses integer IDs across movies and TV (movie 1 and show 1 both
- * exist), so a bare id would collide.
- */
-async function findExistingMediaId(source: "tmdb", externalId: string): Promise<string | null> {
-	const rows = await db
-		.select({ mediaItemId: mediaExternalIds.mediaItemId })
-		.from(mediaExternalIds)
-		.where(and(eq(mediaExternalIds.source, source), eq(mediaExternalIds.externalId, externalId)))
-		.limit(1);
-	return rows[0]?.mediaItemId ?? null;
-}
-
-async function linkGenres(
-	tx: Parameters<Parameters<typeof db.transaction>[0]>[0],
-	mediaItemId: string,
-	tmdbGenres: { id: number; name: string }[],
-) {
-	for (const g of tmdbGenres) {
-		const slug = slugify(g.name);
-		const [genre] = await tx
-			.insert(genres)
-			.values({ name: g.name, slug })
-			.onConflictDoUpdate({ target: genres.slug, set: { name: g.name } })
-			.returning({ id: genres.id });
-
-		await tx.insert(mediaGenres).values({ mediaItemId, genreId: genre.id }).onConflictDoNothing();
-	}
-}
-
-function slugify(s: string): string {
-	return s
-		.toLowerCase()
-		.normalize("NFKD")
-		.replace(/[\u0300-\u036f]/g, "")
-		.replace(/[^a-z0-9]+/g, "-")
-		.replace(/^-+|-+$/g, "");
-}
-
-function buildSlug(title: string, date: string, type: "movie" | "tv", tmdbId: number): string {
-	const year = date?.slice(0, 4) || "unknown";
-	return `${slugify(title)}-${year}-${type}-${tmdbId}`;
 }

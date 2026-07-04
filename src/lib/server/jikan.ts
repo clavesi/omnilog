@@ -4,18 +4,16 @@
  * search immediately followed by an import's detail fetch) don't 429.
  */
 
-import { and, eq } from "drizzle-orm";
 import { db } from "$lib/server/db";
 import {
 	type AnimeMetadata,
-	genres,
 	type MangaMetadata,
 	mediaExternalIds,
-	mediaGenres,
 	mediaItems,
 	mediaMetadata,
 } from "$lib/server/db/schema";
 import { findPossibleDuplicate, PossibleDuplicateError } from "$lib/server/dedupe";
+import { buildSlug, findExistingMediaId, linkGenres } from "$lib/server/media-import";
 
 const JIKAN_BASE = "https://api.jikan.moe/v4";
 const MIN_REQUEST_GAP_MS = 350; // ~2.8/sec, safely under the 3/sec limit
@@ -227,7 +225,7 @@ function parseDurationMinutes(raw: string | null): number | null {
 // ============================================================================
 
 export async function importAnime(malId: number, options?: { allowDuplicate?: boolean }): Promise<string> {
-	const existing = await findExistingMediaId(`anime:${malId}`);
+	const existing = await findExistingMediaId("mal", `anime:${malId}`);
 	if (existing) return existing;
 
 	const anime = await fetchAnimeDetails(malId);
@@ -284,7 +282,7 @@ export async function importAnime(malId: number, options?: { allowDuplicate?: bo
 // ============================================================================
 
 export async function importManga(malId: number): Promise<string> {
-	const existing = await findExistingMediaId(`manga:${malId}`);
+	const existing = await findExistingMediaId("mal", `manga:${malId}`);
 	if (existing) return existing;
 
 	const manga = await fetchMangaDetails(malId);
@@ -329,53 +327,4 @@ export async function importManga(malId: number): Promise<string> {
 
 		return mediaItemId;
 	});
-}
-
-// ============================================================================
-// Shared helpers
-// ============================================================================
-
-async function findExistingMediaId(externalId: string): Promise<string | null> {
-	const rows = await db
-		.select({ mediaItemId: mediaExternalIds.mediaItemId })
-		.from(mediaExternalIds)
-		.where(and(eq(mediaExternalIds.source, "mal"), eq(mediaExternalIds.externalId, externalId)))
-		.limit(1);
-	return rows[0]?.mediaItemId ?? null;
-}
-
-async function linkGenres(
-	tx: Parameters<Parameters<typeof db.transaction>[0]>[0],
-	mediaItemId: string,
-	jikanGenres: { mal_id: number; name: string }[],
-) {
-	for (const g of jikanGenres) {
-		const slug = slugify(g.name);
-		const [genre] = await tx
-			.insert(genres)
-			.values({ name: g.name, slug })
-			.onConflictDoUpdate({ target: genres.slug, set: { name: g.name } })
-			.returning({ id: genres.id });
-
-		await tx.insert(mediaGenres).values({ mediaItemId, genreId: genre.id }).onConflictDoNothing();
-	}
-}
-
-function slugify(s: string): string {
-	return s
-		.toLowerCase()
-		.normalize("NFKD")
-		.replace(/[\u0300-\u036f]/g, "")
-		.replace(/[^a-z0-9]+/g, "-")
-		.replace(/^-+|-+$/g, "");
-}
-
-function buildSlug(
-	title: string,
-	year: number | string | null | undefined,
-	kind: "anime" | "manga",
-	malId: number,
-): string {
-	const y = year ? String(year).slice(0, 4) : "unknown";
-	return `${slugify(title)}-${y}-${kind}-${malId}`;
 }

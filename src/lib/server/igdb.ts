@@ -1,14 +1,7 @@
-import { and, eq } from "drizzle-orm";
 import { TWITCH_CLIENT_ID, TWITCH_CLIENT_SECRET } from "$env/static/private";
 import { db } from "$lib/server/db";
-import {
-	type GameMetadata,
-	genres,
-	mediaExternalIds,
-	mediaGenres,
-	mediaItems,
-	mediaMetadata,
-} from "$lib/server/db/schema";
+import { type GameMetadata, mediaExternalIds, mediaItems, mediaMetadata } from "$lib/server/db/schema";
+import { buildSlug, findExistingMediaId, linkGenres } from "$lib/server/media-import";
 
 const TWITCH_TOKEN_URL = "https://id.twitch.tv/oauth2/token";
 const IGDB_BASE = "https://api.igdb.com/v4";
@@ -174,7 +167,7 @@ export async function importGame(igdbId: number): Promise<string> {
 		const [inserted] = await tx
 			.insert(mediaItems)
 			.values({
-				slug: buildSlug(game.name, releaseDate, igdbId),
+				slug: buildSlug(game.name, releaseDate, "game", igdbId),
 				mediaType: "game",
 				title: game.name,
 				originalTitle: null,
@@ -212,48 +205,4 @@ export async function importGame(igdbId: number): Promise<string> {
 
 		return mediaItemId;
 	});
-}
-
-// ============================================================================
-// Shared helpers (same pattern as tmdb.ts)
-// ============================================================================
-
-async function findExistingMediaId(source: "igdb", externalId: string): Promise<string | null> {
-	const rows = await db
-		.select({ mediaItemId: mediaExternalIds.mediaItemId })
-		.from(mediaExternalIds)
-		.where(and(eq(mediaExternalIds.source, source), eq(mediaExternalIds.externalId, externalId)))
-		.limit(1);
-	return rows[0]?.mediaItemId ?? null;
-}
-
-async function linkGenres(
-	tx: Parameters<Parameters<typeof db.transaction>[0]>[0],
-	mediaItemId: string,
-	igdbGenres: { id: number; name: string }[],
-) {
-	for (const g of igdbGenres) {
-		const slug = slugify(g.name);
-		const [genre] = await tx
-			.insert(genres)
-			.values({ name: g.name, slug })
-			.onConflictDoUpdate({ target: genres.slug, set: { name: g.name } })
-			.returning({ id: genres.id });
-
-		await tx.insert(mediaGenres).values({ mediaItemId, genreId: genre.id }).onConflictDoNothing();
-	}
-}
-
-function slugify(s: string): string {
-	return s
-		.toLowerCase()
-		.normalize("NFKD")
-		.replace(/[\u0300-\u036f]/g, "")
-		.replace(/[^a-z0-9]+/g, "-")
-		.replace(/^-+|-+$/g, "");
-}
-
-function buildSlug(title: string, releaseDate: string | null, igdbId: number): string {
-	const year = releaseDate?.slice(0, 4) || "unknown";
-	return `${slugify(title)}-${year}-game-${igdbId}`;
 }
