@@ -2,17 +2,20 @@
 import { enhance } from "$app/forms";
 import { igdbImage } from "$lib/igdb-image";
 import type { IgdbSearchHit } from "$lib/server/igdb";
+import type { JikanSearchHit } from "$lib/server/jikan";
 import type { TmdbSearchHit } from "$lib/server/tmdb";
 import { tmdbImage } from "$lib/tmdb-image";
 
-type SearchHit = TmdbSearchHit | IgdbSearchHit;
-type SearchType = "all" | "movie" | "tv" | "game";
+type SearchHit = TmdbSearchHit | IgdbSearchHit | JikanSearchHit;
+type SearchType = "all" | "movie" | "tv" | "game" | "anime" | "manga";
 
 const TYPE_OPTIONS: { value: SearchType; label: string }[] = [
 	{ value: "all", label: "All" },
 	{ value: "movie", label: "Movies" },
 	{ value: "tv", label: "TV" },
 	{ value: "game", label: "Games" },
+	{ value: "anime", label: "Anime" },
+	{ value: "manga", label: "Manga" },
 ];
 
 let query = $state("");
@@ -42,8 +45,6 @@ function onInput() {
 
 function onTypeChange(type: SearchType) {
 	selectedType = type;
-	// Re-run immediately on filter change — no debounce, since this is
-	// a deliberate click, not incidental typing.
 	clearTimeout(debounceTimer);
 	if (query.trim().length >= 2) {
 		loading = true;
@@ -73,7 +74,10 @@ async function runSearch() {
 }
 
 function titleOf(hit: SearchHit): string {
-	return hit.type === "movie" ? hit.title : hit.name;
+	if (hit.type === "movie") return hit.title;
+	if (hit.type === "tv") return hit.name;
+	if (hit.type === "game") return hit.name;
+	return hit.title; // anime, manga
 }
 
 function yearOf(hit: SearchHit): string {
@@ -82,13 +86,24 @@ function yearOf(hit: SearchHit): string {
 	if (hit.type === "game") {
 		return hit.firstReleaseDate ? new Date(hit.firstReleaseDate * 1000).getFullYear().toString() : "";
 	}
+	if (hit.type === "anime" || hit.type === "manga") {
+		return hit.year ? String(hit.year) : "";
+	}
 	return "";
 }
 
 function typeLabel(hit: SearchHit): string {
 	if (hit.type === "movie") return "Movie";
 	if (hit.type === "tv") return "TV";
-	return "Game";
+	if (hit.type === "game") return "Game";
+	if (hit.type === "anime") return "Anime";
+	return "Manga";
+}
+
+function imageOf(hit: SearchHit): string | null {
+	if (hit.type === "game") return igdbImage(hit.coverImageId, "cover_small");
+	if (hit.type === "anime" || hit.type === "manga") return hit.imageUrl;
+	return tmdbImage(hit.poster_path, "w185");
 }
 </script>
 
@@ -97,12 +112,12 @@ function typeLabel(hit: SearchHit): string {
 		type="search"
 		bind:value={query}
 		oninput={onInput}
-		placeholder="Search movies, TV shows, and games..."
+		placeholder="Search movies, TV, games, anime, manga..."
 		autocomplete="off"
 		class="w-full rounded-lg border border-gray-300 px-4 py-3 text-base"
 	/>
 
-	<div class="mt-3 flex gap-2">
+	<div class="mt-3 flex flex-wrap gap-2">
 		{#each TYPE_OPTIONS as opt (opt.value)}
 			<button
 				type="button"
@@ -148,19 +163,9 @@ function typeLabel(hit: SearchHit): string {
 						class="flex w-full cursor-pointer items-center gap-3 rounded-lg border-none bg-transparent p-2 text-left font-[inherit] text-inherit hover:bg-gray-100 disabled:cursor-wait disabled:opacity-60"
 						disabled={importing === itemKey}
 					>
-						{#if hit.type === "game"}
-							{#if hit.coverImageId}
-								<img
-									src={igdbImage(hit.coverImageId, "cover_small")}
-									alt=""
-									class="h-[69px] w-[46px] shrink-0 rounded object-cover"
-								/>
-							{:else}
-								<div class="h-[69px] w-[46px] shrink-0 rounded bg-gray-200"></div>
-							{/if}
-						{:else if hit.poster_path}
+						{#if imageOf(hit)}
 							<img
-								src={tmdbImage(hit.poster_path, "w185")}
+								src={imageOf(hit)}
 								alt=""
 								class="h-[69px] w-[46px] shrink-0 rounded object-cover"
 							/>

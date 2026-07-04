@@ -4,12 +4,11 @@ import { requireUser } from "$lib/server/auth";
 import { db } from "$lib/server/db";
 import { mediaItems } from "$lib/server/db/schema";
 import { importGame } from "$lib/server/igdb";
+import { importAnime, importManga } from "$lib/server/jikan";
 import { importMovie, importTv } from "$lib/server/tmdb";
 
 export const actions = {
 	pickResult: async (event) => {
-		// Anonymous visitors can search and browse, but importing writes to
-		// the DB — require login before that happens.
 		requireUser(event);
 
 		const { request } = event;
@@ -29,6 +28,10 @@ export const actions = {
 			mediaItemId = await importTv(externalId);
 		} else if (type === "game") {
 			mediaItemId = await importGame(externalId);
+		} else if (type === "anime") {
+			mediaItemId = await importAnime(externalId);
+		} else if (type === "manga") {
+			mediaItemId = await importManga(externalId);
 		} else {
 			return fail(400, { error: "Unknown type" });
 		}

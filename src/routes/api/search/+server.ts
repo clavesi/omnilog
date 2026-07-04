@@ -1,12 +1,17 @@
+// src/routes/api/search/+server.ts
 import { json } from "@sveltejs/kit";
-import { searchGames } from "$lib/server/igdb";
-import { searchMoviesAndTv, searchMoviesOnly, searchTvOnly } from "$lib/server/tmdb";
+import { type IgdbSearchHit, searchGames } from "$lib/server/igdb";
+import { type JikanSearchHit, searchAnime, searchManga } from "$lib/server/jikan";
+import { searchMoviesAndTv, searchMoviesOnly, searchTvOnly, type TmdbSearchHit } from "$lib/server/tmdb";
 import type { RequestHandler } from "./$types";
 
-type SearchType = "all" | "movie" | "tv" | "game";
+type SearchHit = TmdbSearchHit | IgdbSearchHit | JikanSearchHit;
+type SearchType = "all" | "movie" | "tv" | "game" | "anime" | "manga";
+
+const VALID_TYPES: SearchType[] = ["all", "movie", "tv", "game", "anime", "manga"];
 
 function isSearchType(v: string | null): v is SearchType {
-	return v === "all" || v === "movie" || v === "tv" || v === "game";
+	return VALID_TYPES.includes(v as SearchType);
 }
 
 export const GET: RequestHandler = async ({ url }) => {
@@ -16,48 +21,38 @@ export const GET: RequestHandler = async ({ url }) => {
 	const typeParam = url.searchParams.get("type");
 	const type: SearchType = isSearchType(typeParam) ? typeParam : "all";
 
-	// Only query the source(s) actually needed for the requested type —
-	// no point paying the IGDB round-trip if the user filtered to "Movies".
-	if (type === "movie") {
+	async function single(fn: () => Promise<unknown[]>, label: string) {
 		try {
-			return json({ results: await searchMoviesOnly(q) });
+			return json({ results: await fn() });
 		} catch (err) {
-			console.error("TMDB movie search failed", err);
+			console.error(`${label} search failed`, err);
 			return json({ results: [], error: "search failed" }, { status: 500 });
 		}
 	}
 
-	if (type === "tv") {
-		try {
-			return json({ results: await searchTvOnly(q) });
-		} catch (err) {
-			console.error("TMDB tv search failed", err);
-			return json({ results: [], error: "search failed" }, { status: 500 });
-		}
-	}
+	if (type === "movie") return single(() => searchMoviesOnly(q), "TMDB movie");
+	if (type === "tv") return single(() => searchTvOnly(q), "TMDB tv");
+	if (type === "game") return single(() => searchGames(q), "IGDB");
+	if (type === "anime") return single(() => searchAnime(q), "Jikan anime");
+	if (type === "manga") return single(() => searchManga(q), "Jikan manga");
 
-	if (type === "game") {
-		try {
-			return json({ results: await searchGames(q) });
-		} catch (err) {
-			console.error("IGDB search failed", err);
-			return json({ results: [], error: "search failed" }, { status: 500 });
-		}
-	}
+	// type === "all" — query everything in parallel, degrade gracefully
+	// if any individual source fails.
+	const sources = await Promise.allSettled<SearchHit[]>([
+		searchMoviesAndTv(q),
+		searchGames(q),
+		searchAnime(q),
+		searchManga(q),
+	]);
 
-	// type === "all" — query everything in parallel, degrade gracefully if
-	// one source fails rather than erroring the whole search.
-	const [tmdbResult, igdbResult] = await Promise.allSettled([searchMoviesAndTv(q), searchGames(q)]);
+	const labels = ["TMDB", "IGDB", "Jikan anime", "Jikan manga"];
+	const results = sources.flatMap((s) => (s.status === "fulfilled" ? s.value : []));
 
-	const results = [
-		...(tmdbResult.status === "fulfilled" ? tmdbResult.value : []),
-		...(igdbResult.status === "fulfilled" ? igdbResult.value : []),
-	];
+	sources.forEach((s, i) => {
+		if (s.status === "rejected") console.error(`${labels[i]} search failed`, s.reason);
+	});
 
-	if (tmdbResult.status === "rejected") console.error("TMDB search failed", tmdbResult.reason);
-	if (igdbResult.status === "rejected") console.error("IGDB search failed", igdbResult.reason);
-
-	if (tmdbResult.status === "rejected" && igdbResult.status === "rejected") {
+	if (sources.every((s) => s.status === "rejected")) {
 		return json({ results: [], error: "search failed" }, { status: 500 });
 	}
 

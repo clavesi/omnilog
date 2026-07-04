@@ -84,6 +84,36 @@ function handleDeleted(logId: string) {
 					{/if}
 				{/if}
 
+				{#if metadata && isMetadataType(metadata, "anime")}
+					{#if metadata.episodes}
+						<li>{metadata.episodes} episode{metadata.episodes === 1 ? "" : "s"}</li>
+					{/if}
+					{#if metadata.duration_minutes}
+						<li>{metadata.duration_minutes} min/ep</li>
+					{/if}
+					{#if metadata.studios.length}
+						<li>{metadata.studios.join(", ")}</li>
+					{/if}
+					{#if metadata.status}
+						<li>{metadata.status}</li>
+					{/if}
+				{/if}
+
+				{#if metadata && isMetadataType(metadata, "manga")}
+					{#if metadata.chapters}
+						<li>{metadata.chapters} chapter{metadata.chapters === 1 ? "" : "s"}</li>
+					{/if}
+					{#if metadata.volumes}
+						<li>{metadata.volumes} volume{metadata.volumes === 1 ? "" : "s"}</li>
+					{/if}
+					{#if metadata.authors.length}
+						<li>{metadata.authors.join(", ")}</li>
+					{/if}
+					{#if metadata.status}
+						<li>{metadata.status}</li>
+					{/if}
+				{/if}
+
 				{#if Number.isFinite(averageRatingNum)}
 					<li class="font-medium text-gray-800">
 						★ {(averageRatingNum / 2).toFixed(1)} ({item.ratingCount}
