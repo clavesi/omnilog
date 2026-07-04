@@ -1,5 +1,5 @@
 import { and, eq } from "drizzle-orm";
-import { env } from "$env/dynamic/private";
+import { TMDB_API_KEY } from "$env/static/private";
 import { db } from "$lib/server/db";
 import {
 	genres,
@@ -10,11 +10,11 @@ import {
 	mediaMetadata,
 	type TvMetadata,
 } from "$lib/server/db/schema";
+import { findPossibleDuplicate, PossibleDuplicateError } from "$lib/server/dedupe";
 
 const TMDB_BASE = "https://api.themoviedb.org/3";
 const TMDB_IMAGE = "https://image.tmdb.org/t/p";
-if (!env.TMDB_API_KEY) throw new Error("TMDB_API_KEY is not set");
-const TMDB_API_KEY = env.TMDB_API_KEY;
+if (!TMDB_API_KEY) throw new Error("TMDB_API_KEY is not set");
 
 // ============================================================================
 // TYPES — only what we use from TMDB, not their full schema
@@ -269,13 +269,20 @@ export function tmdbImage(path: string | null, size: "w185" | "w342" | "w500" | 
  * Idempotent movie import. Returns the internal media_items.id.
  *
  * If the movie is already in the DB (keyed on tmdb id via media_external_ids),
- * returns its existing id without re-inserting.
+ * returns its existing id without re-inserting. If a likely duplicate exists
+ * under a DIFFERENT source (e.g. the same film already imported as an anime
+ * via MAL), throws PossibleDuplicateError unless options.allowDuplicate is set.
  */
-export async function importMovie(tmdbId: number): Promise<string> {
+export async function importMovie(tmdbId: number, options?: { allowDuplicate?: boolean }): Promise<string> {
 	const existing = await findExistingMediaId("tmdb", `movie:${tmdbId}`);
 	if (existing) return existing;
 
 	const movie = await fetchMovieDetails(tmdbId);
+
+	if (!options?.allowDuplicate) {
+		const duplicate = await findPossibleDuplicate(movie.title, movie.release_date || null);
+		if (duplicate) throw new PossibleDuplicateError(duplicate);
+	}
 
 	return db.transaction(async (tx) => {
 		const [inserted] = await tx
@@ -325,11 +332,16 @@ export async function importMovie(tmdbId: number): Promise<string> {
 // Import: TV
 // ============================================================================
 
-export async function importTv(tmdbId: number): Promise<string> {
+export async function importTv(tmdbId: number, options?: { allowDuplicate?: boolean }): Promise<string> {
 	const existing = await findExistingMediaId("tmdb", `tv:${tmdbId}`);
 	if (existing) return existing;
 
 	const show = await fetchTvDetails(tmdbId);
+
+	if (!options?.allowDuplicate) {
+		const duplicate = await findPossibleDuplicate(show.name, show.first_air_date || null);
+		if (duplicate) throw new PossibleDuplicateError(duplicate);
+	}
 
 	return db.transaction(async (tx) => {
 		const [inserted] = await tx

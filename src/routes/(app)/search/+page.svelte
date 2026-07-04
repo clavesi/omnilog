@@ -8,6 +8,7 @@ import { tmdbImage } from "$lib/tmdb-image";
 
 type SearchHit = TmdbSearchHit | IgdbSearchHit | JikanSearchHit;
 type SearchType = "all" | "movie" | "tv" | "game" | "anime" | "manga";
+type DuplicateInfo = { slug: string; title: string; mediaType: string; coverImageUrl: string | null };
 
 const TYPE_OPTIONS: { value: SearchType; label: string }[] = [
 	{ value: "all", label: "All" },
@@ -24,6 +25,11 @@ let results = $state<SearchHit[]>([]);
 let loading = $state(false);
 let error = $state<string | null>(null);
 let importing = $state<string | null>(null);
+
+// Per-result-item duplicate warning, keyed by `${type}-${id}`. Null/absent
+// means no warning; present means the server flagged a likely duplicate
+// and is waiting for the user to confirm or bail out.
+let duplicateWarnings = $state<Record<string, DuplicateInfo>>({});
 
 let debounceTimer: ReturnType<typeof setTimeout> | undefined;
 let abortController: AbortController | undefined;
@@ -64,6 +70,7 @@ async function runSearch() {
 		});
 		const data = await res.json();
 		results = data.results ?? [];
+		duplicateWarnings = {}; // fresh search, clear stale warnings
 	} catch (err) {
 		if (err instanceof Error && err.name === "AbortError") return;
 		error = "Search failed";
@@ -105,6 +112,11 @@ function imageOf(hit: SearchHit): string | null {
 	if (hit.type === "anime" || hit.type === "manga") return hit.imageUrl;
 	return tmdbImage(hit.poster_path, "w185");
 }
+
+function dismissWarning(itemKey: string) {
+	const { [itemKey]: _, ...rest } = duplicateWarnings;
+	duplicateWarnings = rest;
+}
 </script>
 
 <div class="mx-auto my-8 max-w-[640px] px-4">
@@ -143,48 +155,104 @@ function imageOf(hit: SearchHit): string | null {
 	<ul class="m-0 mt-4 list-none p-0">
 		{#each results as hit (`${hit.type}-${hit.id}`)}
 			{@const itemKey = `${hit.type}-${hit.id}`}
+			{@const warning = duplicateWarnings[itemKey]}
 			<li class="m-0">
-				<form
-					method="POST"
-					action="?/pickResult"
-					class="m-0"
-					use:enhance={() => {
-						importing = itemKey;
-						return async ({ update }) => {
-							importing = null;
-							await update();
-						};
-					}}
-				>
-					<input type="hidden" name="type" value={hit.type} />
-					<input type="hidden" name="externalId" value={hit.id} />
-					<button
-						type="submit"
-						class="flex w-full cursor-pointer items-center gap-3 rounded-lg border-none bg-transparent p-2 text-left font-[inherit] text-inherit hover:bg-gray-100 disabled:cursor-wait disabled:opacity-60"
-						disabled={importing === itemKey}
-					>
-						{#if imageOf(hit)}
-							<img
-								src={imageOf(hit)}
-								alt=""
-								class="h-[69px] w-[46px] shrink-0 rounded object-cover"
-							/>
-						{:else}
-							<div class="h-[69px] w-[46px] shrink-0 rounded bg-gray-200"></div>
-						{/if}
-						<div class="flex flex-1 flex-col">
-							<span class="font-medium">{titleOf(hit)}</span>
-							<span class="text-sm text-gray-500">
-								{typeLabel(hit)}
-								{#if yearOf(hit)}
-									· {yearOf(hit)}{/if}
-							</span>
+				{#if warning}
+					<div class="rounded-lg border border-amber-300 bg-amber-50 p-3">
+						<p class="m-0 mb-2 text-sm text-amber-900">
+							This looks like it might already exist as
+							<strong>{warning.title}</strong> ({warning.mediaType}).
+						</p>
+						<div class="flex gap-2">
+							<a
+								href="/media/{warning.slug}"
+								class="rounded bg-white px-3 py-1.5 text-sm font-medium text-amber-900 no-underline hover:bg-amber-100"
+							>
+								View existing
+							</a>
+							<form
+								method="POST"
+								action="?/pickResult"
+								class="m-0"
+								use:enhance={() => {
+									importing = itemKey;
+									return async ({ update }) => {
+										importing = null;
+										dismissWarning(itemKey);
+										await update();
+									};
+								}}
+							>
+								<input type="hidden" name="type" value={hit.type} />
+								<input type="hidden" name="externalId" value={hit.id} />
+								<input type="hidden" name="confirmDuplicate" value="true" />
+								<button
+									type="submit"
+									class="rounded bg-amber-600 px-3 py-1.5 text-sm font-medium text-white hover:bg-amber-700 disabled:opacity-60"
+									disabled={importing === itemKey}
+								>
+									{importing === itemKey ? "Importing..." : "Import anyway"}
+								</button>
+							</form>
+							<button
+								type="button"
+								class="rounded px-3 py-1.5 text-sm text-amber-700 hover:underline"
+								onclick={() => dismissWarning(itemKey)}
+							>
+								Cancel
+							</button>
 						</div>
-						{#if importing === itemKey}
-							<span class="text-sm text-gray-500 italic">Importing...</span>
-						{/if}
-					</button>
-				</form>
+					</div>
+				{:else}
+					<form
+						method="POST"
+						action="?/pickResult"
+						class="m-0"
+						use:enhance={() => {
+							importing = itemKey;
+							return async ({ result, update }) => {
+								importing = null;
+								if (result.type === "failure" && result.status === 409 && result.data?.duplicate) {
+									duplicateWarnings = {
+										...duplicateWarnings,
+										[itemKey]: result.data.duplicate as DuplicateInfo,
+									};
+									return;
+								}
+								await update();
+							};
+						}}
+					>
+						<input type="hidden" name="type" value={hit.type} />
+						<input type="hidden" name="externalId" value={hit.id} />
+						<button
+							type="submit"
+							class="flex w-full cursor-pointer items-center gap-3 rounded-lg border-none bg-transparent p-2 text-left font-[inherit] text-inherit hover:bg-gray-100 disabled:cursor-wait disabled:opacity-60"
+							disabled={importing === itemKey}
+						>
+							{#if imageOf(hit)}
+								<img
+									src={imageOf(hit)}
+									alt=""
+									class="h-[69px] w-[46px] shrink-0 rounded object-cover"
+								/>
+							{:else}
+								<div class="h-[69px] w-[46px] shrink-0 rounded bg-gray-200"></div>
+							{/if}
+							<div class="flex flex-1 flex-col">
+								<span class="font-medium">{titleOf(hit)}</span>
+								<span class="text-sm text-gray-500">
+									{typeLabel(hit)}
+									{#if yearOf(hit)}
+										· {yearOf(hit)}{/if}
+								</span>
+							</div>
+							{#if importing === itemKey}
+								<span class="text-sm text-gray-500 italic">Importing...</span>
+							{/if}
+						</button>
+					</form>
+				{/if}
 			</li>
 		{/each}
 	</ul>

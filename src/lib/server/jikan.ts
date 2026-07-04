@@ -15,6 +15,7 @@ import {
 	mediaItems,
 	mediaMetadata,
 } from "$lib/server/db/schema";
+import { findPossibleDuplicate, PossibleDuplicateError } from "$lib/server/dedupe";
 
 const JIKAN_BASE = "https://api.jikan.moe/v4";
 const MIN_REQUEST_GAP_MS = 350; // ~2.8/sec, safely under the 3/sec limit
@@ -225,15 +226,19 @@ function parseDurationMinutes(raw: string | null): number | null {
 // Import: anime
 // ============================================================================
 
-export async function importAnime(malId: number): Promise<string> {
+export async function importAnime(malId: number, options?: { allowDuplicate?: boolean }): Promise<string> {
 	const existing = await findExistingMediaId(`anime:${malId}`);
 	if (existing) return existing;
 
 	const anime = await fetchAnimeDetails(malId);
+	const releaseDate = anime.year ? `${anime.year}-01-01` : null;
+
+	if (!options?.allowDuplicate) {
+		const duplicate = await findPossibleDuplicate(anime.title, releaseDate);
+		if (duplicate) throw new PossibleDuplicateError(duplicate);
+	}
 
 	return db.transaction(async (tx) => {
-		const releaseDate = anime.year ? `${anime.year}-01-01` : null;
-
 		const [inserted] = await tx
 			.insert(mediaItems)
 			.values({
