@@ -1,10 +1,10 @@
 import { fail, redirect } from "@sveltejs/kit";
 import { eq } from "drizzle-orm";
+import { requireUser } from "$lib/server/auth";
 import { db } from "$lib/server/db";
 import { mediaItems } from "$lib/server/db/schema";
-import { importMovie, importTv } from "$lib/server/tmdb";
 import { importGame } from "$lib/server/igdb";
-import { requireUser } from "$lib/server/auth";
+import { importMovie, importTv } from "$lib/server/tmdb";
 
 export const actions = {
 	pickResult: async (event) => {

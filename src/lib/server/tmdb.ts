@@ -44,6 +44,28 @@ export type TmdbSearchHit =
 			vote_average: number;
 	  };
 
+type TmdbMovieSearchResult = {
+	id: number;
+	title: string;
+	original_title: string;
+	overview?: string;
+	release_date?: string;
+	poster_path: string | null;
+	backdrop_path: string | null;
+	vote_average?: number;
+};
+
+type TmdbTvSearchResult = {
+	id: number;
+	name: string;
+	original_name: string;
+	overview?: string;
+	first_air_date?: string;
+	poster_path: string | null;
+	backdrop_path: string | null;
+	vote_average?: number;
+};
+
 type TmdbMovieDetails = {
 	id: number;
 	title: string;
@@ -171,6 +193,52 @@ export async function searchMoviesAndTv(query: string): Promise<TmdbSearchHit[]>
 	});
 
 	return hits.slice(0, 10);
+}
+
+export async function searchMoviesOnly(query: string): Promise<TmdbSearchHit[]> {
+	if (!query.trim()) return [];
+
+	const data = await tmdb<{ results: TmdbMovieSearchResult[] }>("/search/movie", {
+		query,
+		include_adult: "false",
+	});
+
+	return data.results
+		.map((r) => ({
+			type: "movie" as const,
+			id: r.id,
+			title: r.title,
+			original_title: r.original_title,
+			overview: r.overview ?? "",
+			release_date: r.release_date ?? "",
+			poster_path: r.poster_path ?? null,
+			backdrop_path: r.backdrop_path ?? null,
+			vote_average: r.vote_average ?? 0,
+		}))
+		.slice(0, 10);
+}
+
+export async function searchTvOnly(query: string): Promise<TmdbSearchHit[]> {
+	if (!query.trim()) return [];
+
+	const data = await tmdb<{ results: TmdbTvSearchResult[] }>("/search/tv", {
+		query,
+		include_adult: "false",
+	});
+
+	return data.results
+		.map((r) => ({
+			type: "tv" as const,
+			id: r.id,
+			name: r.name,
+			original_name: r.original_name,
+			overview: r.overview ?? "",
+			first_air_date: r.first_air_date ?? "",
+			poster_path: r.poster_path ?? null,
+			backdrop_path: r.backdrop_path ?? null,
+			vote_average: r.vote_average ?? 0,
+		}))
+		.slice(0, 10);
 }
 
 // ============================================================================

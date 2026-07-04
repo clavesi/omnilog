@@ -6,12 +6,21 @@ import type { TmdbSearchHit } from "$lib/server/tmdb";
 import { tmdbImage } from "$lib/tmdb-image";
 
 type SearchHit = TmdbSearchHit | IgdbSearchHit;
+type SearchType = "all" | "movie" | "tv" | "game";
+
+const TYPE_OPTIONS: { value: SearchType; label: string }[] = [
+	{ value: "all", label: "All" },
+	{ value: "movie", label: "Movies" },
+	{ value: "tv", label: "TV" },
+	{ value: "game", label: "Games" },
+];
 
 let query = $state("");
+let selectedType = $state<SearchType>("all");
 let results = $state<SearchHit[]>([]);
 let loading = $state(false);
 let error = $state<string | null>(null);
-let importing = $state<string | null>(null); // `${type}-${id}` of item being imported
+let importing = $state<string | null>(null);
 
 let debounceTimer: ReturnType<typeof setTimeout> | undefined;
 let abortController: AbortController | undefined;
@@ -31,6 +40,17 @@ function onInput() {
 	debounceTimer = setTimeout(runSearch, 250);
 }
 
+function onTypeChange(type: SearchType) {
+	selectedType = type;
+	// Re-run immediately on filter change — no debounce, since this is
+	// a deliberate click, not incidental typing.
+	clearTimeout(debounceTimer);
+	if (query.trim().length >= 2) {
+		loading = true;
+		runSearch();
+	}
+}
+
 async function runSearch() {
 	const q = query.trim();
 	if (q.length < 2) return;
@@ -38,7 +58,7 @@ async function runSearch() {
 	abortController = new AbortController();
 
 	try {
-		const res = await fetch(`/api/search?q=${encodeURIComponent(q)}`, {
+		const res = await fetch(`/api/search?q=${encodeURIComponent(q)}&type=${selectedType}`, {
 			signal: abortController.signal,
 		});
 		const data = await res.json();
@@ -81,6 +101,21 @@ function typeLabel(hit: SearchHit): string {
 		autocomplete="off"
 		class="w-full rounded-lg border border-gray-300 px-4 py-3 text-base"
 	/>
+
+	<div class="mt-3 flex gap-2">
+		{#each TYPE_OPTIONS as opt (opt.value)}
+			<button
+				type="button"
+				class="rounded-full px-3 py-1.5 text-sm font-medium transition-colors {selectedType ===
+				opt.value
+					? 'bg-blue-600 text-white'
+					: 'bg-gray-100 text-gray-600 hover:bg-gray-200'}"
+				onclick={() => onTypeChange(opt.value)}
+			>
+				{opt.label}
+			</button>
+		{/each}
+	</div>
 
 	{#if loading}
 		<p class="mt-4 text-gray-500">Searching...</p>
