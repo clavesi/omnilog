@@ -1,10 +1,14 @@
 <script lang="ts">
 import { enhance } from "$app/forms";
+import { igdbImage } from "$lib/igdb-image";
+import type { IgdbSearchHit } from "$lib/server/igdb";
 import type { TmdbSearchHit } from "$lib/server/tmdb";
 import { tmdbImage } from "$lib/tmdb-image";
 
+type SearchHit = TmdbSearchHit | IgdbSearchHit;
+
 let query = $state("");
-let results = $state<TmdbSearchHit[]>([]);
+let results = $state<SearchHit[]>([]);
 let loading = $state(false);
 let error = $state<string | null>(null);
 let importing = $state<string | null>(null); // `${type}-${id}` of item being imported
@@ -48,13 +52,23 @@ async function runSearch() {
 	}
 }
 
-function titleOf(hit: TmdbSearchHit): string {
+function titleOf(hit: SearchHit): string {
 	return hit.type === "movie" ? hit.title : hit.name;
 }
 
-function yearOf(hit: TmdbSearchHit): string {
-	const d = hit.type === "movie" ? hit.release_date : hit.first_air_date;
-	return d ? d.slice(0, 4) : "";
+function yearOf(hit: SearchHit): string {
+	if (hit.type === "movie") return hit.release_date?.slice(0, 4) ?? "";
+	if (hit.type === "tv") return hit.first_air_date?.slice(0, 4) ?? "";
+	if (hit.type === "game") {
+		return hit.firstReleaseDate ? new Date(hit.firstReleaseDate * 1000).getFullYear().toString() : "";
+	}
+	return "";
+}
+
+function typeLabel(hit: SearchHit): string {
+	if (hit.type === "movie") return "Movie";
+	if (hit.type === "tv") return "TV";
+	return "Game";
 }
 </script>
 
@@ -63,7 +77,7 @@ function yearOf(hit: TmdbSearchHit): string {
 		type="search"
 		bind:value={query}
 		oninput={onInput}
-		placeholder="Search movies and TV shows..."
+		placeholder="Search movies, TV shows, and games..."
 		autocomplete="off"
 		class="w-full rounded-lg border border-gray-300 px-4 py-3 text-base"
 	/>
@@ -93,13 +107,23 @@ function yearOf(hit: TmdbSearchHit): string {
 					}}
 				>
 					<input type="hidden" name="type" value={hit.type} />
-					<input type="hidden" name="tmdbId" value={hit.id} />
+					<input type="hidden" name="externalId" value={hit.id} />
 					<button
 						type="submit"
 						class="flex w-full cursor-pointer items-center gap-3 rounded-lg border-none bg-transparent p-2 text-left font-[inherit] text-inherit hover:bg-gray-100 disabled:cursor-wait disabled:opacity-60"
 						disabled={importing === itemKey}
 					>
-						{#if hit.poster_path}
+						{#if hit.type === "game"}
+							{#if hit.coverImageId}
+								<img
+									src={igdbImage(hit.coverImageId, "cover_small")}
+									alt=""
+									class="h-[69px] w-[46px] shrink-0 rounded object-cover"
+								/>
+							{:else}
+								<div class="h-[69px] w-[46px] shrink-0 rounded bg-gray-200"></div>
+							{/if}
+						{:else if hit.poster_path}
 							<img
 								src={tmdbImage(hit.poster_path, "w185")}
 								alt=""
@@ -111,7 +135,7 @@ function yearOf(hit: TmdbSearchHit): string {
 						<div class="flex flex-1 flex-col">
 							<span class="font-medium">{titleOf(hit)}</span>
 							<span class="text-sm text-gray-500">
-								{hit.type === "movie" ? "Movie" : "TV"}
+								{typeLabel(hit)}
 								{#if yearOf(hit)}
 									· {yearOf(hit)}{/if}
 							</span>

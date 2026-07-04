@@ -1,6 +1,5 @@
 <script lang="ts">
 import LogCard from "$lib/components/LogCard.svelte";
-
 import { isMetadataType } from "$lib/media-types";
 
 let { data } = $props();
@@ -70,6 +69,21 @@ function handleDeleted(logId: string) {
 					{/if}
 				{/if}
 
+				{#if metadata && isMetadataType(metadata, "game")}
+					{#if metadata.platforms.length}
+						<li>{metadata.platforms.join(", ")}</li>
+					{/if}
+					{#if metadata.developers.length}
+						<li>Dev: {metadata.developers.join(", ")}</li>
+					{/if}
+					{#if metadata.publishers.length && metadata.publishers.join() !== metadata.developers.join()}
+						<li>Pub: {metadata.publishers.join(", ")}</li>
+					{/if}
+					{#if metadata.game_modes.length}
+						<li>{metadata.game_modes.join(", ")}</li>
+					{/if}
+				{/if}
+
 				{#if Number.isFinite(averageRatingNum)}
 					<li class="font-medium text-gray-800">
 						★ {(averageRatingNum / 2).toFixed(1)} ({item.ratingCount}
@@ -108,6 +122,7 @@ function handleDeleted(logId: string) {
 						<LogCard
 							{log}
 							showMediaInfo={false}
+							showAuthor={true}
 							isOwner={data.currentUserId === log.userId}
 							onDelete={handleDeleted}
 						/>

@@ -3,29 +3,32 @@ import { eq } from "drizzle-orm";
 import { db } from "$lib/server/db";
 import { mediaItems } from "$lib/server/db/schema";
 import { importMovie, importTv } from "$lib/server/tmdb";
+import { importGame } from "$lib/server/igdb";
+import { requireUser } from "$lib/server/auth";
 
 export const actions = {
 	pickResult: async (event) => {
 		// Anonymous visitors can search and browse, but importing writes to
 		// the DB — require login before that happens.
-		if (!event.locals.user) {
-			redirect(302, "/login?next=/search");
-		}
+		requireUser(event);
 
-		const form = await event.request.formData();
+		const { request } = event;
+		const form = await request.formData();
 		const type = form.get("type");
-		const tmdbIdRaw = form.get("tmdbId");
-		const tmdbId = Number(tmdbIdRaw);
+		const externalIdRaw = form.get("externalId");
+		const externalId = Number(externalIdRaw);
 
-		if (!Number.isFinite(tmdbId)) {
-			return fail(400, { error: "Bad tmdbId" });
+		if (!Number.isFinite(externalId)) {
+			return fail(400, { error: "Bad id" });
 		}
 
 		let mediaItemId: string;
 		if (type === "movie") {
-			mediaItemId = await importMovie(tmdbId);
+			mediaItemId = await importMovie(externalId);
 		} else if (type === "tv") {
-			mediaItemId = await importTv(tmdbId);
+			mediaItemId = await importTv(externalId);
+		} else if (type === "game") {
+			mediaItemId = await importGame(externalId);
 		} else {
 			return fail(400, { error: "Unknown type" });
 		}
