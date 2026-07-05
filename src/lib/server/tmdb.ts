@@ -1,4 +1,5 @@
 import { TMDB_API_KEY } from "$env/static/private";
+import { tmdbImage } from "$lib/media-images";
 import { db } from "$lib/server/db";
 import {
 	type MovieMetadata,
@@ -11,7 +12,6 @@ import { findPossibleDuplicate, PossibleDuplicateError } from "$lib/server/dedup
 import { buildSlug, findExistingMediaId, linkGenres } from "$lib/server/media-import";
 
 const TMDB_BASE = "https://api.themoviedb.org/3";
-const TMDB_IMAGE = "https://image.tmdb.org/t/p";
 if (!TMDB_API_KEY) throw new Error("TMDB_API_KEY is not set");
 
 // ============================================================================
@@ -249,14 +249,6 @@ export async function fetchMovieDetails(tmdbId: number) {
 
 export async function fetchTvDetails(tmdbId: number) {
 	return tmdb<TmdbTvDetails>(`/tv/${tmdbId}`);
-}
-
-// ============================================================================
-// Image URL helper (pure — safe to import from client code)
-// ============================================================================
-
-export function tmdbImage(path: string | null, size: "w185" | "w342" | "w500" | "original" = "w342"): string | null {
-	return path ? `${TMDB_IMAGE}/${size}${path}` : null;
 }
 
 // ============================================================================

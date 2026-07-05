@@ -114,6 +114,33 @@ function handleDeleted(logId: string) {
 					{/if}
 				{/if}
 
+				{#if metadata && isMetadataType(metadata, "music")}
+					{#if metadata.artists.length}
+						<li>{metadata.artists.join(", ")}</li>
+					{/if}
+					{#if metadata.album_type}
+						<li class="capitalize">{metadata.album_type}</li>
+					{/if}
+					{#if metadata.label}
+						<li>{metadata.label}</li>
+					{/if}
+					{#if metadata.track_count}
+						<li>{metadata.track_count} tracks</li>
+					{/if}
+				{/if}
+
+				{#if metadata && isMetadataType(metadata, "book")}
+					{#if metadata.authors.length}
+						<li>{metadata.authors.join(", ")}</li>
+					{/if}
+					{#if metadata.page_count}
+						<li>{metadata.page_count} pages</li>
+					{/if}
+					{#if metadata.publisher}
+						<li>{metadata.publisher}</li>
+					{/if}
+				{/if}
+
 				{#if Number.isFinite(averageRatingNum)}
 					<li class="font-medium text-gray-800">
 						★ {(averageRatingNum / 2).toFixed(1)} ({item.ratingCount}

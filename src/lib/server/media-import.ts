@@ -4,7 +4,7 @@ import { genres, mediaExternalIds, mediaGenres } from "$lib/server/db/schema";
 
 type DbTransaction = Parameters<Parameters<typeof db.transaction>[0]>[0];
 
-export type MediaExternalSource = "tmdb" | "igdb" | "mal";
+export type MediaExternalSource = "tmdb" | "igdb" | "mal" | "musicbrainz" | "openlibrary";
 
 export function slugify(s: string): string {
 	return s
@@ -19,7 +19,7 @@ export function buildSlug(
 	title: string,
 	dateOrYear: string | number | null | undefined,
 	mediaType: string,
-	externalId: number,
+	externalId: string | number,
 ): string {
 	const year = dateOrYear ? String(dateOrYear).slice(0, 4) : "unknown";
 	return `${slugify(title)}-${year}-${mediaType}-${externalId}`;

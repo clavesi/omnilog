@@ -1,13 +1,14 @@
 <script lang="ts">
 import { enhance } from "$app/forms";
-import { igdbImage } from "$lib/igdb-image";
+import { igdbImage, openLibraryImage, tmdbImage } from "$lib/media-images";
 import type { IgdbSearchHit } from "$lib/server/igdb";
 import type { JikanSearchHit } from "$lib/server/jikan";
+import type { MusicBrainzSearchHit } from "$lib/server/musicbrainz";
+import type { OpenLibrarySearchHit } from "$lib/server/openlibrary";
 import type { TmdbSearchHit } from "$lib/server/tmdb";
-import { tmdbImage } from "$lib/tmdb-image";
 
-type SearchHit = TmdbSearchHit | IgdbSearchHit | JikanSearchHit;
-type SearchType = "all" | "movie" | "tv" | "game" | "anime" | "manga";
+type SearchHit = TmdbSearchHit | IgdbSearchHit | JikanSearchHit | MusicBrainzSearchHit | OpenLibrarySearchHit;
+type SearchType = "all" | "movie" | "tv" | "game" | "anime" | "manga" | "music" | "book";
 type DuplicateInfo = { slug: string; title: string; mediaType: string; coverImageUrl: string | null };
 
 const TYPE_OPTIONS: { value: SearchType; label: string }[] = [
@@ -17,6 +18,8 @@ const TYPE_OPTIONS: { value: SearchType; label: string }[] = [
 	{ value: "game", label: "Games" },
 	{ value: "anime", label: "Anime" },
 	{ value: "manga", label: "Manga" },
+	{ value: "music", label: "Music" },
+	{ value: "book", label: "Books" },
 ];
 
 let query = $state("");
@@ -25,10 +28,6 @@ let results = $state<SearchHit[]>([]);
 let loading = $state(false);
 let error = $state<string | null>(null);
 let importing = $state<string | null>(null);
-
-// Per-result-item duplicate warning, keyed by `${type}-${id}`. Null/absent
-// means no warning; present means the server flagged a likely duplicate
-// and is waiting for the user to confirm or bail out.
 let duplicateWarnings = $state<Record<string, DuplicateInfo>>({});
 
 let debounceTimer: ReturnType<typeof setTimeout> | undefined;
@@ -70,7 +69,7 @@ async function runSearch() {
 		});
 		const data = await res.json();
 		results = data.results ?? [];
-		duplicateWarnings = {}; // fresh search, clear stale warnings
+		duplicateWarnings = {};
 	} catch (err) {
 		if (err instanceof Error && err.name === "AbortError") return;
 		error = "Search failed";
@@ -84,7 +83,13 @@ function titleOf(hit: SearchHit): string {
 	if (hit.type === "movie") return hit.title;
 	if (hit.type === "tv") return hit.name;
 	if (hit.type === "game") return hit.name;
-	return hit.title; // anime, manga
+	return hit.title; // anime, manga, music, book
+}
+
+function subtitleOf(hit: SearchHit): string {
+	if (hit.type === "music") return hit.artists.join(", ");
+	if (hit.type === "book") return hit.authors.join(", ");
+	return "";
 }
 
 function yearOf(hit: SearchHit): string {
@@ -93,7 +98,7 @@ function yearOf(hit: SearchHit): string {
 	if (hit.type === "game") {
 		return hit.firstReleaseDate ? new Date(hit.firstReleaseDate * 1000).getFullYear().toString() : "";
 	}
-	if (hit.type === "anime" || hit.type === "manga") {
+	if (hit.type === "anime" || hit.type === "manga" || hit.type === "music" || hit.type === "book") {
 		return hit.year ? String(hit.year) : "";
 	}
 	return "";
@@ -104,12 +109,16 @@ function typeLabel(hit: SearchHit): string {
 	if (hit.type === "tv") return "TV";
 	if (hit.type === "game") return "Game";
 	if (hit.type === "anime") return "Anime";
-	return "Manga";
+	if (hit.type === "manga") return "Manga";
+	if (hit.type === "music") return hit.primaryType ?? "Music";
+	return "Book";
 }
 
 function imageOf(hit: SearchHit): string | null {
 	if (hit.type === "game") return igdbImage(hit.coverImageId, "cover_small");
 	if (hit.type === "anime" || hit.type === "manga") return hit.imageUrl;
+	if (hit.type === "music") return hit.coverUrl;
+	if (hit.type === "book") return openLibraryImage(hit.coverId, "M");
 	return tmdbImage(hit.poster_path, "w185");
 }
 
@@ -124,7 +133,7 @@ function dismissWarning(itemKey: string) {
 		type="search"
 		bind:value={query}
 		oninput={onInput}
-		placeholder="Search movies, TV, games, anime, manga..."
+		placeholder="Search movies, TV, games, anime, manga, music, books..."
 		autocomplete="off"
 		class="w-full rounded-lg border border-gray-300 px-4 py-3 text-base"
 	/>
@@ -241,6 +250,9 @@ function dismissWarning(itemKey: string) {
 							{/if}
 							<div class="flex flex-1 flex-col">
 								<span class="font-medium">{titleOf(hit)}</span>
+								{#if subtitleOf(hit)}
+									<span class="text-sm text-gray-600">{subtitleOf(hit)}</span>
+								{/if}
 								<span class="text-sm text-gray-500">
 									{typeLabel(hit)}
 									{#if yearOf(hit)}

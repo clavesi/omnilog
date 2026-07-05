@@ -6,6 +6,8 @@ import { mediaItems } from "$lib/server/db/schema";
 import { PossibleDuplicateError } from "$lib/server/dedupe";
 import { importGame } from "$lib/server/igdb";
 import { importAnime, importManga } from "$lib/server/jikan";
+import { importAlbum } from "$lib/server/musicbrainz";
+import { importBook } from "$lib/server/openlibrary";
 import { importMovie, importTv } from "$lib/server/tmdb";
 
 export const actions = {
@@ -16,25 +18,36 @@ export const actions = {
 		const form = await request.formData();
 		const type = form.get("type");
 		const externalIdRaw = form.get("externalId");
-		const externalId = Number(externalIdRaw);
 		const allowDuplicate = form.get("confirmDuplicate") === "true";
 
-		if (!Number.isFinite(externalId)) {
-			return fail(400, { error: "Bad id" });
-		}
+		// Numeric-ID sources (TMDB, IGDB, Jikan) vs string-ID sources
+		// (MusicBrainz MBIDs, Open Library work keys) need different parsing.
+		const numericId = Number(externalIdRaw);
+		const stringId = typeof externalIdRaw === "string" ? externalIdRaw : "";
 
 		let mediaItemId: string;
 		try {
 			if (type === "movie") {
-				mediaItemId = await importMovie(externalId, { allowDuplicate });
+				if (!Number.isFinite(numericId)) return fail(400, { error: "Bad id" });
+				mediaItemId = await importMovie(numericId, { allowDuplicate });
 			} else if (type === "tv") {
-				mediaItemId = await importTv(externalId, { allowDuplicate });
+				if (!Number.isFinite(numericId)) return fail(400, { error: "Bad id" });
+				mediaItemId = await importTv(numericId, { allowDuplicate });
 			} else if (type === "game") {
-				mediaItemId = await importGame(externalId);
+				if (!Number.isFinite(numericId)) return fail(400, { error: "Bad id" });
+				mediaItemId = await importGame(numericId);
 			} else if (type === "anime") {
-				mediaItemId = await importAnime(externalId, { allowDuplicate });
+				if (!Number.isFinite(numericId)) return fail(400, { error: "Bad id" });
+				mediaItemId = await importAnime(numericId, { allowDuplicate });
 			} else if (type === "manga") {
-				mediaItemId = await importManga(externalId);
+				if (!Number.isFinite(numericId)) return fail(400, { error: "Bad id" });
+				mediaItemId = await importManga(numericId);
+			} else if (type === "music") {
+				if (!stringId) return fail(400, { error: "Bad id" });
+				mediaItemId = await importAlbum(stringId);
+			} else if (type === "book") {
+				if (!stringId) return fail(400, { error: "Bad id" });
+				mediaItemId = await importBook(stringId);
 			} else {
 				return fail(400, { error: "Unknown type" });
 			}

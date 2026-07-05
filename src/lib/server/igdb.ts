@@ -1,11 +1,11 @@
 import { TWITCH_CLIENT_ID, TWITCH_CLIENT_SECRET } from "$env/static/private";
+import { igdbImage } from "$lib/media-images";
 import { db } from "$lib/server/db";
 import { type GameMetadata, mediaExternalIds, mediaItems, mediaMetadata } from "$lib/server/db/schema";
 import { buildSlug, findExistingMediaId, linkGenres } from "$lib/server/media-import";
 
 const TWITCH_TOKEN_URL = "https://id.twitch.tv/oauth2/token";
 const IGDB_BASE = "https://api.igdb.com/v4";
-const IGDB_IMAGE = "https://images.igdb.com/igdb/image/upload";
 
 // ============================================================================
 // Token cache — IGDB tokens last ~60 days, but we refresh proactively with
@@ -136,17 +136,6 @@ async function fetchGameDetails(igdbId: number): Promise<IgdbGameRaw> {
 	const results = await igdb<IgdbGameRaw[]>("games", body);
 	if (!results[0]) throw new Error(`IGDB game ${igdbId} not found`);
 	return results[0];
-}
-
-// ============================================================================
-// Image URL helper — pure, safe to import client-side too
-// ============================================================================
-
-export function igdbImage(
-	imageId: string | null,
-	size: "cover_small" | "cover_big" | "screenshot_med" | "1080p" = "cover_big",
-): string | null {
-	return imageId ? `${IGDB_IMAGE}/t_${size}/${imageId}.jpg` : null;
 }
 
 // ============================================================================

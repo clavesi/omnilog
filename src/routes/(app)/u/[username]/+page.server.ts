@@ -28,6 +28,7 @@ export const load: PageServerLoad = async ({ params, locals }) => {
 			reviewBody: logs.reviewBody,
 			containsSpoilers: logs.containsSpoilers,
 			isRewatch: logs.isRewatch,
+			isPublic: logs.isPublic,
 			loggedAt: logs.loggedAt,
 			createdAt: logs.createdAt,
 			mediaSlug: mediaItems.slug,
