@@ -1,6 +1,7 @@
 import { and, desc, eq, lt, or } from "drizzle-orm";
 import { db } from "./db";
-import { logs, mediaItems, users } from "./db/schema";
+import { logs, mediaParts, users } from "./db/schema";
+import { directMedia, logMediaSelect, parentPart, partMedia } from "./log-media-joins";
 
 const PAGE_SIZE = 20;
 
@@ -61,14 +62,14 @@ export async function getFeedPage(opts: { cursorRaw?: string | null; excludeUser
 			loggedAt: logs.loggedAt,
 			createdAt: logs.createdAt,
 			username: users.username,
-			mediaSlug: mediaItems.slug,
-			mediaTitle: mediaItems.title,
-			mediaCoverUrl: mediaItems.coverImageUrl,
-			mediaType: mediaItems.mediaType,
+			...logMediaSelect,
 		})
 		.from(logs)
 		.innerJoin(users, eq(logs.userId, users.id))
-		.innerJoin(mediaItems, eq(logs.mediaItemId, mediaItems.id))
+		.leftJoin(directMedia, eq(logs.mediaItemId, directMedia.id))
+		.leftJoin(mediaParts, eq(logs.mediaPartId, mediaParts.id))
+		.leftJoin(partMedia, eq(mediaParts.mediaItemId, partMedia.id))
+		.leftJoin(parentPart, eq(mediaParts.parentPartId, parentPart.id))
 		.where(and(...conditions))
 		.orderBy(desc(logs.createdAt), desc(logs.id))
 		.limit(PAGE_SIZE + 1); // fetch one extra to know if there's a next page

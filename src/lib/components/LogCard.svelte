@@ -1,4 +1,5 @@
 <script lang="ts">
+import { formatPartLabel } from "$lib/part-label";
 import MediaTypeMark from "./MediaTypeMark.svelte";
 import StaticStars from "./StaticStars.svelte";
 
@@ -17,6 +18,9 @@ type LogCardData = {
 	mediaTitle: string;
 	mediaCoverUrl: string | null;
 	mediaType?: string;
+	partTitle?: string | null;
+	partNumber?: number | null;
+	seasonNumber?: number | null;
 	username?: string;
 };
 
@@ -72,6 +76,20 @@ const editHref = $derived.by(() => {
 
 	return base;
 });
+
+const partHref = $derived(
+	log.mediaPartId ? `/media/${log.mediaSlug}/part/${log.mediaPartId}` : null,
+);
+
+const partLabel = $derived(
+	log.mediaPartId && log.partNumber != null
+		? formatPartLabel({
+				seasonNumber: log.seasonNumber,
+				partNumber: log.partNumber,
+				title: log.partTitle,
+			})
+		: null,
+);
 </script>
 
 <article
@@ -80,7 +98,7 @@ const editHref = $derived.by(() => {
 >
 	<div class="flex gap-4">
 		{#if showMediaInfo}
-			<a href="/media/{log.mediaSlug}" class="flex shrink-0 gap-1.5 no-underline">
+			<a href={partHref ?? `/media/${log.mediaSlug}`} class="flex shrink-0 gap-1.5 no-underline">
 				{#if log.mediaType}
 					<MediaTypeMark mediaType={log.mediaType} variant="tab" />
 				{/if}
@@ -99,12 +117,21 @@ const editHref = $derived.by(() => {
 		<div class="min-w-0 flex-1">
 			<div class="flex flex-wrap items-center gap-2.5">
 				{#if showMediaInfo}
-					<a
-						href="/media/{log.mediaSlug}"
-						class="font-display text-[1.0625rem] font-semibold text-text no-underline hover:text-accent"
-					>
-						{log.mediaTitle}
-					</a>
+					{#if partLabel && partHref}
+						<a
+							href={partHref}
+							class="font-display text-[1.0625rem] font-semibold text-text no-underline hover:text-accent"
+						>
+							{partLabel}
+						</a>
+					{:else}
+						<a
+							href="/media/{log.mediaSlug}"
+							class="font-display text-[1.0625rem] font-semibold text-text no-underline hover:text-accent"
+						>
+							{log.mediaTitle}
+						</a>
+					{/if}
 				{/if}
 				{#if showAuthor && log.username}
 					<a
@@ -132,6 +159,15 @@ const editHref = $derived.by(() => {
 					</span>
 				{/if}
 			</div>
+
+			{#if showMediaInfo && partLabel && partHref}
+				<a
+					href="/media/{log.mediaSlug}"
+					class="mt-0.5 block text-sm text-text-muted no-underline transition-colors hover:text-text"
+				>
+					{log.mediaTitle}
+				</a>
+			{/if}
 
 			<time class="mt-1 block font-mono text-[0.8125rem] text-text-muted">{displayDate}</time>
 

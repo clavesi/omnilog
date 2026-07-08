@@ -1,7 +1,8 @@
 import { error } from "@sveltejs/kit";
 import { and, desc, eq } from "drizzle-orm";
 import { db } from "$lib/server/db";
-import { logs, mediaItems, users } from "$lib/server/db/schema";
+import { logs, mediaParts, users } from "$lib/server/db/schema";
+import { directMedia, logMediaSelect, parentPart, partMedia } from "$lib/server/log-media-joins";
 import type { PageServerLoad } from "./$types";
 
 export const load: PageServerLoad = async ({ params, locals }) => {
@@ -32,13 +33,13 @@ export const load: PageServerLoad = async ({ params, locals }) => {
 			mediaPartId: logs.mediaPartId,
 			loggedAt: logs.loggedAt,
 			createdAt: logs.createdAt,
-			mediaSlug: mediaItems.slug,
-			mediaTitle: mediaItems.title,
-			mediaCoverUrl: mediaItems.coverImageUrl,
-			mediaType: mediaItems.mediaType,
+			...logMediaSelect,
 		})
 		.from(logs)
-		.innerJoin(mediaItems, eq(logs.mediaItemId, mediaItems.id))
+		.leftJoin(directMedia, eq(logs.mediaItemId, directMedia.id))
+		.leftJoin(mediaParts, eq(logs.mediaPartId, mediaParts.id))
+		.leftJoin(partMedia, eq(mediaParts.mediaItemId, partMedia.id))
+		.leftJoin(parentPart, eq(mediaParts.parentPartId, parentPart.id))
 		.where(
 			isOwnProfile ? eq(logs.userId, profileUser.id) : and(eq(logs.userId, profileUser.id), eq(logs.isPublic, true)),
 		)
