@@ -29,6 +29,7 @@ export const load: PageServerLoad = async ({ params, locals }) => {
 			containsSpoilers: logs.containsSpoilers,
 			isRewatch: logs.isRewatch,
 			isPublic: logs.isPublic,
+			mediaPartId: logs.mediaPartId,
 			loggedAt: logs.loggedAt,
 			createdAt: logs.createdAt,
 			username: users.username,

@@ -10,6 +10,7 @@ import {
 } from "$lib/server/db/schema";
 import { findPossibleDuplicate, PossibleDuplicateError } from "$lib/server/dedupe";
 import { buildSlug, findExistingMediaId, linkGenres } from "$lib/server/media-import";
+import { createPart, findChildParts, findPart } from "$lib/server/parts";
 
 const TMDB_BASE = "https://api.themoviedb.org/3";
 if (!TMDB_API_KEY) throw new Error("TMDB_API_KEY is not set");
@@ -376,4 +377,72 @@ export async function importTv(tmdbId: number, options?: { allowDuplicate?: bool
 
 		return mediaItemId;
 	});
+}
+
+// ============================================================================
+// Import: TV season episodes
+//
+// Lazy — only fetched from TMDB the first time a season is viewed, then
+// cached forever in media_parts. Checks for existing child episode parts
+// before hitting the API, so repeat views are pure DB reads.
+// ============================================================================
+
+type TmdbEpisodeRaw = {
+	episode_number: number;
+	name: string;
+	overview: string;
+	air_date: string | null;
+	still_path: string | null;
+};
+
+type TmdbSeasonDetail = {
+	season_number: number;
+	name: string;
+	episodes: TmdbEpisodeRaw[];
+};
+
+async function fetchSeasonDetails(tmdbShowId: number, seasonNumber: number): Promise<TmdbSeasonDetail> {
+	return tmdb<TmdbSeasonDetail>(`/tv/${tmdbShowId}/season/${seasonNumber}`);
+}
+
+export async function importSeasonEpisodes(mediaItemId: string, tmdbShowId: number, seasonNumber: number) {
+	const existingSeasonId = await findPart(mediaItemId, "season", seasonNumber, null);
+	if (existingSeasonId) {
+		const existingEpisodes = await findChildParts(existingSeasonId);
+		if (existingEpisodes.length > 0) return existingEpisodes;
+	}
+
+	const season = await fetchSeasonDetails(tmdbShowId, seasonNumber);
+
+	const seasonPartId = await db.transaction(async (tx) => {
+		const id =
+			existingSeasonId ??
+			(await createPart(tx, {
+				mediaItemId,
+				parentPartId: null,
+				partType: "season",
+				partNumber: seasonNumber,
+				title: season.name,
+				releaseDate: null,
+				metadata: {},
+			}));
+
+		for (const ep of season.episodes) {
+			await createPart(tx, {
+				mediaItemId,
+				parentPartId: id,
+				partType: "episode",
+				partNumber: ep.episode_number,
+				title: ep.name,
+				releaseDate: ep.air_date || null,
+				metadata: { overview: ep.overview, stillPath: ep.still_path },
+			});
+		}
+
+		return id;
+	});
+
+	// Re-query so the return shape matches the "already cached" branch above
+	// exactly — full media_parts rows either way, not an ad-hoc subset.
+	return findChildParts(seasonPartId);
 }

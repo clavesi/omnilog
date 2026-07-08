@@ -4,6 +4,7 @@
  * search immediately followed by an import's detail fetch) don't 429.
  */
 
+import { and, eq } from "drizzle-orm";
 import { db } from "$lib/server/db";
 import {
 	type AnimeMetadata,
@@ -14,6 +15,7 @@ import {
 } from "$lib/server/db/schema";
 import { findPossibleDuplicate, PossibleDuplicateError } from "$lib/server/dedupe";
 import { buildSlug, findExistingMediaId, linkGenres } from "$lib/server/media-import";
+import { createPart, findFlatParts } from "$lib/server/parts";
 
 const JIKAN_BASE = "https://api.jikan.moe/v4";
 const MIN_REQUEST_GAP_MS = 350; // ~2.8/sec, safely under the 3/sec limit
@@ -36,18 +38,21 @@ function throttled<T>(fn: () => Promise<T>): Promise<T> {
 	return run.then(fn);
 }
 
+const RETRYABLE_STATUSES = new Set([429, 502, 503, 504]);
+
 async function jikanFetch<T>(path: string, retriesLeft = 2): Promise<T> {
 	return throttled(async () => {
 		const res = await fetch(`${JIKAN_BASE}${path}`);
 
-		if (res.status === 429) {
+		if (RETRYABLE_STATUSES.has(res.status)) {
 			if (retriesLeft <= 0) {
-				throw new Error(`Jikan ${path} failed: rate limited, retries exhausted`);
+				throw new Error(`Jikan ${path} failed: ${res.status} ${res.statusText}, retries exhausted`);
 			}
-			// Respect Retry-After if the upstream sends one; otherwise back off
-			// with a fixed delay. This covers the case Jikan's docs warn about —
-			// getting rate limited by MyAnimeList.net itself, not just Jikan's
-			// own stated 3/sec limit.
+			// Respect Retry-After if the upstream sends one (mainly a 429
+			// thing). For 502/503/504 there's usually no such header — back
+			// off with a fixed delay instead, since those tend to be brief
+			// upstream (MyAnimeList.net) hiccups that clear up in a second
+			// or two.
 			const retryAfterHeader = res.headers.get("Retry-After");
 			const retryAfterMs = retryAfterHeader ? Number(retryAfterHeader) * 1000 : 1000;
 			await new Promise((r) => setTimeout(r, retryAfterMs));
@@ -327,4 +332,62 @@ export async function importManga(malId: number): Promise<string> {
 
 		return mediaItemId;
 	});
+}
+
+// ============================================================================
+// Import: anime episodes
+//
+// Flat list, no season nesting — MAL already treats each anime season as a
+// separate top-level entry (its own mal_id), so there's no season layer to
+// build here, unlike TV. Lazy + cached in media_parts, same as TV seasons.
+// ============================================================================
+
+type JikanEpisodeRaw = {
+	mal_id: number; // this IS the episode number in this endpoint's context
+	title: string;
+	aired: string | null;
+	filler: boolean;
+	recap: boolean;
+};
+
+async function fetchAnimeEpisodes(malId: number): Promise<JikanEpisodeRaw[]> {
+	// Page 1 only for v1 — Jikan paginates at 100/page, which covers the
+	// vast majority of single MAL entries given how MAL splits long-running
+	// shows into separate per-season/per-cour entries anyway.
+	return jikanFetch<JikanEpisodeRaw[]>(`/anime/${malId}/episodes`);
+}
+
+export async function importAnimeEpisodes(mediaItemId: string) {
+	const existing = await findFlatParts(mediaItemId, "episode");
+	if (existing.length > 0) return existing;
+
+	// Need the MAL id to hit the episodes endpoint — pull it back out of
+	// media_external_ids rather than requiring the caller to pass it in
+	// separately (keeps the call site simpler: just a mediaItemId).
+	const [ext] = await db
+		.select({ externalId: mediaExternalIds.externalId })
+		.from(mediaExternalIds)
+		.where(and(eq(mediaExternalIds.mediaItemId, mediaItemId), eq(mediaExternalIds.source, "mal")))
+		.limit(1);
+
+	if (!ext) throw new Error(`No MAL external id found for media item ${mediaItemId}`);
+	const malId = Number(ext.externalId.replace("anime:", ""));
+
+	const episodes = await fetchAnimeEpisodes(malId);
+
+	await db.transaction(async (tx) => {
+		for (const ep of episodes) {
+			await createPart(tx, {
+				mediaItemId,
+				parentPartId: null,
+				partType: "episode",
+				partNumber: ep.mal_id,
+				title: ep.title,
+				releaseDate: ep.aired ? ep.aired.slice(0, 10) : null,
+				metadata: { filler: ep.filler, recap: ep.recap },
+			});
+		}
+	});
+
+	return findFlatParts(mediaItemId, "episode");
 }
