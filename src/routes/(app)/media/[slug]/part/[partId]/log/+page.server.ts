@@ -46,10 +46,7 @@ export const load: PageServerLoad = async (event) => {
 		.orderBy(desc(logs.createdAt))
 		.limit(1);
 
-	const returnTo = safeReturnPath(
-		url.searchParams.get("returnTo"),
-		`/media/${params.slug}/part/${params.partId}`,
-	);
+	const returnTo = safeReturnPath(url.searchParams.get("returnTo"), `/media/${params.slug}/part/${params.partId}`);
 
 	return {
 		item,

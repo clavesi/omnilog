@@ -36,10 +36,7 @@ export const load: PageServerLoad = async (event) => {
 	if (!existingLog) throw error(404, "Log not found");
 	if (existingLog.userId !== user.id) throw error(403, "Not your log");
 
-	const returnTo = safeReturnPath(
-		url.searchParams.get("returnTo"),
-		`/media/${params.slug}/part/${params.partId}`,
-	);
+	const returnTo = safeReturnPath(url.searchParams.get("returnTo"), `/media/${params.slug}/part/${params.partId}`);
 
 	return {
 		item,

@@ -16,9 +16,7 @@ const backHref = $derived(
 
 const partHref = $derived(`/media/${data.item.slug}/part/${data.part.id}`);
 
-const logHref = $derived(
-	`/media/${data.item.slug}/part/${data.part.id}/log?returnTo=${encodeURIComponent(partHref)}`,
-);
+const logHref = $derived(`/media/${data.item.slug}/part/${data.part.id}/log?returnTo=${encodeURIComponent(partHref)}`);
 </script>
 
 <main class="mx-auto my-8 max-w-[700px] px-4">

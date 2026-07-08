@@ -29,14 +29,7 @@ type Props = {
 	onDelete?: (logId: string) => void;
 };
 
-let {
-	log,
-	showMediaInfo = true,
-	showAuthor = false,
-	isOwner = false,
-	returnTo,
-	onDelete,
-}: Props = $props();
+let { log, showMediaInfo = true, showAuthor = false, isOwner = false, returnTo, onDelete }: Props = $props();
 
 let revealSpoilers = $state(false);
 
