@@ -52,6 +52,7 @@ export const load: PageServerLoad = async ({ params, locals }) => {
 		mediaSlug: item.slug,
 		mediaTitle: item.title,
 		mediaCoverUrl: item.coverImageUrl,
+		mediaType: item.mediaType,
 	}));
 
 	return {

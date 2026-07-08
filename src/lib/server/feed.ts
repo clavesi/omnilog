@@ -64,6 +64,7 @@ export async function getFeedPage(opts: { cursorRaw?: string | null; excludeUser
 			mediaSlug: mediaItems.slug,
 			mediaTitle: mediaItems.title,
 			mediaCoverUrl: mediaItems.coverImageUrl,
+			mediaType: mediaItems.mediaType,
 		})
 		.from(logs)
 		.innerJoin(users, eq(logs.userId, users.id))

@@ -1,4 +1,5 @@
 <script lang="ts">
+import MediaTypeMark from "./MediaTypeMark.svelte";
 import StaticStars from "./StaticStars.svelte";
 
 type LogCardData = {
@@ -15,6 +16,7 @@ type LogCardData = {
 	mediaSlug: string;
 	mediaTitle: string;
 	mediaCoverUrl: string | null;
+	mediaType?: string;
 	username?: string;
 };
 
@@ -23,10 +25,18 @@ type Props = {
 	showMediaInfo?: boolean;
 	showAuthor?: boolean;
 	isOwner?: boolean;
+	returnTo?: string;
 	onDelete?: (logId: string) => void;
 };
 
-let { log, showMediaInfo = true, showAuthor = false, isOwner = false, onDelete }: Props = $props();
+let {
+	log,
+	showMediaInfo = true,
+	showAuthor = false,
+	isOwner = false,
+	returnTo,
+	onDelete,
+}: Props = $props();
 
 let revealSpoilers = $state(false);
 
@@ -58,109 +68,118 @@ async function handleDelete() {
 	}
 }
 
-const editHref = $derived(
-	log.mediaPartId
+const editHref = $derived.by(() => {
+	const base = log.mediaPartId
 		? `/media/${log.mediaSlug}/part/${log.mediaPartId}/log/${log.id}/edit`
-		: `/media/${log.mediaSlug}/log/${log.id}/edit`,
-);
+		: `/media/${log.mediaSlug}/log/${log.id}/edit`;
+
+	if (returnTo) {
+		return `${base}?returnTo=${encodeURIComponent(returnTo)}`;
+	}
+
+	return base;
+});
 </script>
 
 <article
-    class="border-b border-gray-200 py-4 transition-opacity duration-150"
-    class:opacity-50={deleting}
+	class="border-b border-border py-6 transition-opacity duration-150"
+	class:opacity-50={deleting}
 >
-    <div class="flex gap-4">
-        {#if showMediaInfo}
-            <a href="/media/{log.mediaSlug}" class="shrink-0">
-                {#if log.mediaCoverUrl}
-                    <img
-                        src={log.mediaCoverUrl}
-                        alt=""
-                        class="h-[69px] w-[46px] rounded bg-gray-200 object-cover"
-                    />
-                {:else}
-                    <div class="h-[69px] w-[46px] rounded bg-gray-200"></div>
-                {/if}
-            </a>
-        {/if}
+	<div class="flex gap-4">
+		{#if showMediaInfo}
+			<a href="/media/{log.mediaSlug}" class="flex shrink-0 gap-1.5 no-underline">
+				{#if log.mediaType}
+					<MediaTypeMark mediaType={log.mediaType} variant="tab" />
+				{/if}
+				{#if log.mediaCoverUrl}
+					<img
+						src={log.mediaCoverUrl}
+						alt=""
+						class="h-[69px] w-[46px] rounded-sm bg-surface object-cover"
+					/>
+				{:else}
+					<div class="h-[69px] w-[46px] rounded-sm bg-surface"></div>
+				{/if}
+			</a>
+		{/if}
 
-        <div class="min-w-0 flex-1">
-            <div class="flex flex-wrap items-center gap-2.5">
-                {#if showMediaInfo}
-                    <a
-                        href="/media/{log.mediaSlug}"
-                        class="font-semibold text-inherit no-underline hover:underline"
-                        >{log.mediaTitle}</a
-                    >
-                {/if}
-                {#if showAuthor && log.username}
-                    <a
-                        href="/u/{log.username}"
-                        class="font-semibold text-blue-600 no-underline hover:underline"
-                        >{log.username}</a
-                    >
-                {/if}
-                {#if log.rating !== null}
-                    <StaticStars value={log.rating} size={16} />
-                {/if}
-                {#if log.isRewatch}
-                    <span
-                        class="rounded-full bg-indigo-50 px-2 py-0.5 text-[0.6875rem] text-indigo-700"
-                        >Rewatch</span
-                    >
-                {/if}
-                {#if isOwner && !log.isPublic}
-                    <span
-                        class="rounded-full bg-gray-100 px-2 py-0.5 text-[0.6875rem] text-gray-500"
-                        >Private</span
-                    >
-                {/if}
-            </div>
+		<div class="min-w-0 flex-1">
+			<div class="flex flex-wrap items-center gap-2.5">
+				{#if showMediaInfo}
+					<a
+						href="/media/{log.mediaSlug}"
+						class="font-display text-[1.0625rem] font-semibold text-text no-underline hover:text-accent"
+					>
+						{log.mediaTitle}
+					</a>
+				{/if}
+				{#if showAuthor && log.username}
+					<a
+						href="/u/{log.username}"
+						class="text-sm text-accent no-underline hover:text-text"
+					>
+						{log.username}
+					</a>
+				{/if}
+				{#if log.rating !== null}
+					<StaticStars value={log.rating} size={16} />
+				{/if}
+				{#if log.isRewatch}
+					<span
+						class="rounded-sm border border-border px-2 py-0.5 font-mono text-[0.6875rem] text-text-muted"
+					>
+						Rewatch
+					</span>
+				{/if}
+				{#if isOwner && !log.isPublic}
+					<span
+						class="rounded-sm border border-border px-2 py-0.5 font-mono text-[0.6875rem] text-text-muted"
+					>
+						Private
+					</span>
+				{/if}
+			</div>
 
-            <time class="mt-0.5 block text-[0.8125rem] text-gray-500"
-                >{displayDate}</time
-            >
+			<time class="mt-1 block font-mono text-[0.8125rem] text-text-muted">{displayDate}</time>
 
-            {#if log.reviewBody}
-                <div class="mt-2">
-                    {#if log.reviewTitle}
-                        <h3 class="mb-1 text-[0.9375rem]">{log.reviewTitle}</h3>
-                    {/if}
+			{#if log.reviewBody}
+				<div class="mt-3">
+					{#if log.reviewTitle}
+						<h3 class="mb-1 font-display text-[0.9375rem]">{log.reviewTitle}</h3>
+					{/if}
 
-                    {#if log.containsSpoilers && !revealSpoilers}
-                        <button
-                            type="button"
-                            class="cursor-pointer rounded border border-dashed border-gray-300 bg-gray-100 px-3 py-2 text-sm text-gray-500"
-                            onclick={() => (revealSpoilers = true)}
-                        >
-                            Contains spoilers — click to reveal
-                        </button>
-                    {:else}
-                        <p
-                            class="m-0 leading-normal whitespace-pre-wrap text-gray-800"
-                        >
-                            {log.reviewBody}
-                        </p>
-                    {/if}
-                </div>
-            {/if}
+					{#if log.containsSpoilers && !revealSpoilers}
+						<button
+							type="button"
+							class="cursor-pointer rounded-sm border border-dashed border-border bg-surface px-3 py-2 text-sm text-text-muted transition-colors hover:border-text-muted hover:text-text"
+							onclick={() => (revealSpoilers = true)}
+						>
+							Contains spoilers — click to reveal
+						</button>
+					{:else}
+						<p class="m-0 leading-relaxed whitespace-pre-wrap text-text">
+							{log.reviewBody}
+						</p>
+					{/if}
+				</div>
+			{/if}
 
-            {#if isOwner}
-                <div class="mt-2 flex gap-3 text-[0.8125rem]">
-               		<a href={editHref} class="text-blue-600 no-underline hover:underline">
+			{#if isOwner}
+				<div class="mt-3 flex gap-4 text-[0.8125rem]">
+					<a href={editHref} class="text-accent no-underline hover:text-text">
 						Edit
 					</a>
 
-                    <button
-                        type="button"
-                        class="cursor-pointer border-none bg-transparent p-0 text-[0.8125rem] text-red-600 hover:underline"
-                        onclick={handleDelete}
-                        disabled={deleting}
-                    >
-                        {deleting ? "Deleting..." : "Delete"}
-                    </button>
-                </div>
-            {/if}
-        </div>
-    </div>
+					<button
+						type="button"
+						class="cursor-pointer border-none bg-transparent p-0 text-[0.8125rem] text-danger transition-colors hover:text-text"
+						onclick={handleDelete}
+						disabled={deleting}
+					>
+						{deleting ? "Deleting..." : "Delete"}
+					</button>
+				</div>
+			{/if}
+		</div>
+	</div>
 </article>

@@ -1,6 +1,8 @@
 <script lang="ts">
 import { enhance } from "$app/forms";
+import MediaTypeMark from "$lib/components/MediaTypeMark.svelte";
 import { igdbImage, openLibraryImage, tmdbImage } from "$lib/media-images";
+import { getMediaTypeColor, getSearchTypeColor, mediaTypeLabel } from "$lib/media-type-colors";
 import type { IgdbSearchHit } from "$lib/server/igdb";
 import type { JikanSearchHit } from "$lib/server/jikan";
 import type { MusicBrainzSearchHit } from "$lib/server/musicbrainz";
@@ -83,7 +85,7 @@ function titleOf(hit: SearchHit): string {
 	if (hit.type === "movie") return hit.title;
 	if (hit.type === "tv") return hit.name;
 	if (hit.type === "game") return hit.name;
-	return hit.title; // anime, manga, music, book
+	return hit.title;
 }
 
 function subtitleOf(hit: SearchHit): string {
@@ -110,7 +112,7 @@ function typeLabel(hit: SearchHit): string {
 	if (hit.type === "game") return "Game";
 	if (hit.type === "anime") return "Anime";
 	if (hit.type === "manga") return "Manga";
-	if (hit.type === "music") return hit.primaryType ?? "Music";
+	if (hit.type === "music") return hit.primaryType ?? "Album";
 	return "Book";
 }
 
@@ -128,24 +130,30 @@ function dismissWarning(itemKey: string) {
 }
 </script>
 
-<div class="mx-auto my-8 max-w-[640px] px-4">
+<div>
+	<h1 class="mb-6 font-display text-2xl">Search</h1>
+
 	<input
 		type="search"
 		bind:value={query}
 		oninput={onInput}
 		placeholder="Search movies, TV, games, anime, manga, music, books..."
 		autocomplete="off"
-		class="w-full rounded-lg border border-gray-300 px-4 py-3 text-base"
+		class="w-full rounded-sm border border-border bg-surface px-4 py-3 text-base text-text placeholder:text-text-muted focus:border-accent focus:ring-1 focus:ring-accent"
 	/>
 
-	<div class="mt-3 flex flex-wrap gap-2">
+	<div class="mt-4 flex flex-wrap gap-2">
 		{#each TYPE_OPTIONS as opt (opt.value)}
+			{@const typeColor = getSearchTypeColor(opt.value)}
 			<button
 				type="button"
-				class="rounded-full px-3 py-1.5 text-sm font-medium transition-colors {selectedType ===
+				class="rounded-sm border px-3 py-1.5 text-sm font-medium motion-safe:transition-colors {selectedType !==
 				opt.value
-					? 'bg-blue-600 text-white'
-					: 'bg-gray-100 text-gray-600 hover:bg-gray-200'}"
+					? 'hover:border-text-muted'
+					: ''}"
+				style={selectedType === opt.value
+					? `background-color: ${typeColor}; border-color: ${typeColor}; color: var(--color-bg)`
+					: `border-color: var(--color-border); color: var(--color-text-muted)`}
 				onclick={() => onTypeChange(opt.value)}
 			>
 				{opt.label}
@@ -154,28 +162,30 @@ function dismissWarning(itemKey: string) {
 	</div>
 
 	{#if loading}
-		<p class="mt-4 text-gray-500">Searching...</p>
+		<p class="mt-6 font-mono text-sm text-text-muted">Searching...</p>
 	{:else if error}
-		<p class="mt-4 text-red-600">{error}</p>
+		<p class="mt-6 text-danger">{error}</p>
 	{:else if query.length >= 2 && results.length === 0}
-		<p class="mt-4 text-gray-500">No results.</p>
+		<p class="mt-6 text-text-muted">No results.</p>
 	{/if}
 
-	<ul class="m-0 mt-4 list-none p-0">
+	<ul class="m-0 mt-6 list-none divide-y divide-border p-0">
 		{#each results as hit (`${hit.type}-${hit.id}`)}
 			{@const itemKey = `${hit.type}-${hit.id}`}
 			{@const warning = duplicateWarnings[itemKey]}
+			{@const hitColor = getMediaTypeColor(hit.type)}
 			<li class="m-0">
 				{#if warning}
-					<div class="rounded-lg border border-amber-300 bg-amber-50 p-3">
-						<p class="m-0 mb-2 text-sm text-amber-900">
+					<div class="border border-border bg-surface p-4" style="border-left: 3px solid {hitColor}">
+						<p class="m-0 mb-3 text-sm text-text">
 							This looks like it might already exist as
-							<strong>{warning.title}</strong> ({warning.mediaType}).
+							<strong>{warning.title}</strong>
+							<span class="font-mono text-text-muted">({mediaTypeLabel(warning.mediaType)})</span>.
 						</p>
-						<div class="flex gap-2">
+						<div class="flex flex-wrap gap-2">
 							<a
 								href="/media/{warning.slug}"
-								class="rounded bg-white px-3 py-1.5 text-sm font-medium text-amber-900 no-underline hover:bg-amber-100"
+								class="rounded-sm border border-border bg-bg px-3 py-1.5 text-sm font-medium text-text no-underline transition-colors hover:border-text-muted"
 							>
 								View existing
 							</a>
@@ -197,7 +207,8 @@ function dismissWarning(itemKey: string) {
 								<input type="hidden" name="confirmDuplicate" value="true" />
 								<button
 									type="submit"
-									class="rounded bg-amber-600 px-3 py-1.5 text-sm font-medium text-white hover:bg-amber-700 disabled:opacity-60"
+									class="cursor-pointer rounded-sm border-none px-3 py-1.5 text-sm font-medium text-bg transition-opacity hover:opacity-90 disabled:opacity-60"
+									style="background-color: {hitColor}"
 									disabled={importing === itemKey}
 								>
 									{importing === itemKey ? "Importing..." : "Import anyway"}
@@ -205,7 +216,7 @@ function dismissWarning(itemKey: string) {
 							</form>
 							<button
 								type="button"
-								class="rounded px-3 py-1.5 text-sm text-amber-700 hover:underline"
+								class="cursor-pointer rounded-sm border-none bg-transparent px-3 py-1.5 text-sm text-text-muted transition-colors hover:text-text"
 								onclick={() => dismissWarning(itemKey)}
 							>
 								Cancel
@@ -236,31 +247,33 @@ function dismissWarning(itemKey: string) {
 						<input type="hidden" name="externalId" value={hit.id} />
 						<button
 							type="submit"
-							class="flex w-full cursor-pointer items-center gap-3 rounded-lg border-none bg-transparent p-2 text-left font-[inherit] text-inherit hover:bg-gray-100 disabled:cursor-wait disabled:opacity-60"
+							class="flex w-full cursor-pointer items-center gap-3 border-none bg-transparent px-0 py-4 text-left font-[inherit] text-inherit transition-colors hover:bg-surface disabled:cursor-wait disabled:opacity-60"
 							disabled={importing === itemKey}
 						>
+							<MediaTypeMark mediaType={hit.type} variant="tab" />
 							{#if imageOf(hit)}
 								<img
 									src={imageOf(hit)}
 									alt=""
-									class="h-[69px] w-[46px] shrink-0 rounded object-cover"
+									class="h-[69px] w-[46px] shrink-0 rounded-sm object-cover"
 								/>
 							{:else}
-								<div class="h-[69px] w-[46px] shrink-0 rounded bg-gray-200"></div>
+								<div class="h-[69px] w-[46px] shrink-0 rounded-sm bg-surface"></div>
 							{/if}
-							<div class="flex flex-1 flex-col">
-								<span class="font-medium">{titleOf(hit)}</span>
+							<div class="flex min-w-0 flex-1 flex-col gap-0.5">
+								<span class="font-display font-medium">{titleOf(hit)}</span>
 								{#if subtitleOf(hit)}
-									<span class="text-sm text-gray-600">{subtitleOf(hit)}</span>
+									<span class="text-sm text-text-muted">{subtitleOf(hit)}</span>
 								{/if}
-								<span class="text-sm text-gray-500">
+								<span class="font-mono text-sm text-text-muted">
 									{typeLabel(hit)}
 									{#if yearOf(hit)}
-										· {yearOf(hit)}{/if}
+										· {yearOf(hit)}
+									{/if}
 								</span>
 							</div>
 							{#if importing === itemKey}
-								<span class="text-sm text-gray-500 italic">Importing...</span>
+								<span class="font-mono text-sm text-text-muted italic">Importing...</span>
 							{/if}
 						</button>
 					</form>

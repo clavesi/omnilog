@@ -17,6 +17,7 @@ export const load: PageServerLoad = async (event) => {
 			title: mediaItems.title,
 			coverImageUrl: mediaItems.coverImageUrl,
 			releaseDate: mediaItems.releaseDate,
+			mediaType: mediaItems.mediaType,
 		})
 		.from(mediaItems)
 		.where(eq(mediaItems.slug, params.slug))

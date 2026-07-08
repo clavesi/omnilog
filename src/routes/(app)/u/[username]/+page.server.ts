@@ -35,6 +35,7 @@ export const load: PageServerLoad = async ({ params, locals }) => {
 			mediaSlug: mediaItems.slug,
 			mediaTitle: mediaItems.title,
 			mediaCoverUrl: mediaItems.coverImageUrl,
+			mediaType: mediaItems.mediaType,
 		})
 		.from(logs)
 		.innerJoin(mediaItems, eq(logs.mediaItemId, mediaItems.id))

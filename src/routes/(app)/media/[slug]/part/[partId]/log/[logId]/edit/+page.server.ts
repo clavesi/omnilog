@@ -21,6 +21,7 @@ export const load: PageServerLoad = async (event) => {
 			slug: mediaItems.slug,
 			title: mediaItems.title,
 			coverImageUrl: mediaItems.coverImageUrl,
+			mediaType: mediaItems.mediaType,
 		})
 		.from(mediaItems)
 		.where(eq(mediaItems.slug, params.slug))
@@ -35,7 +36,10 @@ export const load: PageServerLoad = async (event) => {
 	if (!existingLog) throw error(404, "Log not found");
 	if (existingLog.userId !== user.id) throw error(403, "Not your log");
 
-	const returnTo = safeReturnPath(url.searchParams.get("returnTo"), `/media/${params.slug}`);
+	const returnTo = safeReturnPath(
+		url.searchParams.get("returnTo"),
+		`/media/${params.slug}/part/${params.partId}`,
+	);
 
 	return {
 		item,
@@ -61,7 +65,10 @@ export const actions: Actions = {
 		if (existingLog.userId !== user.id) return fail(403, { error: "Not your log" });
 
 		const form = await request.formData();
-		const returnTo = safeReturnPath(form.get("returnTo") as string | null, `/media/${params.slug}`);
+		const returnTo = safeReturnPath(
+			form.get("returnTo") as string | null,
+			`/media/${params.slug}/part/${params.partId}`,
+		);
 		const ratingRaw = form.get("rating");
 		const loggedAtRaw = form.get("loggedAt");
 		const reviewBodyRaw = form.get("reviewBody");

@@ -12,12 +12,11 @@ let hover = $state<number | null>(null);
 let displayValue = $derived(hover ?? value ?? 0);
 
 function setRating(v: number) {
-	value = value === v ? null : v; // Click same value to clear
+	value = value === v ? null : v;
 }
 
-// How much of star at `position` (1-5) should be gold-filled.
 function fillPercent(position: number): number {
-	const full = position * 2; // e.g. star 3 is fully filled at value 6
+	const full = position * 2;
 	if (displayValue >= full) return 100;
 	if (displayValue === full - 1) return 50;
 	return 0;
@@ -39,7 +38,7 @@ const STAR_PATH = "M12 2 L15 9 L22 10 L17 14.5 L18.5 21.5 L12 17.5 L5.5 21.5 L7 
 		{#each [1, 2, 3, 4, 5] as position (position)}
 			<div class="relative" style="width: {size}px; height: {size}px;">
 				<svg
-					class="block fill-gray-300"
+					class="block fill-border"
 					style="width: {size}px; height: {size}px;"
 					viewBox="0 0 24 24"
 					aria-hidden="true"
@@ -48,11 +47,11 @@ const STAR_PATH = "M12 2 L15 9 L22 10 L17 14.5 L18.5 21.5 L12 17.5 L5.5 21.5 L7 
 				</svg>
 
 				<div
-					class="pointer-events-none absolute top-0 left-0 h-full overflow-hidden transition-[width] duration-75 ease-linear"
+					class="pointer-events-none absolute top-0 left-0 h-full overflow-hidden motion-safe:transition-[width] motion-safe:duration-75 motion-safe:ease-linear"
 					style="width: {fillPercent(position)}%"
 				>
 					<svg
-						class="block fill-amber-500"
+						class="block fill-accent"
 						style="width: {size}px; height: {size}px;"
 						viewBox="0 0 24 24"
 						aria-hidden="true"
@@ -80,7 +79,7 @@ const STAR_PATH = "M12 2 L15 9 L22 10 L17 14.5 L18.5 21.5 L12 17.5 L5.5 21.5 L7 
 		{/each}
 	</div>
 
-	<span class="min-w-18 text-sm text-gray-600">
+	<span class="min-w-18 font-mono text-sm text-text-muted">
 		{#if displayValue > 0}
 			{(displayValue / 2).toFixed(1)} / 5
 		{:else}
@@ -91,7 +90,7 @@ const STAR_PATH = "M12 2 L15 9 L22 10 L17 14.5 L18.5 21.5 L12 17.5 L5.5 21.5 L7 
 	{#if value !== null}
 		<button
 			type="button"
-			class="cursor-pointer border-none bg-transparent text-[0.8125rem] text-gray-500 underline hover:text-gray-800"
+			class="cursor-pointer border-none bg-transparent text-[0.8125rem] text-text-muted underline transition-colors hover:text-text"
 			onclick={() => (value = null)}
 		>
 			Clear

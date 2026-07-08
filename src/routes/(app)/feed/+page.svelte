@@ -1,4 +1,3 @@
-<!-- src/routes/(app)/feed/+page.svelte -->
 <script lang="ts">
 import LogCard from "$lib/components/LogCard.svelte";
 
@@ -26,11 +25,11 @@ async function loadMore() {
 }
 </script>
 
-<main class="feed">
-	<h1>Feed</h1>
+<div>
+	<h1 class="mb-8 text-2xl">Feed</h1>
 
 	{#if feedLogs.length === 0}
-		<p class="empty">No public logs yet. Be the first to log something!</p>
+		<p class="py-12 text-center text-text-muted">No public logs yet. Be the first to log something!</p>
 	{:else}
 		{#each feedLogs as log (log.id)}
 			<LogCard
@@ -44,41 +43,13 @@ async function loadMore() {
 	{/if}
 
 	{#if cursor}
-		<button type="button" class="load-more" onclick={loadMore} disabled={loadingMore}>
+		<button
+			type="button"
+			class="mt-8 block w-full cursor-pointer rounded-sm border border-border bg-transparent py-3 font-mono text-sm text-text-muted transition-colors hover:border-text-muted hover:text-text disabled:cursor-wait disabled:opacity-60"
+			onclick={loadMore}
+			disabled={loadingMore}
+		>
 			{loadingMore ? "Loading..." : "Load more"}
 		</button>
 	{/if}
-</main>
-
-<style>
-	.feed {
-		max-width: 700px;
-		margin: 2rem auto;
-		padding: 0 1rem;
-	}
-	h1 {
-		margin: 0 0 1.5rem;
-	}
-	.empty {
-		color: #888;
-		padding: 2rem 0;
-		text-align: center;
-	}
-	.load-more {
-		display: block;
-		margin: 1.5rem auto 0;
-		padding: 0.625rem 1.5rem;
-		background: #f3f4f6;
-		border: none;
-		border-radius: 0.375rem;
-		cursor: pointer;
-		font: inherit;
-	}
-	.load-more:hover:not(:disabled) {
-		background: #e5e7eb;
-	}
-	.load-more:disabled {
-		opacity: 0.6;
-		cursor: wait;
-	}
-</style>
+</div>

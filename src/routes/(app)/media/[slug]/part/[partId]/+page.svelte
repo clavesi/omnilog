@@ -14,10 +14,10 @@ const backHref = $derived(
 	data.season ? `/media/${data.item.slug}/season/${data.season.partNumber}` : `/media/${data.item.slug}/episodes`,
 );
 
+const partHref = $derived(`/media/${data.item.slug}/part/${data.part.id}`);
+
 const logHref = $derived(
-	`/media/${data.item.slug}/part/${data.part.id}/log?returnTo=${encodeURIComponent(
-		`/media/${data.item.slug}/part/${data.part.id}`,
-	)}`,
+	`/media/${data.item.slug}/part/${data.part.id}/log?returnTo=${encodeURIComponent(partHref)}`,
 );
 </script>
 
@@ -64,6 +64,7 @@ const logHref = $derived(
                     showMediaInfo={false}
                     showAuthor={true}
                     isOwner={data.currentUserId === log.userId}
+                    returnTo={partHref}
                     onDelete={handleDeleted}
                 />
             {/each}

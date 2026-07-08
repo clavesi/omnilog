@@ -23,6 +23,7 @@ export const load: PageServerLoad = async (event) => {
 			slug: mediaItems.slug,
 			title: mediaItems.title,
 			coverImageUrl: mediaItems.coverImageUrl,
+			mediaType: mediaItems.mediaType,
 		})
 		.from(mediaItems)
 		.where(eq(mediaItems.slug, params.slug))
@@ -45,7 +46,10 @@ export const load: PageServerLoad = async (event) => {
 		.orderBy(desc(logs.createdAt))
 		.limit(1);
 
-	const returnTo = safeReturnPath(url.searchParams.get("returnTo"), `/media/${params.slug}`);
+	const returnTo = safeReturnPath(
+		url.searchParams.get("returnTo"),
+		`/media/${params.slug}/part/${params.partId}`,
+	);
 
 	return {
 		item,
@@ -65,7 +69,10 @@ export const actions: Actions = {
 		if (!part) return fail(404, { error: "Part not found" });
 
 		const form = await request.formData();
-		const returnTo = safeReturnPath(form.get("returnTo") as string | null, `/media/${params.slug}`);
+		const returnTo = safeReturnPath(
+			form.get("returnTo") as string | null,
+			`/media/${params.slug}/part/${params.partId}`,
+		);
 		const ratingRaw = form.get("rating");
 		const loggedAtRaw = form.get("loggedAt");
 		const reviewBodyRaw = form.get("reviewBody");
