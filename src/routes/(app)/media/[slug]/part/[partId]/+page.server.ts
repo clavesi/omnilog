@@ -1,7 +1,8 @@
 import { error } from "@sveltejs/kit";
-import { and, desc, eq, or } from "drizzle-orm";
+import { and, eq } from "drizzle-orm";
 import { db } from "$lib/server/db";
-import { logs, mediaItems, mediaParts, users } from "$lib/server/db/schema";
+import { mediaItems, mediaParts } from "$lib/server/db/schema";
+import { getLogsForPart } from "$lib/server/logs";
 import type { PageServerLoad } from "./$types";
 
 export const load: PageServerLoad = async ({ params, locals }) => {
@@ -27,10 +28,9 @@ export const load: PageServerLoad = async ({ params, locals }) => {
 
 	if (!part) throw error(404, "Part not found");
 
-	// If this episode belongs to a season (TV), fetch the season for the
-	// "back to season" link. Anime episodes have no parent, so this is null.
 	let season: { id: string; partNumber: number } | null = null;
 	if (part.parentPartId) {
+		// TV episodes belong to a season part; anime episodes have no parent.
 		const [s] = await db
 			.select({ id: mediaParts.id, partNumber: mediaParts.partNumber })
 			.from(mediaParts)
@@ -40,46 +40,18 @@ export const load: PageServerLoad = async ({ params, locals }) => {
 	}
 
 	const currentUserId = locals.user?.id ?? null;
-
-	// Same visibility rule as the media item page: public logs from everyone,
-	// plus the viewer's own log even if private.
-	const rows = await db
-		.select({
-			id: logs.id,
-			userId: logs.userId,
-			rating: logs.rating,
-			reviewTitle: logs.reviewTitle,
-			reviewBody: logs.reviewBody,
-			containsSpoilers: logs.containsSpoilers,
-			isRewatch: logs.isRewatch,
-			isPublic: logs.isPublic,
-			loggedAt: logs.loggedAt,
-			createdAt: logs.createdAt,
-			username: users.username,
-		})
-		.from(logs)
-		.innerJoin(users, eq(logs.userId, users.id))
-		.where(
-			and(
-				eq(logs.mediaPartId, part.id),
-				currentUserId ? or(eq(logs.isPublic, true), eq(logs.userId, currentUserId)) : eq(logs.isPublic, true),
-			),
-		)
-		.orderBy(desc(logs.createdAt));
-
-	const partLogs = rows.map((l) => ({
-		...l,
-		mediaPartId: part.id,
-		mediaSlug: item.slug,
-		mediaTitle: item.title,
-		mediaCoverUrl: item.coverImageUrl,
-	}));
+	const logs = await getLogsForPart(part.id, currentUserId, item, {
+		id: part.id,
+		partNumber: part.partNumber,
+		title: part.title,
+		seasonNumber: season?.partNumber,
+	});
 
 	return {
 		item,
 		part,
 		season,
-		logs: partLogs,
+		logs,
 		currentUserId,
 	};
 };

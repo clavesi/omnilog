@@ -3,6 +3,10 @@ import { enhance } from "$app/forms";
 import type { ActionData, PageData } from "./$types";
 
 let { form, data }: { form: ActionData; data: PageData } = $props();
+
+// bg-surface keeps inputs on-theme; unset background renders white in most browsers.
+const inputClass =
+	"w-full rounded-sm border border-border bg-surface px-3 py-2 font-[inherit] text-text focus:border-accent focus:ring-1 focus:ring-accent";
 </script>
 
 <svelte:head>
@@ -15,7 +19,7 @@ let { form, data }: { form: ActionData; data: PageData } = $props();
 	<form method="post" use:enhance class="mt-6 flex flex-col gap-4">
 		<input type="hidden" name="next" value={data.next} />
 
-		<label class="flex flex-col gap-1 text-sm">
+		<label class="flex flex-col gap-1 text-sm text-text-muted">
 			Email
 			<input
 				type="email"
@@ -23,27 +27,35 @@ let { form, data }: { form: ActionData; data: PageData } = $props();
 				value={form?.email ?? ""}
 				required
 				autocomplete="email"
-				class="rounded border border-gray-300 p-2 text-base"
+				class={inputClass}
 			/>
 		</label>
 
-		<label class="flex flex-col gap-1 text-sm">
+		<label class="flex flex-col gap-1 text-sm text-text-muted">
 			Password
 			<input
 				type="password"
 				name="password"
 				required
 				autocomplete="current-password"
-				class="rounded border border-gray-300 p-2 text-base"
+				class={inputClass}
 			/>
 		</label>
 
 		{#if form?.message}
-			<p class="m-0 text-[#b00020]">{form.message}</p>
+			<p class="m-0 text-danger">{form.message}</p>
 		{/if}
 
-		<button type="submit" class="cursor-pointer p-2.5 text-base">Log in</button>
+		<button
+			type="submit"
+			class="cursor-pointer rounded-sm border-none bg-accent px-6 py-2.5 font-[inherit] text-bg transition-opacity hover:opacity-90"
+		>
+			Log in
+		</button>
 	</form>
 
-	<p>Don't have an account? <a href="/signup?next={data.next}">Sign up</a></p>
+	<p class="text-text-muted">
+		Don't have an account?
+		<a href="/signup?next={data.next}" class="text-accent no-underline hover:text-text">Sign up</a>
+	</p>
 </div>

@@ -1,29 +1,15 @@
 <script lang="ts">
 import { formatPartLabel } from "$lib/part-label";
+import type { LogCardData } from "$lib/types/log";
+import { formatWatchLabel } from "$lib/watch-label";
 import MediaTypeMark from "./MediaTypeMark.svelte";
 import StaticStars from "./StaticStars.svelte";
 
-type LogCardData = {
-	id: string;
-	rating: number | null;
-	reviewTitle: string | null;
-	reviewBody: string | null;
-	containsSpoilers: boolean;
-	isRewatch: boolean;
-	isPublic: boolean;
-	mediaPartId: string | null;
-	loggedAt: string | null;
-	createdAt: string | Date;
-	mediaSlug: string;
-	mediaTitle: string;
-	mediaCoverUrl: string | null;
-	mediaType?: string;
-	partTitle?: string | null;
-	partNumber?: number | null;
-	seasonNumber?: number | null;
-	username?: string;
-};
-
+/**
+ * Log card used across feed, profiles, and media/part pages.
+ * Callers tune context via props — e.g. feed shows author + media, part page
+ * hides media (you're already on the episode) but shows author.
+ */
 type Props = {
 	log: LogCardData;
 	showMediaInfo?: boolean;
@@ -38,6 +24,7 @@ let { log, showMediaInfo = true, showAuthor = false, isOwner = false, returnTo, 
 let revealSpoilers = $state(false);
 
 const displayDate = $derived.by(() => {
+	// loggedAt is user-editable; fall back to createdAt for older logs without a date.
 	const d = log.loggedAt ?? (typeof log.createdAt === "string" ? log.createdAt : log.createdAt.toISOString());
 	return new Date(d).toLocaleDateString(undefined, {
 		year: "numeric",
@@ -77,9 +64,7 @@ const editHref = $derived.by(() => {
 	return base;
 });
 
-const partHref = $derived(
-	log.mediaPartId ? `/media/${log.mediaSlug}/part/${log.mediaPartId}` : null,
-);
+const partHref = $derived(log.mediaPartId ? `/media/${log.mediaSlug}/part/${log.mediaPartId}` : null);
 
 const partLabel = $derived(
 	log.mediaPartId && log.partNumber != null
@@ -90,6 +75,8 @@ const partLabel = $derived(
 			})
 		: null,
 );
+
+const watchLabel = $derived(formatWatchLabel(log.watchNumber, log.isRewatch));
 </script>
 
 <article
@@ -144,11 +131,11 @@ const partLabel = $derived(
 				{#if log.rating !== null}
 					<StaticStars value={log.rating} size={16} />
 				{/if}
-				{#if log.isRewatch}
+				{#if watchLabel}
 					<span
 						class="rounded-sm border border-border px-2 py-0.5 font-mono text-[0.6875rem] text-text-muted"
 					>
-						Rewatch
+						{watchLabel}
 					</span>
 				{/if}
 				{#if isOwner && !log.isPublic}

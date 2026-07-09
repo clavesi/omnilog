@@ -1,8 +1,8 @@
 import { error } from "@sveltejs/kit";
-import { and, desc, eq } from "drizzle-orm";
+import { and, eq } from "drizzle-orm";
 import { db } from "$lib/server/db";
-import { logs, mediaParts, users } from "$lib/server/db/schema";
-import { directMedia, logMediaSelect, parentPart, partMedia } from "$lib/server/log-media-joins";
+import { logs, users } from "$lib/server/db/schema";
+import { queryLogsWithMedia } from "$lib/server/logs";
 import type { PageServerLoad } from "./$types";
 
 export const load: PageServerLoad = async ({ params, locals }) => {
@@ -21,30 +21,13 @@ export const load: PageServerLoad = async ({ params, locals }) => {
 
 	const isOwnProfile = locals.user?.id === profileUser.id;
 
-	const rows = await db
-		.select({
-			id: logs.id,
-			rating: logs.rating,
-			reviewTitle: logs.reviewTitle,
-			reviewBody: logs.reviewBody,
-			containsSpoilers: logs.containsSpoilers,
-			isRewatch: logs.isRewatch,
-			isPublic: logs.isPublic,
-			mediaPartId: logs.mediaPartId,
-			loggedAt: logs.loggedAt,
-			createdAt: logs.createdAt,
-			...logMediaSelect,
-		})
-		.from(logs)
-		.leftJoin(directMedia, eq(logs.mediaItemId, directMedia.id))
-		.leftJoin(mediaParts, eq(logs.mediaPartId, mediaParts.id))
-		.leftJoin(partMedia, eq(mediaParts.mediaItemId, partMedia.id))
-		.leftJoin(parentPart, eq(mediaParts.parentPartId, parentPart.id))
-		.where(
-			isOwnProfile ? eq(logs.userId, profileUser.id) : and(eq(logs.userId, profileUser.id), eq(logs.isPublic, true)),
-		)
-		.orderBy(desc(logs.createdAt))
-		.limit(50);
+	// Own profile shows all logs; others see only public entries.
+	const rows = await queryLogsWithMedia({
+		where: isOwnProfile
+			? eq(logs.userId, profileUser.id)
+			: and(eq(logs.userId, profileUser.id), eq(logs.isPublic, true)),
+		limit: 50,
+	});
 
 	return {
 		profileUser,

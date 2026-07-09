@@ -1,7 +1,8 @@
-import { and, desc, eq, lt, or } from "drizzle-orm";
+import { and, desc, eq, lt, not, or } from "drizzle-orm";
 import { db } from "./db";
 import { logs, mediaParts, users } from "./db/schema";
 import { directMedia, logMediaSelect, parentPart, partMedia } from "./log-media-joins";
+import { logCardSelect } from "./logs";
 
 const PAGE_SIZE = 20;
 
@@ -13,6 +14,7 @@ export function encodeCursor(c: FeedCursor): string {
 
 function decodeCursor(raw: string | null): FeedCursor | null {
 	if (!raw) return null;
+	// ISO timestamps contain hyphens, so split on the last "_" before the log id.
 	const idx = raw.lastIndexOf("_");
 	if (idx === -1) return null;
 	return { createdAt: raw.slice(0, idx), id: raw.slice(idx + 1) };
@@ -24,8 +26,7 @@ function decodeCursor(raw: string | null): FeedCursor | null {
  * since it won't skip or duplicate rows as new logs come in between pages.
  *
  * excludeUserId: pass to hide a user's own logs from a "not mine" view.
- * Currently unused (feed shows everyone including you) but wired up in
- * case you want that toggle later.
+ * Currently unused but wired up for later.
  */
 export async function getFeedPage(opts: { cursorRaw?: string | null; excludeUserId?: string } = {}) {
 	const cursor = decodeCursor(opts.cursorRaw ?? null);
@@ -45,22 +46,12 @@ export async function getFeedPage(opts: { cursorRaw?: string | null; excludeUser
 	}
 
 	if (opts.excludeUserId) {
-		conditions.push(eq(logs.userId, opts.excludeUserId));
+		conditions.push(not(eq(logs.userId, opts.excludeUserId)));
 	}
 
 	const rows = await db
 		.select({
-			id: logs.id,
-			userId: logs.userId,
-			rating: logs.rating,
-			reviewTitle: logs.reviewTitle,
-			reviewBody: logs.reviewBody,
-			containsSpoilers: logs.containsSpoilers,
-			isRewatch: logs.isRewatch,
-			isPublic: logs.isPublic,
-			mediaPartId: logs.mediaPartId,
-			loggedAt: logs.loggedAt,
-			createdAt: logs.createdAt,
+			...logCardSelect,
 			username: users.username,
 			...logMediaSelect,
 		})

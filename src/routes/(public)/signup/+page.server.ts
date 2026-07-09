@@ -4,18 +4,12 @@ import { eq } from "drizzle-orm";
 import { createSession, setSessionTokenCookie } from "$lib/server/auth";
 import { db } from "$lib/server/db";
 import { users } from "$lib/server/db/schema";
+import { safeRelativePath } from "$lib/server/safe-path";
 import type { Actions, PageServerLoad } from "./$types";
-
-// Only allow redirecting to a same-site relative path.
-function safeNextPath(raw: string | null): string {
-	if (!raw) return "/feed";
-	if (!raw.startsWith("/") || raw.startsWith("//")) return "/feed";
-	return raw;
-}
 
 // If already logged in, bounce them to the app.
 export const load: PageServerLoad = (event) => {
-	const next = safeNextPath(event.url.searchParams.get("next"));
+	const next = safeRelativePath(event.url.searchParams.get("next"));
 	if (event.locals.user) {
 		redirect(302, next);
 	}
@@ -29,7 +23,7 @@ export const actions: Actions = {
 		const username = formData.get("username");
 		const password = formData.get("password");
 		const nextRaw = formData.get("next");
-		const next = safeNextPath(typeof nextRaw === "string" ? nextRaw : null);
+		const next = safeRelativePath(typeof nextRaw === "string" ? nextRaw : null);
 
 		// Keep email/username on failure so the form doesn't blank out
 		const formValues = {

@@ -1,3 +1,4 @@
+/** TV episodes use S{n} E{n}; anime/other parts use E{n} only. */
 export function formatPartLabel(opts: {
 	seasonNumber?: number | null;
 	partNumber: number;

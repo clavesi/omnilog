@@ -6,6 +6,7 @@ let { data } = $props();
 let feedLogs = $state(data.initialLogs);
 let cursor = $state(data.initialCursor);
 let loadingMore = $state(false);
+let loadError = $state<string | null>(null);
 
 function handleDeleted(logId: string) {
 	feedLogs = feedLogs.filter((l) => l.id !== logId);
@@ -14,11 +15,18 @@ function handleDeleted(logId: string) {
 async function loadMore() {
 	if (!cursor || loadingMore) return;
 	loadingMore = true;
+	loadError = null;
 	try {
 		const res = await fetch(`/api/feed?cursor=${encodeURIComponent(cursor)}`);
+		if (!res.ok) {
+			loadError = "Couldn't load more logs. Try again.";
+			return;
+		}
 		const page = await res.json();
 		feedLogs = [...feedLogs, ...page.logs];
 		cursor = page.nextCursor;
+	} catch {
+		loadError = "Couldn't load more logs. Try again.";
 	} finally {
 		loadingMore = false;
 	}
@@ -40,6 +48,10 @@ async function loadMore() {
 				onDelete={handleDeleted}
 			/>
 		{/each}
+	{/if}
+
+	{#if loadError}
+		<p class="mt-4 text-center text-sm text-danger">{loadError}</p>
 	{/if}
 
 	{#if cursor}

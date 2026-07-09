@@ -3,6 +3,7 @@ import { redirect } from "@sveltejs/kit";
 import { eq } from "drizzle-orm";
 import { db } from "./db";
 import { sessions, users } from "./db/schema";
+import { safeRelativePath } from "./safe-path";
 
 const SECOND_IN_MS = 1000;
 const MINUTE_IN_MS = 60 * SECOND_IN_MS;
@@ -158,7 +159,8 @@ export function encodeSessionPublicJSON(session: { id: string; createdAt: Date; 
 // --- App middleware ---
 export function requireUser(event: RequestEvent) {
 	if (!event.locals.user) {
-		redirect(302, "/login");
+		const next = safeRelativePath(`${event.url.pathname}${event.url.search}`);
+		redirect(302, `/login?next=${encodeURIComponent(next)}`);
 	}
 	return event.locals.user;
 }

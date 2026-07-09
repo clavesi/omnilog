@@ -1,7 +1,8 @@
 import { error } from "@sveltejs/kit";
-import { and, desc, eq, or } from "drizzle-orm";
+import { eq } from "drizzle-orm";
 import { db } from "$lib/server/db";
-import { genres, logs, mediaGenres, mediaItems, mediaMetadata, users } from "$lib/server/db/schema";
+import { genres, mediaGenres, mediaItems, mediaMetadata } from "$lib/server/db/schema";
+import { getLogsForMediaItem } from "$lib/server/logs";
 import type { PageServerLoad } from "./$types";
 
 export const load: PageServerLoad = async ({ params, locals }) => {
@@ -18,48 +19,14 @@ export const load: PageServerLoad = async ({ params, locals }) => {
 		.where(eq(mediaGenres.mediaItemId, item.id));
 
 	const currentUserId = locals.user?.id ?? null;
-	// Recent logs for this item, across all users, newest first.
-	const recentLogs = await db
-		.select({
-			id: logs.id,
-			userId: logs.userId,
-			rating: logs.rating,
-			reviewTitle: logs.reviewTitle,
-			reviewBody: logs.reviewBody,
-			containsSpoilers: logs.containsSpoilers,
-			isRewatch: logs.isRewatch,
-			isPublic: logs.isPublic,
-			mediaPartId: logs.mediaPartId,
-			loggedAt: logs.loggedAt,
-			createdAt: logs.createdAt,
-			username: users.username,
-		})
-		.from(logs)
-		.innerJoin(users, eq(logs.userId, users.id))
-		.where(
-			and(
-				eq(logs.mediaItemId, item.id),
-				currentUserId ? or(eq(logs.isPublic, true), eq(logs.userId, currentUserId)) : eq(logs.isPublic, true),
-			),
-		)
-		.orderBy(desc(logs.createdAt))
-		.limit(20);
-
-	// Attach mediaSlug/Title/Cover manually since LogCard expects them —
-	// we already have `item` here, no need to re-join.
-	const logsWithMedia = recentLogs.map((l) => ({
-		...l,
-		mediaSlug: item.slug,
-		mediaTitle: item.title,
-		mediaCoverUrl: item.coverImageUrl,
-		mediaType: item.mediaType,
-	}));
+	// Item is already loaded — attach media fields in JS instead of joining again.
+	const logs = await getLogsForMediaItem(item.id, currentUserId, item);
 
 	return {
 		item,
 		metadata: meta?.metadata ?? null,
 		genres: itemGenres,
-		logs: logsWithMedia,
-		currentUserId: locals.user?.id ?? null,
+		logs,
+		currentUserId,
 	};
 };
