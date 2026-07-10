@@ -1,4 +1,6 @@
 <script lang="ts">
+import { fade } from "svelte/transition";
+import { getMediaTypeColor } from "$lib/media-type-colors";
 import { formatPartLabel } from "$lib/part-label";
 import type { LogCardData } from "$lib/types/log";
 import { formatWatchLabel } from "$lib/watch-label";
@@ -77,15 +79,20 @@ const partLabel = $derived(
 );
 
 const watchLabel = $derived(formatWatchLabel(log.watchNumber, log.isRewatch));
+const typeColor = $derived(log.mediaType ? getMediaTypeColor(log.mediaType) : null);
 </script>
 
 <article
-	class="border-b border-border py-6 transition-opacity duration-150"
+	class="animate-fade-up mb-4 rounded-md border border-border bg-bg p-5 transition-opacity duration-200 last:mb-0"
 	class:opacity-50={deleting}
 >
 	<div class="flex gap-4">
 		{#if showMediaInfo}
-			<a href={partHref ?? `/media/${log.mediaSlug}`} class="flex shrink-0 gap-1.5 no-underline">
+			<a
+				href={partHref ?? `/media/${log.mediaSlug}`}
+				class="group/cover flex shrink-0 gap-1.5 no-underline"
+				style={typeColor ? `--type-color: ${typeColor}` : undefined}
+			>
 				{#if log.mediaType}
 					<MediaTypeMark mediaType={log.mediaType} variant="tab" />
 				{/if}
@@ -93,10 +100,12 @@ const watchLabel = $derived(formatWatchLabel(log.watchNumber, log.isRewatch));
 					<img
 						src={log.mediaCoverUrl}
 						alt=""
-						class="h-[69px] w-[46px] rounded-sm bg-surface object-cover"
+						class="cover-hover h-[69px] w-[46px] rounded-sm bg-surface object-cover group-hover/cover:shadow-[0_0_0_1px_var(--type-color)]"
 					/>
 				{:else}
-					<div class="h-[69px] w-[46px] rounded-sm bg-surface"></div>
+					<div
+						class="cover-hover h-[69px] w-[46px] rounded-sm bg-surface group-hover/cover:shadow-[0_0_0_1px_var(--type-color)]"
+					></div>
 				{/if}
 			</a>
 		{/if}
@@ -107,24 +116,21 @@ const watchLabel = $derived(formatWatchLabel(log.watchNumber, log.isRewatch));
 					{#if partLabel && partHref}
 						<a
 							href={partHref}
-							class="font-display text-[1.0625rem] font-semibold text-text no-underline hover:text-accent"
+							class="font-display text-[1.0625rem] font-semibold text-text no-underline transition-colors hover:text-accent"
 						>
 							{partLabel}
 						</a>
 					{:else}
 						<a
 							href="/media/{log.mediaSlug}"
-							class="font-display text-[1.0625rem] font-semibold text-text no-underline hover:text-accent"
+							class="font-display text-[1.0625rem] font-semibold text-text no-underline transition-colors hover:text-accent"
 						>
 							{log.mediaTitle}
 						</a>
 					{/if}
 				{/if}
 				{#if showAuthor && log.username}
-					<a
-						href="/u/{log.username}"
-						class="text-sm text-accent no-underline hover:text-text"
-					>
+					<a href="/u/{log.username}" class="link-soft text-sm">
 						{log.username}
 					</a>
 				{/if}
@@ -167,11 +173,18 @@ const watchLabel = $derived(formatWatchLabel(log.watchNumber, log.isRewatch));
 					{#if log.containsSpoilers && !revealSpoilers}
 						<button
 							type="button"
-							class="cursor-pointer rounded-sm border border-dashed border-border bg-surface px-3 py-2 text-sm text-text-muted transition-colors hover:border-text-muted hover:text-text"
+							class="cursor-pointer rounded-sm border border-dashed border-border bg-surface px-3 py-2 text-sm text-text-muted transition-colors duration-200 hover:border-text-muted hover:text-text"
 							onclick={() => (revealSpoilers = true)}
 						>
 							Contains spoilers — click to reveal
 						</button>
+					{:else if log.containsSpoilers}
+						<p
+							class="m-0 leading-relaxed whitespace-pre-wrap text-text"
+							in:fade={{ duration: 200 }}
+						>
+							{log.reviewBody}
+						</p>
 					{:else}
 						<p class="m-0 leading-relaxed whitespace-pre-wrap text-text">
 							{log.reviewBody}
@@ -182,13 +195,13 @@ const watchLabel = $derived(formatWatchLabel(log.watchNumber, log.isRewatch));
 
 			{#if isOwner}
 				<div class="mt-3 flex gap-4 text-[0.8125rem]">
-					<a href={editHref} class="text-accent no-underline hover:text-text">
+					<a href={editHref} class="link-soft">
 						Edit
 					</a>
 
 					<button
 						type="button"
-						class="cursor-pointer border-none bg-transparent p-0 text-[0.8125rem] text-danger transition-colors hover:text-text"
+						class="cursor-pointer border-none bg-transparent p-0 text-[0.8125rem] text-danger transition-opacity duration-200 hover:opacity-80"
 						onclick={handleDelete}
 						disabled={deleting}
 					>

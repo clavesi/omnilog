@@ -14,8 +14,8 @@ const label = $derived(mediaTypeLabel(mediaType));
 
 {#if variant === "tab"}
 	<span
-		class="shrink-0 self-stretch rounded-sm"
-		style="width: 3px; background-color: {color}"
+		class="shrink-0 self-stretch rounded-sm transition-shadow duration-200 group-hover/cover:shadow-[0_0_10px_color-mix(in_srgb,var(--mark-color)_70%,transparent)]"
+		style="width: 3px; background-color: {color}; --mark-color: {color}"
 		aria-hidden="true"
 	></span>
 {:else}

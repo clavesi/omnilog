@@ -1,7 +1,7 @@
 <script lang="ts">
 import LogCard from "$lib/components/LogCard.svelte";
 import MediaTypeMark from "$lib/components/MediaTypeMark.svelte";
-import { mediaTypeLabel } from "$lib/media-type-colors";
+import { getMediaTypeColor, mediaTypeLabel } from "$lib/media-type-colors";
 import { isMetadataType } from "$lib/media-types";
 
 let { data } = $props();
@@ -11,6 +11,7 @@ const metadata = $derived(data.metadata);
 const genres = $derived(data.genres);
 const year = $derived(item.releaseDate ? item.releaseDate.slice(0, 4) : null);
 const averageRatingNum = $derived(item.averageRating != null ? Number.parseFloat(item.averageRating) : NaN);
+const typeColor = $derived(getMediaTypeColor(item.mediaType));
 
 let deletedLogIds = $state(new Set<string>());
 const visibleLogs = $derived(data.logs.filter((l) => !deletedLogIds.has(l.id)));
@@ -22,17 +23,30 @@ function handleDeleted(logId: string) {
 
 <article>
 	{#if item.backdropImageUrl}
-		<div
-			class="mb-8 h-52 rounded-sm bg-cover bg-center"
-			style="background-image: url({item.backdropImageUrl})"
-		></div>
+		<div class="relative -mx-6 mb-8 h-56 overflow-hidden sm:mx-0 sm:rounded-md">
+			<div
+				class="absolute inset-0 bg-cover bg-center"
+				style="background-image: url({item.backdropImageUrl})"
+			></div>
+			<div
+				class="absolute inset-0 bg-linear-to-b from-bg/20 via-bg/40 to-bg"
+				aria-hidden="true"
+			></div>
+		</div>
 	{/if}
 
 	<div class="grid grid-cols-1 gap-8 sm:grid-cols-[180px_1fr]">
-		<div class="flex gap-2 sm:flex-col">
+		<div
+			class="group/cover flex gap-2 sm:flex-col"
+			style="--type-color: {typeColor}"
+		>
 			<MediaTypeMark mediaType={item.mediaType} variant="tab" />
 			{#if item.coverImageUrl}
-				<img class="w-full max-w-[180px] rounded-sm" src={item.coverImageUrl} alt="" />
+				<img
+					class="cover-hover w-full max-w-[180px] rounded-sm group-hover/cover:shadow-[0_0_0_1px_var(--type-color)]"
+					src={item.coverImageUrl}
+					alt=""
+				/>
 			{/if}
 		</div>
 

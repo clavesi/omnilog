@@ -34,7 +34,14 @@ async function loadMore() {
 </script>
 
 <div>
-	<h1 class="mb-8 text-2xl">Feed</h1>
+	<header class="mb-10">
+		<h1 class="m-0 font-display text-4xl tracking-tight sm:text-5xl">Feed</h1>
+		<div class="mt-4 flex items-center gap-3" aria-hidden="true">
+			<span class="h-0.5 w-10 rounded-full bg-accent"></span>
+			<span class="h-px flex-1 bg-border"></span>
+		</div>
+		<p class="mt-3 font-mono text-sm text-text-muted">Latest logs from everyone</p>
+	</header>
 
 	{#if feedLogs.length === 0}
 		<p class="py-12 text-center text-text-muted">No public logs yet. Be the first to log something!</p>

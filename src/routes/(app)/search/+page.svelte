@@ -247,7 +247,8 @@ function dismissWarning(itemKey: string) {
 						<input type="hidden" name="externalId" value={hit.id} />
 						<button
 							type="submit"
-							class="flex w-full cursor-pointer items-center gap-3 border-none bg-transparent px-0 py-4 text-left font-[inherit] text-inherit transition-colors hover:bg-surface disabled:cursor-wait disabled:opacity-60"
+							class="group/cover flex w-full cursor-pointer items-center gap-3 border-none bg-transparent px-0 py-4 text-left font-[inherit] text-inherit transition-colors hover:bg-surface/60 disabled:cursor-wait disabled:opacity-60"
+							style="--type-color: {getMediaTypeColor(hit.type)}"
 							disabled={importing === itemKey}
 						>
 							<MediaTypeMark mediaType={hit.type} variant="tab" />
@@ -255,10 +256,12 @@ function dismissWarning(itemKey: string) {
 								<img
 									src={imageOf(hit)}
 									alt=""
-									class="h-[69px] w-[46px] shrink-0 rounded-sm object-cover"
+									class="cover-hover h-[69px] w-[46px] shrink-0 rounded-sm object-cover group-hover/cover:shadow-[0_0_0_1px_var(--type-color)]"
 								/>
 							{:else}
-								<div class="h-[69px] w-[46px] shrink-0 rounded-sm bg-surface"></div>
+								<div
+									class="cover-hover h-[69px] w-[46px] shrink-0 rounded-sm bg-surface group-hover/cover:shadow-[0_0_0_1px_var(--type-color)]"
+								></div>
 							{/if}
 							<div class="flex min-w-0 flex-1 flex-col gap-0.5">
 								<span class="font-display font-medium">{titleOf(hit)}</span>
