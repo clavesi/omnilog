@@ -1,7 +1,11 @@
 /**
- * Note: Jikan has a rate limit of ~3 req/sec, ~60/min. The throttle below
- * enforces a minimum gap between requests so rapid typeahead searches (or
- * search immediately followed by an import's detail fetch) don't 429.
+ * Backed by Tenrai (api.tenrai.org)
+ * Jikan's public instance is shutting down (brownout Sept 1 2026, full shutdown Oct 1 2026).
+ * Tenrai's v1 schema is documented as a 1:1 mirror of Jikan v4.
+ *
+ * Note: throttle values below were inherited from Jikan's documented limits (~3 req/sec, ~60/min)
+ * as a safe conservative default. Tenrai markets itself as "built for scale" and may tolerate more throughput.
+ * Worth revisiting against their actual documented limits if this ever becomes a bottleneck.
  */
 
 import { and, eq } from "drizzle-orm";
@@ -17,8 +21,8 @@ import { findPossibleDuplicate, PossibleDuplicateError } from "$lib/server/dedup
 import { buildSlug, findExistingMediaId, linkGenres } from "$lib/server/media-import";
 import { createPart, findFlatParts } from "$lib/server/parts";
 
-const JIKAN_BASE = "https://api.jikan.moe/v4";
-const MIN_REQUEST_GAP_MS = 350; // ~2.8/sec, safely under the 3/sec limit
+const TENRAI_BASE = "https://api.tenrai.org/v1";
+const MIN_REQUEST_GAP_MS = 350; // ~2.8/sec, conservative default inherited from Jikan's limits
 
 // ============================================================================
 // Simple sequential throttle — queues requests so they're spaced out rather
@@ -28,10 +32,29 @@ const MIN_REQUEST_GAP_MS = 350; // ~2.8/sec, safely under the 3/sec limit
 let lastRequestAt = 0;
 let throttleChain: Promise<void> = Promise.resolve();
 
-function throttled<T>(fn: () => Promise<T>): Promise<T> {
+/** setTimeout that rejects early if the signal aborts while waiting. */
+function abortableDelay(ms: number, signal?: AbortSignal): Promise<void> {
+	return new Promise((resolve, reject) => {
+		if (signal?.aborted) {
+			reject(signal.reason ?? new DOMException("Aborted", "AbortError"));
+			return;
+		}
+		const timer = setTimeout(resolve, ms);
+		signal?.addEventListener(
+			"abort",
+			() => {
+				clearTimeout(timer);
+				reject(signal.reason ?? new DOMException("Aborted", "AbortError"));
+			},
+			{ once: true },
+		);
+	});
+}
+
+function throttled<T>(fn: () => Promise<T>, signal?: AbortSignal): Promise<T> {
 	const run = throttleChain.then(async () => {
 		const wait = Math.max(0, lastRequestAt + MIN_REQUEST_GAP_MS - Date.now());
-		if (wait > 0) await new Promise((r) => setTimeout(r, wait));
+		if (wait > 0) await abortableDelay(wait, signal);
 		lastRequestAt = Date.now();
 	});
 	throttleChain = run.catch(() => {}); // keep the chain alive even if one call errors
@@ -40,13 +63,22 @@ function throttled<T>(fn: () => Promise<T>): Promise<T> {
 
 const RETRYABLE_STATUSES = new Set([429, 502, 503, 504]);
 
-async function jikanFetch<T>(path: string, retriesLeft = 2): Promise<T> {
+/**
+ * signal: pass the originating request's AbortSignal through so a search
+ * superseded by newer typeahead input actually stops — both while queued
+ * (abortableDelay) and mid-flight (fetch's own signal support) — instead
+ * of quietly finishing (and retrying) in the background. Without this,
+ * rapid typing can pile up stale, still-running searches behind the
+ * shared throttle queue, which can itself trip Jikan's real rate limit
+ * for the searches that actually still matter.
+ */
+async function jikanFetch<T>(path: string, signal?: AbortSignal, retriesLeft = 2): Promise<T> {
 	return throttled(async () => {
-		const res = await fetch(`${JIKAN_BASE}${path}`);
+		const res = await fetch(`${TENRAI_BASE}${path}`, { signal });
 
 		if (RETRYABLE_STATUSES.has(res.status)) {
 			if (retriesLeft <= 0) {
-				throw new Error(`Jikan ${path} failed: ${res.status} ${res.statusText}, retries exhausted`);
+				throw new Error(`Tenrai ${path} failed: ${res.status} ${res.statusText}, retries exhausted`);
 			}
 			// Respect Retry-After if the upstream sends one (mainly a 429
 			// thing). For 502/503/504 there's usually no such header — back
@@ -55,16 +87,16 @@ async function jikanFetch<T>(path: string, retriesLeft = 2): Promise<T> {
 			// or two.
 			const retryAfterHeader = res.headers.get("Retry-After");
 			const retryAfterMs = retryAfterHeader ? Number(retryAfterHeader) * 1000 : 1000;
-			await new Promise((r) => setTimeout(r, retryAfterMs));
-			return jikanFetch<T>(path, retriesLeft - 1);
+			await abortableDelay(retryAfterMs, signal);
+			return jikanFetch<T>(path, signal, retriesLeft - 1);
 		}
 
 		if (!res.ok) {
-			throw new Error(`Jikan ${path} failed: ${res.status} ${res.statusText}`);
+			throw new Error(`Tenrai ${path} failed: ${res.status} ${res.statusText}`);
 		}
 		const json = await res.json();
 		return json.data as T;
-	});
+	}, signal);
 }
 
 // ============================================================================
@@ -146,10 +178,13 @@ export type JikanSearchHit =
 // Public: search
 // ============================================================================
 
-export async function searchAnime(query: string): Promise<JikanSearchHit[]> {
+export async function searchAnime(query: string, signal?: AbortSignal): Promise<JikanSearchHit[]> {
 	if (!query.trim()) return [];
 
-	const results = await jikanFetch<JikanAnimeSearchRaw[]>(`/anime?q=${encodeURIComponent(query)}&limit=10&sfw=true`);
+	const results = await jikanFetch<JikanAnimeSearchRaw[]>(
+		`/anime?q=${encodeURIComponent(query)}&limit=10&sfw=true`,
+		signal,
+	);
 
 	// Jikan occasionally returns the same mal_id twice in one search
 	// response — dedupe before mapping to avoid duplicate keys downstream.
@@ -172,10 +207,13 @@ export async function searchAnime(query: string): Promise<JikanSearchHit[]> {
 	);
 }
 
-export async function searchManga(query: string): Promise<JikanSearchHit[]> {
+export async function searchManga(query: string, signal?: AbortSignal): Promise<JikanSearchHit[]> {
 	if (!query.trim()) return [];
 
-	const results = await jikanFetch<JikanMangaSearchRaw[]>(`/manga?q=${encodeURIComponent(query)}&limit=10&sfw=true`);
+	const results = await jikanFetch<JikanMangaSearchRaw[]>(
+		`/manga?q=${encodeURIComponent(query)}&limit=10&sfw=true`,
+		signal,
+	);
 
 	// Same dedupe as searchAnime — Jikan's search index can return a manga
 	// twice (e.g. once for the main entry, once via a cross-reference).
