@@ -49,11 +49,11 @@ const orderedShowcase = $derived(
 	{#if orderedShowcase.length > 0}
 		<section class="mb-10">
 			<h2 class="mb-4 text-sm tracking-wide text-text-muted uppercase">Showcase</h2>
-			<div class="flex flex-wrap gap-4">
+			<div class="grid grid-cols-1 gap-4 min-[420px]:grid-cols-4 sm:grid-cols-5 md:grid-cols-6 lg:grid-cols-7">
 				{#each orderedShowcase as fav (fav.mediaItemId)}
 					<a
 						href="/media/{fav.slug}"
-						class="group/cover w-[110px] shrink-0 no-underline"
+						class="group/cover min-w-0 no-underline"
 						style="--type-color: {getMediaTypeColor(fav.mediaType)}"
 					>
 						<div class="flex gap-1.5">
@@ -62,10 +62,10 @@ const orderedShowcase = $derived(
 								<img
 									src={fav.coverImageUrl}
 									alt=""
-									class="w-full rounded-sm group-hover/cover:shadow-[0_0_0_1px_var(--type-color)]"
+									class="aspect-2/3 w-full rounded-sm object-cover group-hover/cover:shadow-[0_0_0_1px_var(--type-color)]"
 								/>
 							{:else}
-								<div class="flex w-full items-center justify-center rounded-sm border border-border bg-surface py-8 text-text-muted">
+								<div class="flex aspect-2/3 w-full items-center justify-center rounded-sm border border-border bg-surface text-text-muted">
 									?
 								</div>
 							{/if}
