@@ -1,9 +1,11 @@
-import { error } from "@sveltejs/kit";
+import { error, fail } from "@sveltejs/kit";
 import { eq } from "drizzle-orm";
+import { requireUser } from "$lib/server/auth";
 import { db } from "$lib/server/db";
 import { genres, mediaGenres, mediaItems, mediaMetadata } from "$lib/server/db/schema";
+import { getFavoriteForType, removeFavorite, setFavorite } from "$lib/server/favorites";
 import { getLogsForMediaItem } from "$lib/server/logs";
-import type { PageServerLoad } from "./$types";
+import type { Actions, PageServerLoad } from "./$types";
 
 export const load: PageServerLoad = async ({ params, locals }) => {
 	const [item] = await db.select().from(mediaItems).where(eq(mediaItems.slug, params.slug)).limit(1);
@@ -22,11 +24,47 @@ export const load: PageServerLoad = async ({ params, locals }) => {
 	// Item is already loaded — attach media fields in JS instead of joining again.
 	const logs = await getLogsForMediaItem(item.id, currentUserId, item);
 
+	// Is this item the viewer's current favorite for its media type?
+	let isFavorite = false;
+	if (currentUserId) {
+		const favId = await getFavoriteForType(currentUserId, item.mediaType);
+		isFavorite = favId === item.id;
+	}
+
 	return {
 		item,
 		metadata: meta?.metadata ?? null,
 		genres: itemGenres,
 		logs,
 		currentUserId,
+		isFavorite,
 	};
+};
+
+export const actions: Actions = {
+	toggleFavorite: async (event) => {
+		const user = requireUser(event);
+		const { params } = event;
+
+		const [item] = await db
+			.select({ id: mediaItems.id, mediaType: mediaItems.mediaType })
+			.from(mediaItems)
+			.where(eq(mediaItems.slug, params.slug))
+			.limit(1);
+
+		if (!item) return fail(404, { error: "Media not found" });
+
+		const currentFavoriteId = await getFavoriteForType(user.id, item.mediaType);
+
+		if (currentFavoriteId === item.id) {
+			// Already the favorite, toggle off.
+			await removeFavorite(user.id, item.mediaType);
+			return { isFavorite: false };
+		}
+
+		// Either no favorite set for this type yet, or a different item was.
+		// setFavorite upserts, so this replaces any existing favorite of that type.
+		await setFavorite(user.id, item.id, item.mediaType);
+		return { isFavorite: true };
+	},
 };

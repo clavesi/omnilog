@@ -1,4 +1,5 @@
 <script lang="ts">
+import { enhance } from "$app/forms";
 import LogCard from "$lib/components/LogCard.svelte";
 import MediaTypeMark from "$lib/components/MediaTypeMark.svelte";
 import { getMediaTypeColor, mediaTypeLabel } from "$lib/media-type-colors";
@@ -202,6 +203,20 @@ function handleDeleted(logId: string) {
 				>
 					Log this
 				</a>
+
+				{#if data.currentUserId}
+					<form method="POST" action="?/toggleFavorite" use:enhance>
+						<button
+							type="submit"
+							class="inline-flex cursor-pointer items-center gap-1.5 rounded-sm border px-4 py-2 transition-colors {data.isFavorite
+								? 'border-accent text-accent'
+								: 'border-border text-text hover:border-text-muted hover:bg-surface'}"
+						>
+							<span>{data.isFavorite ? "★" : "☆"}</span>
+							{data.isFavorite ? `${mediaTypeLabel(item.mediaType)} favorite` : "Set as favorite"}
+						</button>
+					</form>
+				{/if}
 
 				{#if item.mediaType === "tv"}
 					<a

@@ -2,6 +2,7 @@ import { error } from "@sveltejs/kit";
 import { and, eq } from "drizzle-orm";
 import { db } from "$lib/server/db";
 import { logs, users } from "$lib/server/db/schema";
+import { getShowcaseForUser } from "$lib/server/favorites";
 import { queryLogsWithMedia } from "$lib/server/logs";
 import type { PageServerLoad } from "./$types";
 
@@ -29,9 +30,12 @@ export const load: PageServerLoad = async ({ params, locals }) => {
 		limit: 50,
 	});
 
+	const showcase = await getShowcaseForUser(profileUser.id);
+
 	return {
 		profileUser,
 		logs: rows,
+		showcase,
 		isOwnProfile,
 	};
 };

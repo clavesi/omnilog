@@ -303,12 +303,37 @@ export const userMediaStatus = pgTable(
 );
 
 // ============================================================================
+// FAVORITES
+// One favorite per user per media type — enforced by the unique index below.
+// ============================================================================
+export const favorites = pgTable(
+	"favorites",
+	{
+		id: uuid("id").primaryKey().defaultRandom(),
+		userId: uuid("user_id")
+			.notNull()
+			.references(() => users.id, { onDelete: "cascade" }),
+		mediaType: mediaTypeEnum("media_type").notNull(),
+		mediaItemId: uuid("media_item_id")
+			.notNull()
+			.references(() => mediaItems.id, { onDelete: "cascade" }),
+		createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+	},
+	(t) => [
+		uniqueIndex("favorites_user_media_type_unique").on(t.userId, t.mediaType),
+		index("favorites_user_idx").on(t.userId),
+		index("favorites_media_item_idx").on(t.mediaItemId),
+	],
+);
+
+// ============================================================================
 // RELATIONS
 // ============================================================================
 export const usersRelations = relations(users, ({ many }) => ({
 	sessions: many(sessions),
 	logs: many(logs),
 	statuses: many(userMediaStatus),
+	favorites: many(favorites),
 }));
 
 export const sessionsRelations = relations(sessions, ({ one }) => ({
@@ -328,6 +353,12 @@ export const mediaItemsRelations = relations(mediaItems, ({ many, one }) => ({
 	parts: many(mediaParts),
 	logs: many(logs),
 	statuses: many(userMediaStatus),
+	favorites: many(favorites),
+}));
+
+export const favoritesRelations = relations(favorites, ({ one }) => ({
+	user: one(users, { fields: [favorites.userId], references: [users.id] }),
+	mediaItem: one(mediaItems, { fields: [favorites.mediaItemId], references: [mediaItems.id] }),
 }));
 
 export const mediaExternalIdsRelations = relations(mediaExternalIds, ({ one }) => ({

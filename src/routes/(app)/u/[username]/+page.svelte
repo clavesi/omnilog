@@ -1,5 +1,7 @@
 <script lang="ts">
 import LogCard from "$lib/components/LogCard.svelte";
+import MediaTypeMark from "$lib/components/MediaTypeMark.svelte";
+import { getMediaTypeColor, mediaTypeLabel } from "$lib/media-type-colors";
 
 let { data } = $props();
 
@@ -9,6 +11,13 @@ let visibleLogs = $derived(data.logs.filter((l) => !deletedLogIds.has(l.id)));
 function handleDeleted(logId: string) {
 	deletedLogIds = new Set([...deletedLogIds, logId]);
 }
+
+// Stable display order — otherwise the grid would shuffle based on
+// whatever order the DB happens to return rows in.
+const TYPE_ORDER = ["movie", "tv", "anime", "manga", "game", "music", "book"];
+const orderedShowcase = $derived(
+	[...data.showcase].sort((a, b) => TYPE_ORDER.indexOf(a.mediaType) - TYPE_ORDER.indexOf(b.mediaType)),
+);
 </script>
 
 <div>
@@ -36,6 +45,45 @@ function handleDeleted(logId: string) {
 			</p>
 		</div>
 	</header>
+
+	{#if orderedShowcase.length > 0}
+		<section class="mb-10">
+			<h2 class="mb-4 text-sm tracking-wide text-text-muted uppercase">Showcase</h2>
+			<div class="flex flex-wrap gap-4">
+				{#each orderedShowcase as fav (fav.mediaItemId)}
+					<a
+						href="/media/{fav.slug}"
+						class="group/cover w-[110px] shrink-0 no-underline"
+						style="--type-color: {getMediaTypeColor(fav.mediaType)}"
+					>
+						<div class="flex gap-1.5">
+							<MediaTypeMark mediaType={fav.mediaType} variant="tab" />
+							{#if fav.coverImageUrl}
+								<img
+									src={fav.coverImageUrl}
+									alt=""
+									class="w-full rounded-sm group-hover/cover:shadow-[0_0_0_1px_var(--type-color)]"
+								/>
+							{:else}
+								<div class="flex w-full items-center justify-center rounded-sm border border-border bg-surface py-8 text-text-muted">
+									?
+								</div>
+							{/if}
+						</div>
+						<p class="mt-2 mb-0 truncate text-sm text-text">{fav.title}</p>
+						<p class="m-0 font-mono text-xs text-text-muted">{mediaTypeLabel(fav.mediaType)}</p>
+					</a>
+				{/each}
+			</div>
+		</section>
+	{:else if data.isOwnProfile}
+		<section class="mb-10 rounded-sm border border-dashed border-border p-6 text-center text-text-muted">
+			<p class="m-0">
+				No favorites set yet. Visit any movie, show, game, or other media page and click the star
+				to add it to your showcase.
+			</p>
+		</section>
+	{/if}
 
 	<section>
 		{#if visibleLogs.length === 0}
