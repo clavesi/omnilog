@@ -3,10 +3,21 @@ import LogCard from "$lib/components/LogCard.svelte";
 
 let { data } = $props();
 
+// svelte-ignore state_referenced_locally
 let feedLogs = $state(data.initialLogs);
+// svelte-ignore state_referenced_locally
 let cursor = $state(data.initialCursor);
 let loadingMore = $state(false);
 let loadError = $state<string | null>(null);
+
+// If SvelteKit re-runs load() (e.g. navigating away and back to /feed),
+//   data updates but these wouldn't pick up the fresh values without this.
+// This intentionally resets any "load more" pagination back to page one,
+//   matching what a fresh load of the page would show.
+$effect(() => {
+	feedLogs = data.initialLogs;
+	cursor = data.initialCursor;
+});
 
 function handleDeleted(logId: string) {
 	feedLogs = feedLogs.filter((l) => l.id !== logId);
