@@ -68,11 +68,13 @@ export type OpenLibrarySearchHit = {
 // Public: search
 // ============================================================================
 
-export async function searchBooks(query: string): Promise<OpenLibrarySearchHit[]> {
+export async function searchBooks(query: string, signal?: AbortSignal): Promise<OpenLibrarySearchHit[]> {
 	if (!query.trim()) return [];
 
 	const fields = "key,title,author_name,first_publish_year,cover_i";
-	const res = await fetch(`${OL_BASE}/search.json?q=${encodeURIComponent(query)}&limit=10&fields=${fields}`);
+	const res = await fetch(`${OL_BASE}/search.json?q=${encodeURIComponent(query)}&limit=10&fields=${fields}`, {
+		signal,
+	});
 	if (!res.ok) {
 		throw new Error(`Open Library search failed: ${res.status} ${res.statusText}`);
 	}

@@ -32,35 +32,55 @@ const MIN_REQUEST_GAP_MS = 1100; // just over 1/sec, matches MB's stated limit
 let lastRequestAt = 0;
 let throttleChain: Promise<void> = Promise.resolve();
 
-function throttled<T>(fn: () => Promise<T>): Promise<T> {
+/** setTimeout that rejects early if the signal aborts while waiting. */
+function abortableDelay(ms: number, signal?: AbortSignal): Promise<void> {
+	return new Promise((resolve, reject) => {
+		if (signal?.aborted) {
+			reject(signal.reason ?? new DOMException("Aborted", "AbortError"));
+			return;
+		}
+		const timer = setTimeout(resolve, ms);
+		signal?.addEventListener(
+			"abort",
+			() => {
+				clearTimeout(timer);
+				reject(signal.reason ?? new DOMException("Aborted", "AbortError"));
+			},
+			{ once: true },
+		);
+	});
+}
+
+function throttled<T>(fn: () => Promise<T>, signal?: AbortSignal): Promise<T> {
 	const run = throttleChain.then(async () => {
 		const wait = Math.max(0, lastRequestAt + MIN_REQUEST_GAP_MS - Date.now());
-		if (wait > 0) await new Promise((r) => setTimeout(r, wait));
+		if (wait > 0) await abortableDelay(wait, signal);
 		lastRequestAt = Date.now();
 	});
 	throttleChain = run.catch(() => {});
 	return run.then(fn);
 }
 
-async function mbFetch<T>(path: string, retriesLeft = 2): Promise<T> {
+async function mbFetch<T>(path: string, signal?: AbortSignal, retriesLeft = 2): Promise<T> {
 	return throttled(async () => {
 		const res = await fetch(`${MB_BASE}${path}`, {
 			headers: { "User-Agent": USER_AGENT, Accept: "application/json" },
+			signal,
 		});
 
 		if (res.status === 503) {
 			if (retriesLeft <= 0) {
 				throw new Error(`MusicBrainz ${path} failed: rate limited, retries exhausted`);
 			}
-			await new Promise((r) => setTimeout(r, 1500));
-			return mbFetch<T>(path, retriesLeft - 1);
+			await abortableDelay(1500, signal);
+			return mbFetch<T>(path, signal, retriesLeft - 1);
 		}
 
 		if (!res.ok) {
 			throw new Error(`MusicBrainz ${path} failed: ${res.status} ${res.statusText}`);
 		}
 		return res.json() as Promise<T>;
-	});
+	}, signal);
 }
 
 // ============================================================================
@@ -111,11 +131,12 @@ export type MusicBrainzSearchHit = {
 // Public: search
 // ============================================================================
 
-export async function searchAlbums(query: string): Promise<MusicBrainzSearchHit[]> {
+export async function searchAlbums(query: string, signal?: AbortSignal): Promise<MusicBrainzSearchHit[]> {
 	if (!query.trim()) return [];
 
 	const data = await mbFetch<{ "release-groups": MbReleaseGroupSearchRaw[] }>(
 		`/release-group/?query=${encodeURIComponent(query)}&fmt=json&limit=10`,
+		signal,
 	);
 
 	const groups = data["release-groups"] ?? [];
@@ -125,7 +146,7 @@ export async function searchAlbums(query: string): Promise<MusicBrainzSearchHit[
 	// a failure/404 here as "no cover", not an error worth surfacing.
 	const withCovers = await Promise.all(
 		groups.map(async (g) => {
-			const coverUrl = await fetchCoverArtUrl(g.id).catch(() => null);
+			const coverUrl = await fetchCoverArtUrl(g.id, signal).catch(() => null);
 			return { g, coverUrl };
 		}),
 	);
@@ -143,9 +164,10 @@ export async function searchAlbums(query: string): Promise<MusicBrainzSearchHit[
 	);
 }
 
-async function fetchCoverArtUrl(releaseGroupMbid: string): Promise<string | null> {
+async function fetchCoverArtUrl(releaseGroupMbid: string, signal?: AbortSignal): Promise<string | null> {
 	const res = await fetch(`${COVER_ART_BASE}/release-group/${releaseGroupMbid}`, {
 		headers: { "User-Agent": USER_AGENT, Accept: "application/json" },
+		signal,
 	});
 	if (!res.ok) return null; // 404 is the common/expected case — no art registered
 	const data = (await res.json()) as MbCoverArtResponse;

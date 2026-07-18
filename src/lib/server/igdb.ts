@@ -43,7 +43,7 @@ async function getAccessToken(): Promise<string> {
 // Low-level IGDB request — POST with an Apicalypse query body
 // ============================================================================
 
-async function igdb<T>(endpoint: string, query: string): Promise<T> {
+async function igdb<T>(endpoint: string, query: string, signal?: AbortSignal): Promise<T> {
 	const token = await getAccessToken();
 
 	const res = await fetch(`${IGDB_BASE}/${endpoint}`, {
@@ -55,6 +55,7 @@ async function igdb<T>(endpoint: string, query: string): Promise<T> {
 			"Content-Type": "text/plain",
 		},
 		body: query,
+		signal,
 	});
 
 	if (!res.ok) {
@@ -102,7 +103,7 @@ export type IgdbSearchHit = {
 
 const SEARCH_FIELDS = "name,summary,first_release_date,cover.image_id,platforms.name";
 
-export async function searchGames(query: string): Promise<IgdbSearchHit[]> {
+export async function searchGames(query: string, signal?: AbortSignal): Promise<IgdbSearchHit[]> {
 	if (!query.trim()) return [];
 
 	// Apicalypse: double-quoted search string, semicolon-separated clauses.
@@ -111,7 +112,7 @@ export async function searchGames(query: string): Promise<IgdbSearchHit[]> {
 	const escaped = query.replace(/"/g, '\\"');
 	const body = `search "${escaped}"; fields ${SEARCH_FIELDS}; limit 10; where cover != null;`;
 
-	const results = await igdb<IgdbGameRaw[]>("games", body);
+	const results = await igdb<IgdbGameRaw[]>("games", body, signal);
 
 	return results.map((g) => ({
 		type: "game" as const,

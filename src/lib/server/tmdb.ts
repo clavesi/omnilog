@@ -106,7 +106,7 @@ type CacheEntry = { value: unknown; expiresAt: number };
 const cache = new Map<string, CacheEntry>();
 const CACHE_TTL_MS = 5 * 60 * 1000; // 5 minutes — TMDB data rarely changes
 
-async function tmdb<T>(path: string, params: Record<string, string> = {}): Promise<T> {
+async function tmdb<T>(path: string, params: Record<string, string> = {}, signal?: AbortSignal): Promise<T> {
 	const url = new URL(`${TMDB_BASE}${path}`);
 	url.searchParams.set("api_key", TMDB_API_KEY);
 	for (const [k, v] of Object.entries(params)) url.searchParams.set(k, v);
@@ -117,7 +117,7 @@ async function tmdb<T>(path: string, params: Record<string, string> = {}): Promi
 		return cached.value as T;
 	}
 
-	const res = await fetch(url, { headers: { Accept: "application/json" } });
+	const res = await fetch(url, { headers: { Accept: "application/json" }, signal });
 	if (!res.ok) {
 		throw new Error(`TMDB ${path} failed: ${res.status} ${res.statusText}`);
 	}
@@ -142,7 +142,7 @@ async function tmdb<T>(path: string, params: Record<string, string> = {}): Promi
  * people and preferring results with posters. Results are live from TMDB,
  * not from your DB.
  */
-export async function searchMoviesAndTv(query: string): Promise<TmdbSearchHit[]> {
+export async function searchMoviesAndTv(query: string, signal?: AbortSignal): Promise<TmdbSearchHit[]> {
 	if (!query.trim()) return [];
 
 	const data = await tmdb<{
@@ -150,10 +150,14 @@ export async function searchMoviesAndTv(query: string): Promise<TmdbSearchHit[]>
 			media_type: "movie" | "tv" | "person";
 			[key: string]: unknown;
 		}>;
-	}>("/search/multi", {
-		query,
-		include_adult: "false",
-	});
+	}>(
+		"/search/multi",
+		{
+			query,
+			include_adult: "false",
+		},
+		signal,
+	);
 
 	const hits: TmdbSearchHit[] = [];
 	for (const r of data.results) {
@@ -194,13 +198,17 @@ export async function searchMoviesAndTv(query: string): Promise<TmdbSearchHit[]>
 	return hits.slice(0, 10);
 }
 
-export async function searchMoviesOnly(query: string): Promise<TmdbSearchHit[]> {
+export async function searchMoviesOnly(query: string, signal?: AbortSignal): Promise<TmdbSearchHit[]> {
 	if (!query.trim()) return [];
 
-	const data = await tmdb<{ results: TmdbMovieSearchResult[] }>("/search/movie", {
-		query,
-		include_adult: "false",
-	});
+	const data = await tmdb<{ results: TmdbMovieSearchResult[] }>(
+		"/search/movie",
+		{
+			query,
+			include_adult: "false",
+		},
+		signal,
+	);
 
 	return data.results
 		.map((r) => ({
@@ -217,13 +225,17 @@ export async function searchMoviesOnly(query: string): Promise<TmdbSearchHit[]> 
 		.slice(0, 10);
 }
 
-export async function searchTvOnly(query: string): Promise<TmdbSearchHit[]> {
+export async function searchTvOnly(query: string, signal?: AbortSignal): Promise<TmdbSearchHit[]> {
 	if (!query.trim()) return [];
 
-	const data = await tmdb<{ results: TmdbTvSearchResult[] }>("/search/tv", {
-		query,
-		include_adult: "false",
-	});
+	const data = await tmdb<{ results: TmdbTvSearchResult[] }>(
+		"/search/tv",
+		{
+			query,
+			include_adult: "false",
+		},
+		signal,
+	);
 
 	return data.results
 		.map((r) => ({

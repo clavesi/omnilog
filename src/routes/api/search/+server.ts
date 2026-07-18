@@ -26,13 +26,9 @@ export const GET: RequestHandler = async ({ url, request }) => {
 	const typeParam = url.searchParams.get("type");
 	const type: SearchType = isSearchType(typeParam) ? typeParam : "all";
 
-	// Propagated down into each source's outbound fetch (Tenrai currently,
-	// the others are a natural follow-up). When the client's connection
-	// drops — e.g. a newer typeahead keystroke superseded this search —
-	// this lets in-flight or still-queued requests actually stop instead
-	// of quietly finishing (and retrying) in the background, which is what
-	// was piling up behind Tenrai's shared throttle and eventually tripping
-	// its real rate limit for searches that still mattered.
+	// Propagated down into each source's outbound fetch. When the client's connection drops
+	//   e.g. a newer typeahead keystroke superseded this search
+	// this lets in-flight or still-queued requests actually stop instead of quietly finishing (and retrying) in the background.
 	const signal = request.signal;
 
 	async function single(fn: () => Promise<SearchHit[]>, label: string) {
@@ -45,23 +41,23 @@ export const GET: RequestHandler = async ({ url, request }) => {
 		}
 	}
 
-	if (type === "movie") return single(() => searchMoviesOnly(q), "TMDB movie");
-	if (type === "tv") return single(() => searchTvOnly(q), "TMDB tv");
-	if (type === "game") return single(() => searchGames(q), "IGDB");
+	if (type === "movie") return single(() => searchMoviesOnly(q, signal), "TMDB movie");
+	if (type === "tv") return single(() => searchTvOnly(q, signal), "TMDB tv");
+	if (type === "game") return single(() => searchGames(q, signal), "IGDB");
 	if (type === "anime") return single(() => searchAnime(q, signal), "Tenrai anime");
 	if (type === "manga") return single(() => searchManga(q, signal), "Tenrai manga");
-	if (type === "music") return single(() => searchAlbums(q), "MusicBrainz");
-	if (type === "book") return single(() => searchBooks(q), "Open Library");
+	if (type === "music") return single(() => searchAlbums(q, signal), "MusicBrainz");
+	if (type === "book") return single(() => searchBooks(q, signal), "Open Library");
 
 	// type === "all" — query everything in parallel, degrade gracefully
 	// if any individual source fails.
 	const sources = await Promise.allSettled([
-		searchMoviesAndTv(q),
-		searchGames(q),
+		searchMoviesAndTv(q, signal),
+		searchGames(q, signal),
 		searchAnime(q, signal),
 		searchManga(q, signal),
-		searchAlbums(q),
-		searchBooks(q),
+		searchAlbums(q, signal),
+		searchBooks(q, signal),
 	]);
 
 	const labels = ["TMDB", "IGDB", "Tenrai anime", "Tenrai manga", "MusicBrainz", "Open Library"];
