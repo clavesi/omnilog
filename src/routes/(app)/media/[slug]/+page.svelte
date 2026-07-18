@@ -232,6 +232,20 @@ function handleDeleted(logId: string) {
 					>
 						Browse episodes
 					</a>
+				{:else if item.mediaType === "manga"}
+					<a
+						href="/media/{item.slug}/chapters"
+						class="inline-block rounded-sm border border-border px-4 py-2 text-text no-underline transition-colors hover:border-text-muted hover:bg-surface"
+					>
+						Browse chapters
+					</a>
+				{:else if item.mediaType === "music"}
+					<a
+						href="/media/{item.slug}/tracks"
+						class="inline-block rounded-sm border border-border px-4 py-2 text-text no-underline transition-colors hover:border-text-muted hover:bg-surface"
+					>
+						Browse tracks
+					</a>
 				{/if}
 			</div>
 

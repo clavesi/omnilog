@@ -198,6 +198,12 @@ export const mediaParts = pgTable(
 		releaseDate: date("release_date", { mode: "string" }),
 		metadata: jsonb("metadata").$type<Record<string, unknown>>().notNull().default({}),
 
+		// Cached aggregate, same convention as media_items.averageRating —
+		// recomputed by recomputePartAggregate() in media-aggregate.ts on
+		// every insert/update/delete of a log targeting this part.
+		averageRating: numeric("average_rating", { precision: 3, scale: 1 }),
+		ratingCount: integer("rating_count").notNull().default(0),
+
 		createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
 		updatedAt: timestamp("updated_at", { withTimezone: true }).notNull().defaultNow(),
 	},

@@ -37,6 +37,11 @@ let { data } = $props();
 									{ep.releaseDate}
 								</p>
 							{/if}
+							{#if ep.averageRating}
+								<p class="m-0 mt-0.5 font-mono text-sm text-text">
+									★ {ep.averageRating} ({ep.ratingCount})
+								</p>
+							{/if}
 						</div>
 					</div>
 					<a

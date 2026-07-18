@@ -7,15 +7,17 @@
  *      Replace the placeholder URL below with your actual deployed URL
  *      (or an email) before shipping to production.
  *
- * Scope note: track count / duration / label are left null for v1. Getting
- * them reliably requires a second, release-level API call beyond the
- * release-group lookup used here, which would add real latency given the
- * 1 req/sec throttle. Tracked as a follow-up rather than built now.
+ * track_count / duration_seconds are left null at album-import time
+ * (a release-level lookup is a second API call beyond what's needed for the album itself)
+ * but get filled in lazily by importAlbumTracks() the first time someone actually browses the track list - see that function for details.
+ * Label is fetched eagerly at import time via fetchFirstLabel().
  */
 
+import { eq } from "drizzle-orm";
 import { db } from "$lib/server/db";
 import { type MusicMetadata, mediaExternalIds, mediaItems, mediaMetadata } from "$lib/server/db/schema";
 import { buildSlug, findExistingMediaId, linkGenres } from "$lib/server/media-import";
+import { createPart, findFlatParts } from "$lib/server/parts";
 
 const MB_BASE = "https://musicbrainz.org/ws/2";
 const COVER_ART_BASE = "https://coverartarchive.org";
@@ -236,7 +238,7 @@ export async function importAlbum(mbid: string): Promise<string> {
 		const metadata: MusicMetadata = {
 			type: "music",
 			artists,
-			track_count: null, // see file header — deferred, needs a release-level call
+			track_count: null, // filled in lazily by importAlbumTracks() when tracks are first browsed
 			duration_seconds: null, // same
 			label,
 			album_type: album["primary-type"]?.toLowerCase() ?? null,
@@ -250,4 +252,103 @@ export async function importAlbum(mbid: string): Promise<string> {
 
 		return mediaItemId;
 	});
+}
+
+// ============================================================================
+// Import: album tracks
+//
+// Deferred at album-import time (see file header) — a track listing needs
+// a release-level lookup beyond the release-group data used for the album
+// itself, which isn't worth the extra API call for every album imported,
+// most of which nobody will ever browse track-by-track.
+// Lazy + cached in media_parts, same pattern as TV/anime episodes: only fetched the first time someone actually views the track list.
+//
+// A release-group can have multiple releases (regional variants, reissues,
+// deluxe editions, etc.) with different track lists — this picks whichever
+// release MusicBrainz returns first as "representative" rather than trying
+// to determine a canonical one, which MusicBrainz itself doesn't expose a
+// clean way to do.
+// ============================================================================
+
+type MbTrackRaw = {
+	title: string;
+	length: number | null; // milliseconds
+};
+
+type MbMedium = { tracks?: MbTrackRaw[] };
+type MbReleaseWithMedia = { media?: MbMedium[] };
+
+async function fetchRepresentativeReleaseId(releaseGroupMbid: string): Promise<string | null> {
+	const data = await mbFetch<{ releases: { id: string }[] }>(
+		`/release?release-group=${releaseGroupMbid}&fmt=json&limit=1`,
+	);
+	return data.releases?.[0]?.id ?? null;
+}
+
+async function fetchReleaseTracks(releaseId: string): Promise<{ title: string; lengthMs: number | null }[]> {
+	const data = await mbFetch<MbReleaseWithMedia>(`/release/${releaseId}?fmt=json&inc=recordings`);
+
+	// Flatten multi-disc releases into one sequential track list — "Disc 2
+	// Track 3" style per-medium numbering would need a schema change.
+	const tracks: { title: string; lengthMs: number | null }[] = [];
+	for (const medium of data.media ?? []) {
+		for (const t of medium.tracks ?? []) {
+			tracks.push({ title: t.title, lengthMs: t.length });
+		}
+	}
+	return tracks;
+}
+
+export async function importAlbumTracks(mediaItemId: string, mbid: string) {
+	const existing = await findFlatParts(mediaItemId, "track");
+	if (existing.length > 0) return existing;
+
+	const releaseId = await fetchRepresentativeReleaseId(mbid);
+	if (!releaseId) return []; // no releases registered for this release-group — nothing to import
+
+	const tracks = await fetchReleaseTracks(releaseId);
+	if (tracks.length === 0) return [];
+
+	await db.transaction(async (tx) => {
+		let position = 1;
+		for (const t of tracks) {
+			await createPart(tx, {
+				mediaItemId,
+				parentPartId: null,
+				partType: "track",
+				partNumber: position++,
+				title: t.title,
+				releaseDate: null,
+				metadata: { durationMs: t.lengthMs },
+			});
+		}
+
+		// Now that we have real track data, fill in the album-level
+		// track_count/duration_seconds that were left null at import time.
+		const [currentMeta] = await tx
+			.select()
+			.from(mediaMetadata)
+			.where(eq(mediaMetadata.mediaItemId, mediaItemId))
+			.limit(1);
+
+		if (currentMeta && currentMeta.metadata.type === "music") {
+			const knownDurations = tracks.filter((t) => t.lengthMs !== null);
+			const totalMs = knownDurations.reduce((sum, t) => sum + (t.lengthMs ?? 0), 0);
+
+			await tx
+				.update(mediaMetadata)
+				.set({
+					metadata: {
+						...currentMeta.metadata,
+						track_count: tracks.length,
+						// Only meaningful if every track reported a duration —
+						// otherwise a partial sum would understate the runtime.
+						duration_seconds: knownDurations.length === tracks.length ? Math.round(totalMs / 1000) : null,
+					},
+				})
+				.where(eq(mediaMetadata.mediaItemId, mediaItemId));
+		}
+	});
+
+	return findFlatParts(mediaItemId, "track");
 }

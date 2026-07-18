@@ -2,14 +2,14 @@ import { error, json } from "@sveltejs/kit";
 import { and, eq } from "drizzle-orm";
 import { db } from "$lib/server/db";
 import { logs } from "$lib/server/db/schema";
-import { recomputeAggregate } from "$lib/server/media-aggregate";
+import { recomputeAggregate, recomputePartAggregate } from "$lib/server/media-aggregate";
 import type { RequestHandler } from "./$types";
 
 export const DELETE: RequestHandler = async ({ params, locals }) => {
 	if (!locals.user) throw error(401, "Not logged in");
 
 	const [existing] = await db
-		.select({ id: logs.id, userId: logs.userId, mediaItemId: logs.mediaItemId })
+		.select({ id: logs.id, userId: logs.userId, mediaItemId: logs.mediaItemId, mediaPartId: logs.mediaPartId })
 		.from(logs)
 		.where(eq(logs.id, params.logId))
 		.limit(1);
@@ -21,6 +21,8 @@ export const DELETE: RequestHandler = async ({ params, locals }) => {
 
 	if (existing.mediaItemId) {
 		await recomputeAggregate(existing.mediaItemId);
+	} else if (existing.mediaPartId) {
+		await recomputePartAggregate(existing.mediaPartId);
 	}
 
 	return json({ success: true });

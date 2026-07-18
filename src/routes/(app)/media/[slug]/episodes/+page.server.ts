@@ -44,6 +44,8 @@ export const load: PageServerLoad = async ({ params, locals }) => {
 			title: e.title,
 			releaseDate: e.releaseDate,
 			isFiller: (e.metadata as { filler?: boolean })?.filler ?? false,
+			averageRating: e.averageRating,
+			ratingCount: e.ratingCount,
 			existingLogId: loggedPartLogIds.get(e.id) ?? null,
 		})),
 	};

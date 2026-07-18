@@ -33,7 +33,13 @@ const logHref = $derived(`/media/${data.item.slug}/part/${data.part.id}/log?retu
 	</h1>
 
 	{#if data.part.releaseDate}
-		<p class="mb-4 font-mono text-sm text-text-muted">{data.part.releaseDate}</p>
+		<p class="mb-2 font-mono text-sm text-text-muted">{data.part.releaseDate}</p>
+	{/if}
+
+	{#if data.part.averageRating}
+		<p class="mb-4 font-mono text-sm text-text">
+			★ {data.part.averageRating} ({data.part.ratingCount} rating{data.part.ratingCount === 1 ? "" : "s"})
+		</p>
 	{/if}
 
 	{#if data.part.metadata?.overview}

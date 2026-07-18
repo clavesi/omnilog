@@ -58,6 +58,8 @@ export const load: PageServerLoad = async ({ params, locals }) => {
 			number: e.partNumber,
 			title: e.title,
 			releaseDate: e.releaseDate,
+			averageRating: e.averageRating,
+			ratingCount: e.ratingCount,
 			existingLogId: loggedPartLogIds.get(e.id) ?? null,
 		})),
 	};

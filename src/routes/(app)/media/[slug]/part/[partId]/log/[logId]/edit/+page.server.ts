@@ -5,6 +5,7 @@ import { db } from "$lib/server/db";
 import { logs } from "$lib/server/db/schema";
 import { parseLogFormData } from "$lib/server/log-form";
 import { requireLogForPart, requireOwnedLogForPartAction, requirePartForItem } from "$lib/server/log-routes";
+import { recomputePartAggregate } from "$lib/server/media-aggregate";
 import { safeRelativePath } from "$lib/server/safe-path";
 import type { Actions, PageServerLoad } from "./$types";
 
@@ -61,6 +62,8 @@ export const actions: Actions = {
 				updatedAt: new Date(),
 			})
 			.where(eq(logs.id, params.logId));
+
+		await recomputePartAggregate(part.id);
 
 		redirect(303, returnTo);
 	},

@@ -5,6 +5,7 @@ import { logs } from "$lib/server/db/schema";
 import { parseLogFormData } from "$lib/server/log-form";
 import { requirePartForItem, requirePartForItemAction } from "$lib/server/log-routes";
 import { countUserLogsForPart } from "$lib/server/logs";
+import { recomputePartAggregate } from "$lib/server/media-aggregate";
 import { safeRelativePath } from "$lib/server/safe-path";
 import type { Actions, PageServerLoad } from "./$types";
 
@@ -66,7 +67,7 @@ export const actions: Actions = {
 			isPublic,
 		});
 
-		// Part-level ratings aren't aggregated on media_items yet — only whole-item logs update averageRating.
+		await recomputePartAggregate(part.id);
 
 		redirect(303, returnTo);
 	},
