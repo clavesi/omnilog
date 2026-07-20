@@ -24,7 +24,9 @@
 		"b:check": "biome check",
 		"b:format": "biome format --write",
 		"b:lint": "biome lint --write",
-		"b:all": "biome check --write"
+		"b:all": "biome check --write",
+		"backfill:titles": "node scripts/backfill-anime-manga-titles.mjs",
+		"backfill:titles:neon": "node scripts/backfill-anime-manga-titles.mjs --remote"
 	},
 	"devDependencies": {
 		"@biomejs/biome": "2.5.2",

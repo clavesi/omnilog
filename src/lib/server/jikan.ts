@@ -110,6 +110,7 @@ type JikanImages = {
 type JikanAnimeSearchRaw = {
 	mal_id: number;
 	title: string;
+	title_english: string | null;
 	images: JikanImages;
 	year: number | null;
 	episodes: number | null;
@@ -118,6 +119,7 @@ type JikanAnimeSearchRaw = {
 type JikanMangaSearchRaw = {
 	mal_id: number;
 	title: string;
+	title_english: string | null;
 	images: JikanImages;
 	published: { from: string | null };
 	chapters: number | null;
@@ -125,7 +127,10 @@ type JikanMangaSearchRaw = {
 
 type JikanAnimeFullRaw = {
 	mal_id: number;
-	title: string;
+	title: string; // MAL's "default" title — usually the romaji/native title, NOT English
+	title_english: string | null;
+	title_japanese: string | null;
+	title_synonyms: string[];
 	synopsis: string | null;
 	images: JikanImages;
 	episodes: number | null;
@@ -140,7 +145,10 @@ type JikanAnimeFullRaw = {
 
 type JikanMangaFullRaw = {
 	mal_id: number;
-	title: string;
+	title: string; // same "default" caveat as anime — often romaji, not English
+	title_english: string | null;
+	title_japanese: string | null;
+	title_synonyms: string[];
 	synopsis: string | null;
 	images: JikanImages;
 	chapters: number | null;
@@ -199,7 +207,7 @@ export async function searchAnime(query: string, signal?: AbortSignal): Promise<
 		(r): JikanSearchHit => ({
 			type: "anime",
 			id: r.mal_id,
-			title: r.title,
+			title: r.title_english || r.title,
 			imageUrl: r.images.jpg.large_image_url ?? r.images.jpg.image_url,
 			year: r.year,
 			episodes: r.episodes,
@@ -228,7 +236,7 @@ export async function searchManga(query: string, signal?: AbortSignal): Promise<
 		(r): JikanSearchHit => ({
 			type: "manga",
 			id: r.mal_id,
-			title: r.title,
+			title: r.title_english || r.title,
 			imageUrl: r.images.jpg.large_image_url ?? r.images.jpg.image_url,
 			year: r.published.from ? new Date(r.published.from).getFullYear() : null,
 			chapters: r.chapters,
@@ -267,15 +275,40 @@ function parseDurationMinutes(raw: string | null): number | null {
 // Import: anime
 // ============================================================================
 
+/**
+ * MAL's "default" title (title) is usually the romaji/native title, not
+ * English, unlike TMDB, which already gives you a localized title as primary.
+ * Prefer title_english when available so anime/manga display consistently with
+ * the rest of the catalog, and store the native title as originalTitle (same convention TMDB already uses).
+ * When there's no English title at all, originalTitle stays null
+ *
+ * allVariants collects everything Tenrai knows this could be called, fed into findPossibleDuplicate() so
+ * a cross-source match can be found even if the OTHER source's title doesn't line up with our chosen primary.
+ */
+function resolvePreferredTitle(raw: {
+	title: string;
+	title_english: string | null;
+	title_japanese: string | null;
+	title_synonyms: string[];
+}): { primaryTitle: string; originalTitle: string | null; allVariants: string[] } {
+	const primaryTitle = raw.title_english || raw.title;
+	const originalTitle = raw.title_english ? raw.title : null;
+	const allVariants = [raw.title_english, raw.title, raw.title_japanese, ...raw.title_synonyms].filter(
+		(t): t is string => !!t?.trim(),
+	);
+	return { primaryTitle, originalTitle, allVariants };
+}
+
 export async function importAnime(malId: number, options?: { allowDuplicate?: boolean }): Promise<string> {
 	const existing = await findExistingMediaId("mal", `anime:${malId}`);
 	if (existing) return existing;
 
 	const anime = await fetchAnimeDetails(malId);
 	const releaseDate = anime.year ? `${anime.year}-01-01` : null;
+	const { primaryTitle, originalTitle, allVariants } = resolvePreferredTitle(anime);
 
 	if (!options?.allowDuplicate) {
-		const duplicate = await findPossibleDuplicate(anime.title, releaseDate);
+		const duplicate = await findPossibleDuplicate(allVariants, releaseDate);
 		if (duplicate) throw new PossibleDuplicateError(duplicate);
 	}
 
@@ -283,10 +316,10 @@ export async function importAnime(malId: number, options?: { allowDuplicate?: bo
 		const [inserted] = await tx
 			.insert(mediaItems)
 			.values({
-				slug: buildSlug(anime.title, anime.year, "anime", malId),
+				slug: buildSlug(primaryTitle, anime.year, "anime", malId),
 				mediaType: "anime",
-				title: anime.title,
-				originalTitle: null,
+				title: primaryTitle,
+				originalTitle,
 				description: anime.synopsis,
 				releaseDate,
 				coverImageUrl: anime.images.jpg.large_image_url ?? anime.images.jpg.image_url,
@@ -329,6 +362,7 @@ export async function importManga(malId: number): Promise<string> {
 	if (existing) return existing;
 
 	const manga = await fetchMangaDetails(malId);
+	const { primaryTitle, originalTitle } = resolvePreferredTitle(manga);
 
 	return db.transaction(async (tx) => {
 		const releaseDate = manga.published.from ? manga.published.from.slice(0, 10) : null;
@@ -336,10 +370,10 @@ export async function importManga(malId: number): Promise<string> {
 		const [inserted] = await tx
 			.insert(mediaItems)
 			.values({
-				slug: buildSlug(manga.title, releaseDate?.slice(0, 4), "manga", malId),
+				slug: buildSlug(primaryTitle, releaseDate?.slice(0, 4), "manga", malId),
 				mediaType: "manga",
-				title: manga.title,
-				originalTitle: null,
+				title: primaryTitle,
+				originalTitle,
 				description: manga.synopsis,
 				releaseDate,
 				coverImageUrl: manga.images.jpg.large_image_url ?? manga.images.jpg.image_url,

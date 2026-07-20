@@ -283,7 +283,7 @@ export async function importMovie(tmdbId: number, options?: { allowDuplicate?: b
 	const movie = await fetchMovieDetails(tmdbId);
 
 	if (!options?.allowDuplicate) {
-		const duplicate = await findPossibleDuplicate(movie.title, movie.release_date || null);
+		const duplicate = await findPossibleDuplicate([movie.title, movie.original_title], movie.release_date || null);
 		if (duplicate) throw new PossibleDuplicateError(duplicate);
 	}
 
@@ -342,7 +342,7 @@ export async function importTv(tmdbId: number, options?: { allowDuplicate?: bool
 	const show = await fetchTvDetails(tmdbId);
 
 	if (!options?.allowDuplicate) {
-		const duplicate = await findPossibleDuplicate(show.name, show.first_air_date || null);
+		const duplicate = await findPossibleDuplicate([show.name, show.original_name], show.first_air_date || null);
 		if (duplicate) throw new PossibleDuplicateError(duplicate);
 	}
 
