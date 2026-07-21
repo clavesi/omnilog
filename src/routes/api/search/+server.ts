@@ -35,7 +35,10 @@ export const GET: RequestHandler = async ({ url, request }) => {
 		try {
 			return json({ results: await fn() });
 		} catch (err) {
-			if (isAbortError(err)) throw err; // expected on cancellation, don't log as an error
+			if (isAbortError(err)) {
+				// Expected whenever a newer keystroke supersedes this search
+				return json({ results: [] });
+			}
 			console.error(`${label} search failed`, err);
 			return json({ results: [], error: "search failed" }, { status: 500 });
 		}
@@ -71,6 +74,10 @@ export const GET: RequestHandler = async ({ url, request }) => {
 	});
 
 	if (sources.every((s) => s.status === "rejected")) {
+		// If every rejection was just an abort (superseded search), that's not a real failure.
+		// Only surface 500 if something actually broke.
+		const allAborted = sources.every((s) => s.status === "rejected" && isAbortError(s.reason));
+		if (allAborted) return json({ results: [] });
 		return json({ results: [], error: "search failed" }, { status: 500 });
 	}
 
