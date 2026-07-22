@@ -71,8 +71,15 @@ const RETRYABLE_STATUSES = new Set([429, 502, 503, 504]);
  * rapid typing can pile up stale, still-running searches behind the
  * shared throttle queue, which can itself trip Jikan's real rate limit
  * for the searches that actually still matter.
+ *
+ * Returns the full response envelope (data + pagination, when present) —
+ * jikanFetch() below is the common case that just wants `.data`.
  */
-async function jikanFetch<T>(path: string, signal?: AbortSignal, retriesLeft = 2): Promise<T> {
+async function jikanFetchRaw<T>(
+	path: string,
+	signal?: AbortSignal,
+	retriesLeft = 2,
+): Promise<{ data: T; pagination?: { has_next_page: boolean; current_page: number; last_visible_page: number } }> {
 	return throttled(async () => {
 		const res = await fetch(`${TENRAI_BASE}${path}`, { signal });
 
@@ -88,15 +95,19 @@ async function jikanFetch<T>(path: string, signal?: AbortSignal, retriesLeft = 2
 			const retryAfterHeader = res.headers.get("Retry-After");
 			const retryAfterMs = retryAfterHeader ? Number(retryAfterHeader) * 1000 : 1000;
 			await abortableDelay(retryAfterMs, signal);
-			return jikanFetch<T>(path, signal, retriesLeft - 1);
+			return jikanFetchRaw<T>(path, signal, retriesLeft - 1);
 		}
 
 		if (!res.ok) {
 			throw new Error(`Tenrai ${path} failed: ${res.status} ${res.statusText}`);
 		}
-		const json = await res.json();
-		return json.data as T;
+		return res.json();
 	}, signal);
+}
+
+async function jikanFetch<T>(path: string, signal?: AbortSignal, retriesLeft = 2): Promise<T> {
+	const envelope = await jikanFetchRaw<T>(path, signal, retriesLeft);
+	return envelope.data;
 }
 
 // ============================================================================
@@ -423,10 +434,23 @@ type JikanEpisodeRaw = {
 };
 
 async function fetchAnimeEpisodes(malId: number): Promise<JikanEpisodeRaw[]> {
-	// Page 1 only for v1 — Jikan paginates at 100/page, which covers the
-	// vast majority of single MAL entries given how MAL splits long-running
-	// shows into separate per-season/per-cour entries anyway.
-	return jikanFetch<JikanEpisodeRaw[]>(`/anime/${malId}/episodes`);
+	// Jikan/Tenrai paginates this endpoint at 100/page.
+	// Long-running shows (i.e. One Piece) can have 1000+ episodes, so a single-page fetch silently truncated most of the list
+	// This loops until the API itself reports no more pages.
+	const MAX_PAGES = 50; // 5000 episodes — comfortably above any real anime,
+
+	const all: JikanEpisodeRaw[] = [];
+	let page = 1;
+
+	while (page <= MAX_PAGES) {
+		const envelope = await jikanFetchRaw<JikanEpisodeRaw[]>(`/anime/${malId}/episodes?page=${page}`);
+		all.push(...envelope.data);
+
+		if (!envelope.pagination?.has_next_page) break;
+		page++;
+	}
+
+	return all;
 }
 
 export async function importAnimeEpisodes(mediaItemId: string) {
