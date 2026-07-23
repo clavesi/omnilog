@@ -208,7 +208,7 @@ export const load: PageServerLoad = async ({ params, locals }) => {
 	return {
 		item,
 		currentUserId: locals.user?.id ?? null,
-		isAdmin: locals.user?.isAdmin ?? false,
+		isAdmin: locals.user?.role === "admin" || locals.user?.role === "owner",
 		episodes: episodeDisplays,
 		arcs: arcs.map((a) => ({
 			id: a.id,

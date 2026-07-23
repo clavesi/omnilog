@@ -48,6 +48,13 @@ export const partTypeEnum = pgEnum("part_type", ["season", "episode", "chapter",
 
 export const mediaStatusEnum = pgEnum("media_status", ["planned", "in_progress", "completed", "dropped", "on_hold"]);
 
+// "owner" is a single, fixed role set directly via SQL — there's no UI
+// to grant it, matching how the first admin used to be bootstrapped.
+// Only the owner can promote/demote admins; regular admins have no
+// role-management power at all (they just do the arc/saga management
+// admin was originally created for).
+export const userRoleEnum = pgEnum("user_role", ["user", "admin", "owner"]);
+
 export const externalSourceEnum = pgEnum("external_source", [
 	"tmdb",
 	"openlibrary",
@@ -70,8 +77,10 @@ export const users = pgTable(
 		passwordHash: text("password_hash").notNull(),
 		avatarUrl: text("avatar_url"),
 		bio: text("bio"),
-		// No admin UI to promote/demote yet — set directly via SQL/db:studio.
-		isAdmin: boolean("is_admin").notNull().default(false),
+		// Only the owner can change this via the admin UI — see auth.ts's
+		// requireOwner(). The owner role itself has no promote-to-owner UI;
+		// set it directly via SQL/db:studio.
+		role: userRoleEnum("role").notNull().default("user"),
 		createdAt: timestamp("created_at", { withTimezone: true }).defaultNow().notNull(),
 		updatedAt: timestamp("updated_at", { withTimezone: true }).defaultNow().notNull(),
 	},

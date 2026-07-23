@@ -1,5 +1,5 @@
 {
-	"id": "043e4bad-770c-4c1a-a013-c1c5fa04213e",
+	"id": "7bf99344-883d-4a5c-97df-ee84f7d61c95",
 	"prevId": "cba14a35-3383-493a-a2c3-89b6719f52fd",
 	"version": "7",
 	"dialect": "postgresql",
@@ -1243,12 +1243,13 @@
 					"primaryKey": false,
 					"notNull": false
 				},
-				"is_admin": {
-					"name": "is_admin",
-					"type": "boolean",
+				"role": {
+					"name": "role",
+					"type": "user_role",
+					"typeSchema": "public",
 					"primaryKey": false,
 					"notNull": true,
-					"default": false
+					"default": "'user'"
 				},
 				"created_at": {
 					"name": "created_at",
@@ -1325,6 +1326,11 @@
 			"name": "part_type",
 			"schema": "public",
 			"values": ["season", "episode", "chapter", "volume", "arc", "saga", "track"]
+		},
+		"public.user_role": {
+			"name": "user_role",
+			"schema": "public",
+			"values": ["user", "admin", "owner"]
 		}
 	},
 	"schemas": {},

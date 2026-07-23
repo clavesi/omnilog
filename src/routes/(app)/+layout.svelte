@@ -18,7 +18,7 @@ const navLinkActive = "text-text after:scale-x-100";
 </script>
 
 <header class="border-b border-border/80 bg-bg">
-	<div class="mx-auto flex max-w-[900px] items-center justify-between px-6 py-4">
+	<div class="mx-auto flex max-w-225 items-center justify-between px-6 py-4">
 		<a
 			href="/feed"
 			class="font-display text-xl font-semibold tracking-tight text-accent no-underline transition-colors hover:text-text"
@@ -50,6 +50,11 @@ const navLinkActive = "text-text after:scale-x-100";
 			>
 				Feed
 			</a>
+			{#if data.user?.role === "admin" || data.user?.role === "owner"}
+				<a href="/admin" class="{navLink} {path.startsWith('/admin') ? navLinkActive : ''}">
+					Admin
+				</a>
+			{/if}
 			{#if data.user}
 				<a
 					href="/u/{data.user.username}"
@@ -81,6 +86,6 @@ const navLinkActive = "text-text after:scale-x-100";
 	</div>
 </header>
 
-<main class="mx-auto max-w-[800px] px-6 py-10">
+<main class="mx-auto max-w-200 px-6 py-10">
 	{@render children()}
 </main>

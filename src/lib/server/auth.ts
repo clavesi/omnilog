@@ -166,15 +166,28 @@ export function requireUser(event: RequestEvent) {
 }
 
 /**
- * Like requireUser, but also requires the account to be an admin. There's
- * no admin management UI yet — the first (and any further) admins are set
- * directly via SQL/db:studio:
- * `UPDATE users SET is_admin = true WHERE username = 'your_username_here';`
+ * Like requireUser, but also requires the account to be an admin OR
+ * owner — used for admin-level app management (arc/saga creation, and
+ * viewing the /admin page). For actions that change someone's role
+ * specifically, use requireOwner instead.
  */
 export function requireAdmin(event: RequestEvent) {
 	const user = requireUser(event);
-	if (!user.isAdmin) {
+	if (user.role !== "admin" && user.role !== "owner") {
 		error(403, "Admins only");
+	}
+	return user;
+}
+
+/**
+ * Strictly requires the owner role. There's no admin UI to grant this —
+ * the owner is set directly via SQL/db:studio. Only the owner can
+ * promote/demote admins; regular admins have no role-management power.
+ */
+export function requireOwner(event: RequestEvent) {
+	const user = requireUser(event);
+	if (user.role !== "owner") {
+		error(403, "Owner only");
 	}
 	return user;
 }
