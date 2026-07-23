@@ -1,0 +1,1 @@
+ALTER TYPE "public"."part_type" ADD VALUE 'saga' BEFORE 'track';

@@ -13,7 +13,7 @@ import { db } from "./db";
 import { mediaParts } from "./db/schema";
 
 type DbTransaction = Parameters<Parameters<typeof db.transaction>[0]>[0];
-export type PartType = "season" | "episode" | "chapter" | "volume" | "arc" | "track";
+export type PartType = "season" | "episode" | "chapter" | "volume" | "arc" | "saga" | "track";
 
 export async function findPart(
 	mediaItemId: string,

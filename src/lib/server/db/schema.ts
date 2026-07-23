@@ -44,7 +44,7 @@ const bytea = customType<{ data: Uint8Array; default: false }>({
 // ============================================================================
 export const mediaTypeEnum = pgEnum("media_type", ["movie", "tv", "book", "game", "music", "anime", "manga", "comic"]);
 
-export const partTypeEnum = pgEnum("part_type", ["season", "episode", "chapter", "volume", "arc", "track"]);
+export const partTypeEnum = pgEnum("part_type", ["season", "episode", "chapter", "volume", "arc", "saga", "track"]);
 
 export const mediaStatusEnum = pgEnum("media_status", ["planned", "in_progress", "completed", "dropped", "on_hold"]);
 
