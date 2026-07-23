@@ -70,6 +70,8 @@ export const users = pgTable(
 		passwordHash: text("password_hash").notNull(),
 		avatarUrl: text("avatar_url"),
 		bio: text("bio"),
+		// No admin UI to promote/demote yet — set directly via SQL/db:studio.
+		isAdmin: boolean("is_admin").notNull().default(false),
 		createdAt: timestamp("created_at", { withTimezone: true }).defaultNow().notNull(),
 		updatedAt: timestamp("updated_at", { withTimezone: true }).defaultNow().notNull(),
 	},

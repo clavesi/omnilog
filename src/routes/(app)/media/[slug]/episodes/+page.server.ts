@@ -1,6 +1,6 @@
 import { error, fail } from "@sveltejs/kit";
 import { and, eq, inArray } from "drizzle-orm";
-import { requireUser } from "$lib/server/auth";
+import { requireAdmin } from "$lib/server/auth";
 import { db } from "$lib/server/db";
 import { logs, mediaItems, mediaParts } from "$lib/server/db/schema";
 import { importAnimeEpisodes } from "$lib/server/jikan";
@@ -208,6 +208,7 @@ export const load: PageServerLoad = async ({ params, locals }) => {
 	return {
 		item,
 		currentUserId: locals.user?.id ?? null,
+		isAdmin: locals.user?.isAdmin ?? false,
 		episodes: episodeDisplays,
 		arcs: arcs.map((a) => ({
 			id: a.id,
@@ -227,7 +228,7 @@ export const load: PageServerLoad = async ({ params, locals }) => {
 
 export const actions: Actions = {
 	addTier: async (event) => {
-		requireUser(event);
+		requireAdmin(event);
 		const { request, params } = event;
 		const tier = await requireTier(request);
 		if ("error" in tier) return fail(400, { error: tier.error });
@@ -267,7 +268,7 @@ export const actions: Actions = {
 	},
 
 	editTier: async (event) => {
-		requireUser(event);
+		requireAdmin(event);
 		const { request, params } = event;
 		const tier = await requireTier(request);
 		if ("error" in tier) return fail(400, { error: tier.error });
@@ -311,7 +312,7 @@ export const actions: Actions = {
 	},
 
 	deleteTier: async (event) => {
-		requireUser(event);
+		requireAdmin(event);
 		const { request } = event;
 
 		const form = await request.formData();

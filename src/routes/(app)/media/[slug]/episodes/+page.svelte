@@ -242,7 +242,7 @@ async function deletePart(id: string, label: string) {
 		{#if isFiller}
 			<span class="rounded-sm border border-border px-1.5 py-0.5 font-mono text-xs text-text-muted">Filler</span>
 		{/if}
-		{#if data.currentUserId && part}
+		{#if data.isAdmin && part}
 			<button type="button" class="font-mono text-xs text-text-muted hover:text-text" onclick={() => startEditing(tier, part)}>
 				Edit
 			</button>
@@ -270,7 +270,7 @@ async function deletePart(id: string, label: string) {
 	{#if data.episodes.length === 0}
 		<p class="text-text-muted">No episodes found.</p>
 	{:else}
-		{#if data.currentUserId}
+		{#if data.isAdmin}
 			<div class="mb-6 flex gap-3">
 				{#if showAddForm === null}
 					<button

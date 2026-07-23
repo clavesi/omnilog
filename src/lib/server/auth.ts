@@ -1,5 +1,5 @@
 import type { RequestEvent } from "@sveltejs/kit";
-import { redirect } from "@sveltejs/kit";
+import { error, redirect } from "@sveltejs/kit";
 import { eq } from "drizzle-orm";
 import { db } from "./db";
 import { sessions, users } from "./db/schema";
@@ -163,4 +163,18 @@ export function requireUser(event: RequestEvent) {
 		redirect(302, `/login?next=${encodeURIComponent(next)}`);
 	}
 	return event.locals.user;
+}
+
+/**
+ * Like requireUser, but also requires the account to be an admin. There's
+ * no admin management UI yet — the first (and any further) admins are set
+ * directly via SQL/db:studio:
+ * `UPDATE users SET is_admin = true WHERE username = 'your_username_here';`
+ */
+export function requireAdmin(event: RequestEvent) {
+	const user = requireUser(event);
+	if (!user.isAdmin) {
+		error(403, "Admins only");
+	}
+	return user;
 }
