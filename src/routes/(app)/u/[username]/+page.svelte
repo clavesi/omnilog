@@ -26,11 +26,11 @@ const orderedShowcase = $derived(
 			<img
 				src={data.profileUser.avatarUrl}
 				alt=""
-				class="h-[72px] w-[72px] shrink-0 rounded-sm object-cover"
+				class="h-18 w-18 shrink-0 rounded-sm object-cover"
 			/>
 		{:else}
 			<div
-				class="flex h-[72px] w-[72px] shrink-0 items-center justify-center rounded-sm border border-border bg-surface font-display text-[1.75rem] font-semibold text-accent"
+				class="flex h-18 w-18 shrink-0 items-center justify-center rounded-sm border border-border bg-surface font-display text-[1.75rem] font-semibold text-accent"
 			>
 				{data.profileUser.username[0]?.toUpperCase()}
 			</div>
@@ -84,6 +84,52 @@ const orderedShowcase = $derived(
 			</p>
 		</section>
 	{/if}
+
+	<section class="mb-10">
+		<div class="mb-4 flex items-center justify-between">
+			<h2 class="m-0 text-sm tracking-wide text-text-muted uppercase">Lists</h2>
+			{#if data.isOwnProfile}
+				<a href="/lists/new" class="text-sm text-accent no-underline hover:text-text">+ New list</a>
+			{/if}
+		</div>
+
+		{#if data.lists.length === 0}
+			<p class="text-sm text-text-muted">
+				{data.isOwnProfile ? "No lists yet — create one from any media page." : "No public lists yet."}
+			</p>
+		{:else}
+			<div class="grid grid-cols-1 gap-4 sm:grid-cols-2 md:grid-cols-3">
+				{#each data.lists as list (list.id)}
+					<a
+						href="/lists/{list.id}"
+						class="rounded-sm border border-border p-4 no-underline transition-colors hover:border-text-muted hover:bg-surface"
+					>
+						<div class="mb-3 flex -space-x-6">
+							{#each list.coverImageUrls as url (url)}
+								<img src={url} alt="" class="aspect-2/3 w-14 rounded-sm border-2 border-bg object-cover" />
+							{/each}
+							{#if list.coverImageUrls.length === 0}
+								<div class="flex aspect-2/3 w-14 items-center justify-center rounded-sm border border-border bg-surface text-text-muted">
+									?
+								</div>
+							{/if}
+						</div>
+						<p class="m-0 font-display font-medium text-text">
+							{list.title}
+							{#if !list.isPublic}
+								<span class="ml-1 rounded-sm border border-border px-1.5 py-0.5 font-mono text-xs text-text-muted">
+									Private
+								</span>
+							{/if}
+						</p>
+						<p class="m-0 mt-0.5 font-mono text-sm text-text-muted">
+							{list.itemCount} item{list.itemCount === 1 ? "" : "s"}
+						</p>
+					</a>
+				{/each}
+			</div>
+		{/if}
+	</section>
 
 	<section>
 		{#if visibleLogs.length === 0}

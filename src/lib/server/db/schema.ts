@@ -344,6 +344,48 @@ export const favorites = pgTable(
 );
 
 // ============================================================================
+// USER-CURATED LISTS
+// A titled, ordered collection of media_items — can mix any media type.
+// Position is a plain integer for ordering; reordering just swaps/shifts position values.
+// ============================================================================
+export const lists = pgTable(
+	"lists",
+	{
+		id: uuid("id").primaryKey().defaultRandom(),
+		userId: uuid("user_id")
+			.notNull()
+			.references(() => users.id, { onDelete: "cascade" }),
+		title: text("title").notNull(),
+		description: text("description"),
+		isPublic: boolean("is_public").notNull().default(true),
+		createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+		updatedAt: timestamp("updated_at", { withTimezone: true }).notNull().defaultNow(),
+	},
+	(t) => [index("lists_user_idx").on(t.userId)],
+);
+
+export const listItems = pgTable(
+	"list_items",
+	{
+		id: uuid("id").primaryKey().defaultRandom(),
+		listId: uuid("list_id")
+			.notNull()
+			.references(() => lists.id, { onDelete: "cascade" }),
+		mediaItemId: uuid("media_item_id")
+			.notNull()
+			.references(() => mediaItems.id, { onDelete: "cascade" }),
+		position: integer("position").notNull(),
+		note: text("note"), // optional per-item blurb, e.g. why it's on the list
+		addedAt: timestamp("added_at", { withTimezone: true }).notNull().defaultNow(),
+	},
+	(t) => [
+		uniqueIndex("list_items_list_media_unique").on(t.listId, t.mediaItemId), // no duplicate entries in one list
+		index("list_items_list_idx").on(t.listId),
+		index("list_items_media_item_idx").on(t.mediaItemId),
+	],
+);
+
+// ============================================================================
 // RELATIONS
 // ============================================================================
 export const usersRelations = relations(users, ({ many }) => ({
@@ -351,6 +393,7 @@ export const usersRelations = relations(users, ({ many }) => ({
 	logs: many(logs),
 	statuses: many(userMediaStatus),
 	favorites: many(favorites),
+	lists: many(lists),
 }));
 
 export const sessionsRelations = relations(sessions, ({ one }) => ({
@@ -371,6 +414,17 @@ export const mediaItemsRelations = relations(mediaItems, ({ many, one }) => ({
 	logs: many(logs),
 	statuses: many(userMediaStatus),
 	favorites: many(favorites),
+	listItems: many(listItems),
+}));
+
+export const listsRelations = relations(lists, ({ one, many }) => ({
+	user: one(users, { fields: [lists.userId], references: [users.id] }),
+	items: many(listItems),
+}));
+
+export const listItemsRelations = relations(listItems, ({ one }) => ({
+	list: one(lists, { fields: [listItems.listId], references: [lists.id] }),
+	mediaItem: one(mediaItems, { fields: [listItems.mediaItemId], references: [mediaItems.id] }),
 }));
 
 export const favoritesRelations = relations(favorites, ({ one }) => ({

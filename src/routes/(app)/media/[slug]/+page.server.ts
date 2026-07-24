@@ -4,6 +4,7 @@ import { requireUser } from "$lib/server/auth";
 import { db } from "$lib/server/db";
 import { genres, mediaGenres, mediaItems, mediaMetadata } from "$lib/server/db/schema";
 import { getFavoriteForType, removeFavorite, setFavorite } from "$lib/server/favorites";
+import { addItemToList, createList, getUserListsWithMembership, removeItemFromList } from "$lib/server/lists";
 import { getLogsForMediaItem } from "$lib/server/logs";
 import type { Actions, PageServerLoad } from "./$types";
 
@@ -31,6 +32,8 @@ export const load: PageServerLoad = async ({ params, locals }) => {
 		isFavorite = favId === item.id;
 	}
 
+	const userLists = currentUserId ? await getUserListsWithMembership(currentUserId, item.id) : [];
+
 	return {
 		item,
 		metadata: meta?.metadata ?? null,
@@ -38,6 +41,7 @@ export const load: PageServerLoad = async ({ params, locals }) => {
 		logs,
 		currentUserId,
 		isFavorite,
+		userLists,
 	};
 };
 
@@ -66,5 +70,53 @@ export const actions: Actions = {
 		// setFavorite upserts, so this replaces any existing favorite of that type.
 		await setFavorite(user.id, item.id, item.mediaType);
 		return { isFavorite: true };
+	},
+
+	toggleListItem: async (event) => {
+		const user = requireUser(event);
+		const { request, params } = event;
+
+		const [item] = await db
+			.select({ id: mediaItems.id })
+			.from(mediaItems)
+			.where(eq(mediaItems.slug, params.slug))
+			.limit(1);
+		if (!item) return fail(404, { error: "Media not found" });
+
+		const form = await request.formData();
+		const listId = String(form.get("listId") ?? "");
+		const inList = form.get("inList") === "true";
+		if (!listId) return fail(400, { error: "Missing list id" });
+
+		if (inList) {
+			await removeItemFromList(listId, item.id);
+		} else {
+			await addItemToList(listId, item.id);
+		}
+
+		const userLists = await getUserListsWithMembership(user.id, item.id);
+		return { userLists };
+	},
+
+	createListWithItem: async (event) => {
+		const user = requireUser(event);
+		const { request, params } = event;
+
+		const [item] = await db
+			.select({ id: mediaItems.id })
+			.from(mediaItems)
+			.where(eq(mediaItems.slug, params.slug))
+			.limit(1);
+		if (!item) return fail(404, { error: "Media not found" });
+
+		const form = await request.formData();
+		const title = String(form.get("title") ?? "").trim();
+		if (!title) return fail(400, { error: "Title is required" });
+
+		const listId = await createList(user.id, title, null, true);
+		await addItemToList(listId, item.id);
+
+		const userLists = await getUserListsWithMembership(user.id, item.id);
+		return { userLists };
 	},
 };

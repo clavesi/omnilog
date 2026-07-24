@@ -3,6 +3,7 @@ import { and, eq } from "drizzle-orm";
 import { db } from "$lib/server/db";
 import { logs, users } from "$lib/server/db/schema";
 import { getShowcaseForUser } from "$lib/server/favorites";
+import { getListsForUser } from "$lib/server/lists";
 import { queryLogsWithMedia } from "$lib/server/logs";
 import type { PageServerLoad } from "./$types";
 
@@ -31,11 +32,13 @@ export const load: PageServerLoad = async ({ params, locals }) => {
 	});
 
 	const showcase = await getShowcaseForUser(profileUser.id);
+	const lists = await getListsForUser(profileUser.id, isOwnProfile);
 
 	return {
 		profileUser,
 		logs: rows,
 		showcase,
+		lists,
 		isOwnProfile,
 	};
 };
