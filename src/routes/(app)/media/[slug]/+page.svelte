@@ -220,22 +220,31 @@ function handleDeleted(logId: string) {
 					<form method="POST" action="?/toggleFavorite" use:enhance>
 						<button
 							type="submit"
-							class="inline-flex cursor-pointer items-center gap-1.5 rounded-sm border px-4 py-2 transition-colors {data.isFavorite
+							aria-label={data.isFavorite ? `Remove ${mediaTypeLabel(item.mediaType)} favorite` : "Set as favorite"}
+							title={data.isFavorite ? `${mediaTypeLabel(item.mediaType)} favorite` : "Set as favorite"}
+							class="flex h-10 w-10 cursor-pointer items-center justify-center rounded-sm border text-lg transition-colors {data.isFavorite
 								? 'border-accent text-accent'
 								: 'border-border text-text hover:border-text-muted hover:bg-surface'}"
 						>
-							<span>{data.isFavorite ? "★" : "☆"}</span>
-							{data.isFavorite ? `${mediaTypeLabel(item.mediaType)} favorite` : "Set as favorite"}
+							{data.isFavorite ? "★" : "☆"}
 						</button>
 					</form>
 
 					<div class="relative">
 						<button
 							type="button"
-							class="inline-flex cursor-pointer items-center gap-1.5 rounded-sm border border-border px-4 py-2 text-text transition-colors hover:border-text-muted hover:bg-surface"
+							aria-label="Add to list"
+							title="Add to list"
+							class="flex h-10 w-10 cursor-pointer items-center justify-center rounded-sm border text-text transition-colors {userLists.some(
+								(l) => l.inList,
+							)
+								? 'border-accent text-accent'
+								: 'border-border hover:border-text-muted hover:bg-surface'}"
 							onclick={() => (showListPicker = !showListPicker)}
 						>
-							+ Add to list
+							<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="18" height="18">
+								<path d="M6 3a1 1 0 0 0-1 1v17l7-4 7 4V4a1 1 0 0 0-1-1H6z" />
+							</svg>
 						</button>
 
 						{#if showListPicker}
@@ -322,37 +331,37 @@ function handleDeleted(logId: string) {
 						{/if}
 					</div>
 				{/if}
-
-				{#if item.mediaType === "tv"}
-					<a
-						href="/media/{item.slug}/season/1"
-						class="inline-block rounded-sm border border-border px-4 py-2 text-text no-underline transition-colors hover:border-text-muted hover:bg-surface"
-					>
-						Browse episodes
-					</a>
-				{:else if item.mediaType === "anime"}
-					<a
-						href="/media/{item.slug}/episodes"
-						class="inline-block rounded-sm border border-border px-4 py-2 text-text no-underline transition-colors hover:border-text-muted hover:bg-surface"
-					>
-						Browse episodes
-					</a>
-				{:else if item.mediaType === "manga"}
-					<a
-						href="/media/{item.slug}/chapters"
-						class="inline-block rounded-sm border border-border px-4 py-2 text-text no-underline transition-colors hover:border-text-muted hover:bg-surface"
-					>
-						Browse chapters
-					</a>
-				{:else if item.mediaType === "music"}
-					<a
-						href="/media/{item.slug}/tracks"
-						class="inline-block rounded-sm border border-border px-4 py-2 text-text no-underline transition-colors hover:border-text-muted hover:bg-surface"
-					>
-						Browse tracks
-					</a>
-				{/if}
 			</div>
+
+			{#if item.mediaType === "tv"}
+				<a
+					href="/media/{item.slug}/season/1"
+					class="mt-3 inline-flex items-center gap-1 text-sm text-accent no-underline hover:text-text"
+				>
+					Track episodes →
+				</a>
+			{:else if item.mediaType === "anime"}
+				<a
+					href="/media/{item.slug}/episodes"
+					class="mt-3 inline-flex items-center gap-1 text-sm text-accent no-underline hover:text-text"
+				>
+					Track episodes →
+				</a>
+			{:else if item.mediaType === "manga"}
+				<a
+					href="/media/{item.slug}/chapters"
+					class="mt-3 inline-flex items-center gap-1 text-sm text-accent no-underline hover:text-text"
+				>
+					Chapters →
+				</a>
+			{:else if item.mediaType === "music"}
+				<a
+					href="/media/{item.slug}/tracks"
+					class="mt-3 inline-flex items-center gap-1 text-sm text-accent no-underline hover:text-text"
+				>
+					Track songs →
+				</a>
+			{/if}
 
 			{#if metadata && isMetadataType(metadata, "tv") && metadata.number_of_seasons}
 				<div class="mt-4 flex flex-wrap gap-2">

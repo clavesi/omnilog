@@ -292,6 +292,11 @@ async function deletePart(id: string, label: string) {
 			{#if showAddForm}
 				{@render addForm(showAddForm)}
 			{/if}
+		{:else}
+			<p class="mb-6 text-sm text-text-muted">
+				Story arcs and sagas are curated by admins — reach out to one if you'd like some added
+				for this series.
+			</p>
 		{/if}
 
 		{#if form?.error}

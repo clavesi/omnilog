@@ -19,12 +19,26 @@ const navLinkActive = "text-text after:scale-x-100";
 
 <header class="border-b border-border/80 bg-bg">
 	<div class="mx-auto flex max-w-225 items-center justify-between px-6 py-4">
-		<a
-			href="/feed"
-			class="font-display text-xl font-semibold tracking-tight text-accent no-underline transition-colors hover:text-text"
-		>
-			Omnilog
-		</a>
+		<div class="flex items-center gap-4">
+			<a
+				href="/feed"
+				class="font-display text-xl font-semibold tracking-tight text-accent no-underline transition-colors hover:text-text"
+			>
+				Omnilog
+			</a>
+			{#if data.user?.role === "admin" || data.user?.role === "owner"}
+				<a
+					href="/admin"
+					class="rounded-full border border-danger px-3 py-1 font-mono text-xs no-underline transition-colors hover:bg-danger hover:text-bg {path.startsWith(
+						'/admin',
+					)
+						? 'bg-danger text-bg'
+						: 'text-danger'}"
+				>
+					Admin
+				</a>
+			{/if}
+		</div>
 		<nav class="flex items-center gap-5 text-sm">
 			<a
 				href="/search"
@@ -50,11 +64,6 @@ const navLinkActive = "text-text after:scale-x-100";
 			>
 				Feed
 			</a>
-			{#if data.user?.role === "admin" || data.user?.role === "owner"}
-				<a href="/admin" class="{navLink} {path.startsWith('/admin') ? navLinkActive : ''}">
-					Admin
-				</a>
-			{/if}
 			{#if data.user}
 				<a
 					href="/u/{data.user.username}"
