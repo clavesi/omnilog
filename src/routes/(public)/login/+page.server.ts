@@ -12,7 +12,7 @@ export const load: PageServerLoad = (event) => {
 	if (event.locals.user) {
 		redirect(302, next);
 	}
-	return { next };
+	return { next, resetSuccess: event.url.searchParams.get("reset") === "success" };
 };
 
 export const actions: Actions = {

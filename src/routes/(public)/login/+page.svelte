@@ -16,10 +16,16 @@ const inputClass =
 <div class="mx-auto my-16 max-w-[400px] px-4">
 	<h1>Welcome back</h1>
 
+	{#if data.resetSuccess}
+		<p class="mt-2 rounded-sm border border-accent px-3 py-2 text-sm text-accent">
+			Password reset — log in with your new password.
+		</p>
+	{/if}
+
 	<form method="post" use:enhance class="mt-6 flex flex-col gap-4">
 		<input type="hidden" name="next" value={data.next} />
 
-		<label class="flex flex-col gap-1 text-sm text-text-muted">
+		<label class="flex flex-col gap-1 text-sm text-tegap-1ted">
 			Email
 			<input
 				type="email"
@@ -41,6 +47,10 @@ const inputClass =
 				class={inputClass}
 			/>
 		</label>
+
+		<a href="/forgot-password" class="self-end text-sm text-accent no-underline hover:text-text">
+			Forgot password?
+		</a>
 
 		{#if form?.message}
 			<p class="m-0 text-danger">{form.message}</p>

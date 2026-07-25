@@ -17,7 +17,7 @@ export const sessionCookieName = "auth-session";
 
 // --- Token generation ---
 
-function generateSecureRandomString(): string {
+export function generateSecureRandomString(): string {
 	const alphabet = "abcdefghijkmnpqrstuvwxyz23456789";
 	const bytes = new Uint8Array(24);
 	crypto.getRandomValues(bytes);
@@ -28,13 +28,13 @@ function generateSecureRandomString(): string {
 	return id;
 }
 
-async function hashSecret(secret: string): Promise<Uint8Array> {
+export async function hashSecret(secret: string): Promise<Uint8Array> {
 	const secretBytes = new TextEncoder().encode(secret);
 	const hashBuffer = await crypto.subtle.digest("SHA-256", secretBytes);
 	return new Uint8Array(hashBuffer);
 }
 
-function constantTimeEqual(a: Uint8Array, b: Uint8Array): boolean {
+export function constantTimeEqual(a: Uint8Array, b: Uint8Array): boolean {
 	if (a.byteLength !== b.byteLength) return false;
 	let c = 0;
 	for (let i = 0; i < a.byteLength; i++) {

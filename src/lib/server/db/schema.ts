@@ -320,6 +320,23 @@ export const userMediaStatus = pgTable(
 );
 
 // ============================================================================
+// PASSWORD RESET TOKENS
+// ============================================================================
+export const passwordResetTokens = pgTable(
+	"password_reset_tokens",
+	{
+		id: uuid("id").primaryKey().defaultRandom(),
+		userId: uuid("user_id")
+			.notNull()
+			.references(() => users.id, { onDelete: "cascade" }),
+		tokenHash: bytea("token_hash").notNull(),
+		expiresAt: timestamp("expires_at", { withTimezone: true }).notNull(),
+		createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+	},
+	(t) => [index("password_reset_tokens_user_idx").on(t.userId)],
+);
+
+// ============================================================================
 // FAVORITES
 // One favorite per user per media type — enforced by the unique index below.
 // ============================================================================
