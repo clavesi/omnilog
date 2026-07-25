@@ -72,6 +72,9 @@ const navLinkActive = "text-text after:scale-x-100";
 				>
 					{data.user.username}
 				</a>
+				<a href="/settings" class="{navLink} {path.startsWith('/settings') ? navLinkActive : ''}">
+					Settings
+				</a>
 				<form method="POST" action="/logout">
 					<button
 						type="submit"
