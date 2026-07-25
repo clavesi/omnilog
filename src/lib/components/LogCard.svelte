@@ -100,11 +100,11 @@ const typeColor = $derived(log.mediaType ? getMediaTypeColor(log.mediaType) : nu
 					<img
 						src={log.mediaCoverUrl}
 						alt=""
-						class="cover-hover h-[69px] w-[46px] rounded-sm bg-surface object-cover group-hover/cover:shadow-[0_0_0_1px_var(--type-color)]"
+						class="cover-hover h-17.25 w-11.5 rounded-sm bg-surface object-cover group-hover/cover:shadow-[0_0_0_1px_var(--type-color)]"
 					/>
 				{:else}
 					<div
-						class="cover-hover h-[69px] w-[46px] rounded-sm bg-surface group-hover/cover:shadow-[0_0_0_1px_var(--type-color)]"
+						class="cover-hover h-17.25 w-11.5 rounded-sm bg-surface group-hover/cover:shadow-[0_0_0_1px_var(--type-color)]"
 					></div>
 				{/if}
 			</a>

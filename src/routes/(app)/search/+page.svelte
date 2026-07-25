@@ -256,11 +256,11 @@ function dismissWarning(itemKey: string) {
 								<img
 									src={imageOf(hit)}
 									alt=""
-									class="cover-hover h-[69px] w-[46px] shrink-0 rounded-sm object-cover group-hover/cover:shadow-[0_0_0_1px_var(--type-color)]"
+									class="cover-hover h-17.25 w-11.5 shrink-0 rounded-sm object-cover group-hover/cover:shadow-[0_0_0_1px_var(--type-color)]"
 								/>
 							{:else}
 								<div
-									class="cover-hover h-[69px] w-[46px] shrink-0 rounded-sm bg-surface group-hover/cover:shadow-[0_0_0_1px_var(--type-color)]"
+									class="cover-hover h-17.25 w-11.5 shrink-0 rounded-sm bg-surface group-hover/cover:shadow-[0_0_0_1px_var(--type-color)]"
 								></div>
 							{/if}
 							<div class="flex min-w-0 flex-1 flex-col gap-0.5">

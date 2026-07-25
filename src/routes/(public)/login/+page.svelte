@@ -13,7 +13,7 @@ const inputClass =
 	<title>Log in · Omnilog</title>
 </svelte:head>
 
-<div class="mx-auto my-16 max-w-[400px] px-4">
+<div class="mx-auto my-16 max-w-100 px-4">
 	<h1>Welcome back</h1>
 
 	{#if data.resetSuccess}

@@ -49,7 +49,7 @@ const orderedShowcase = $derived(
 	{#if orderedShowcase.length > 0}
 		<section class="mb-10">
 			<h2 class="mb-4 text-sm tracking-wide text-text-muted uppercase">Showcase</h2>
-			<div class="grid grid-cols-1 gap-4 min-[420px]:grid-cols-4 sm:grid-cols-5 md:grid-cols-6 lg:grid-cols-7">
+			<div class="grid grid-cols-1 gap-4 min-105:grid-cols-4 sm:grid-cols-5 md:grid-cols-6 lg:grid-cols-7">
 				{#each orderedShowcase as fav (fav.mediaItemId)}
 					<a
 						href="/media/{fav.slug}"

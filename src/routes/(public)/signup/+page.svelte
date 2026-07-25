@@ -13,7 +13,7 @@ const inputClass =
 	<title>Sign up · Omnilog</title>
 </svelte:head>
 
-<div class="mx-auto my-16 max-w-[400px] px-4">
+<div class="mx-auto my-16 max-w-100 px-4">
 	<h1>Create your account</h1>
 
 	<form method="post" use:enhance class="mt-6 flex flex-col gap-4">
