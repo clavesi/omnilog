@@ -14,7 +14,6 @@ let profileSubmitting = $state(false);
 
 // svelte-ignore state_referenced_locally
 let newEmail = $state(data.profile.email);
-let emailPassword = $state("");
 let emailSubmitting = $state(false);
 
 $effect(() => {
@@ -98,10 +97,9 @@ let deleteSubmitting = $state(false);
 			action="?/updateEmail"
 			use:enhance={() => {
 				emailSubmitting = true;
-				return async ({ update, result }) => {
+				return async ({ update }) => {
 					await update();
 					emailSubmitting = false;
-					if (result.type === "success") emailPassword = "";
 				};
 			}}
 			class="flex flex-col gap-4"
@@ -112,16 +110,6 @@ let deleteSubmitting = $state(false);
 					type="email"
 					name="email"
 					bind:value={newEmail}
-					required
-					class="w-full rounded-sm border border-border bg-bg px-3 py-2 text-text"
-				/>
-			</label>
-			<label class="flex flex-col gap-1 text-sm">
-				Current password
-				<input
-					type="password"
-					name="currentPassword"
-					bind:value={emailPassword}
 					required
 					class="w-full rounded-sm border border-border bg-bg px-3 py-2 text-text"
 				/>

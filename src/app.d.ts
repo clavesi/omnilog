@@ -1,11 +1,11 @@
-import type { sessions, users } from "$lib/server/db/schema";
+import type { auth } from "$lib/server/auth";
 
 declare global {
 	namespace App {
 		// interface Error {}
 		interface Locals {
-			user: typeof users.$inferSelect | null;
-			session: typeof sessions.$inferSelect | null;
+			user: typeof auth.$Infer.Session.user | null;
+			session: typeof auth.$Infer.Session.session | null;
 		}
 		// interface PageData {}
 		// interface PageState {}

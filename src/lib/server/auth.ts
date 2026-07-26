@@ -1,160 +1,52 @@
-import type { RequestEvent } from "@sveltejs/kit";
-import { error, redirect } from "@sveltejs/kit";
-import { eq } from "drizzle-orm";
+import { hash, verify } from "@node-rs/argon2";
+import { error, type RequestEvent, redirect } from "@sveltejs/kit";
+import { betterAuth } from "better-auth";
+import { drizzleAdapter } from "better-auth/adapters/drizzle";
+import { username } from "better-auth/plugins";
+import { sveltekitCookies } from "better-auth/svelte-kit";
+import { getRequestEvent } from "$app/server";
+import { BETTER_AUTH_SECRET, BETTER_AUTH_URL } from "$env/static/private";
 import { db } from "./db";
-import { sessions, users } from "./db/schema";
+import { account, session, users, verification } from "./db/schema";
+import { sendPasswordResetEmail } from "./resend";
 import { safeRelativePath } from "./safe-path";
 
-const SECOND_IN_MS = 1000;
-const MINUTE_IN_MS = 60 * SECOND_IN_MS;
-const HOUR_IN_MS = 60 * MINUTE_IN_MS;
-const DAY_IN_MS = 24 * HOUR_IN_MS;
+const ARGON2_PARAMS = { memoryCost: 19456, timeCost: 2, outputLen: 32, parallelism: 1 };
 
-const INACTIVITY_TIMEOUT_MS = 30 * DAY_IN_MS; // sign out after 30 days of inactivity
-const ACTIVITY_CHECK_INTERVAL_MS = 1 * HOUR_IN_MS; // update lastVerifiedAt at most once per hour
-
-export const sessionCookieName = "auth-session";
-
-// --- Token generation ---
-
-export function generateSecureRandomString(): string {
-	const alphabet = "abcdefghijkmnpqrstuvwxyz23456789";
-	const bytes = new Uint8Array(24);
-	crypto.getRandomValues(bytes);
-	let id = "";
-	for (let i = 0; i < bytes.length; i++) {
-		id += alphabet[bytes[i] >> 3];
-	}
-	return id;
-}
-
-export async function hashSecret(secret: string): Promise<Uint8Array> {
-	const secretBytes = new TextEncoder().encode(secret);
-	const hashBuffer = await crypto.subtle.digest("SHA-256", secretBytes);
-	return new Uint8Array(hashBuffer);
-}
-
-export function constantTimeEqual(a: Uint8Array, b: Uint8Array): boolean {
-	if (a.byteLength !== b.byteLength) return false;
-	let c = 0;
-	for (let i = 0; i < a.byteLength; i++) {
-		c |= a[i] ^ b[i];
-	}
-	return c === 0;
-}
-
-// --- Types ---
-
-export type SessionWithToken = {
-	id: string;
-	userId: string;
-	createdAt: Date;
-	lastVerifiedAt: Date;
-	token: string;
-};
-
-// --- Session lifecycle ---
-
-export async function createSession(userId: string): Promise<SessionWithToken> {
-	const id = generateSecureRandomString();
-	const secret = generateSecureRandomString();
-	const secretHash = await hashSecret(secret);
-	const now = new Date();
-
-	await db.insert(sessions).values({
-		id,
-		userId,
-		secretHash,
-		createdAt: now,
-		lastVerifiedAt: now,
-	});
-
-	return {
-		id,
-		userId,
-		createdAt: now,
-		lastVerifiedAt: now,
-		token: `${id}.${secret}`,
-	};
-}
-
-/**
- * Loads a session + user by session ID and enforces the inactivity timeout.
- * Does NOT verify the secret — that's validateSessionToken's job.
- */
-async function getSessionAndUser(sessionId: string) {
-	const [row] = await db
-		.select({ session: sessions, user: users })
-		.from(sessions)
-		.innerJoin(users, eq(sessions.userId, users.id))
-		.where(eq(sessions.id, sessionId));
-
-	if (!row) return null;
-
-	const { session, user } = row;
-
-	// Inactivity check — based on lastVerifiedAt, not createdAt.
-	const idleMs = Date.now() - session.lastVerifiedAt.getTime();
-	if (idleMs >= INACTIVITY_TIMEOUT_MS) {
-		await db.delete(sessions).where(eq(sessions.id, session.id));
-		return null;
-	}
-
-	return { session, user };
-}
-
-export async function validateSessionToken(token: string) {
-	const parts = token.split(".");
-	if (parts.length !== 2) return { session: null, user: null };
-	const [sessionId, secret] = parts;
-
-	const result = await getSessionAndUser(sessionId);
-	if (!result) return { session: null, user: null };
-
-	const providedHash = await hashSecret(secret);
-	if (!constantTimeEqual(providedHash, result.session.secretHash)) {
-		return { session: null, user: null };
-	}
-
-	// Secret verified. Update activity marker if we're past the throttle window.
-	const now = new Date();
-	if (now.getTime() - result.session.lastVerifiedAt.getTime() >= ACTIVITY_CHECK_INTERVAL_MS) {
-		result.session.lastVerifiedAt = now;
-		await db.update(sessions).set({ lastVerifiedAt: now }).where(eq(sessions.id, result.session.id));
-	}
-
-	return result;
-}
-
-export async function invalidateSession(sessionId: string) {
-	await db.delete(sessions).where(eq(sessions.id, sessionId));
-}
-
-// --- Cookie helpers ---
-
-export function setSessionTokenCookie(event: RequestEvent, token: string) {
-	event.cookies.set(sessionCookieName, token, {
-		path: "/",
-		httpOnly: true,
-		sameSite: "lax",
-		secure: !import.meta.env.DEV,
-		maxAge: Math.floor(INACTIVITY_TIMEOUT_MS / 1000),
-	});
-}
-
-export function deleteSessionTokenCookie(event: RequestEvent) {
-	event.cookies.delete(sessionCookieName, { path: "/" });
-}
-
-// --- Public serialization (omits secretHash) ---
-
-export function encodeSessionPublicJSON(session: { id: string; createdAt: Date; lastVerifiedAt: Date }) {
-	return {
-		id: session.id,
-		createdAt: Math.floor(session.createdAt.getTime() / 1000),
-		lastVerifiedAt: Math.floor(session.lastVerifiedAt.getTime() / 1000),
-	};
-}
+export const auth = betterAuth({
+	secret: BETTER_AUTH_SECRET,
+	baseURL: BETTER_AUTH_URL,
+	database: drizzleAdapter(db, {
+		provider: "pg",
+		schema: { user: users, session, account, verification },
+	}),
+	emailAndPassword: {
+		enabled: true,
+		minPasswordLength: 8,
+		password: {
+			hash: (password) => hash(password, ARGON2_PARAMS),
+			verify: ({ hash: storedHash, password }) => verify(storedHash, password, ARGON2_PARAMS),
+		},
+		sendResetPassword: async ({ user, url }) => {
+			await sendPasswordResetEmail(user.email, url);
+		},
+		revokeSessionsOnPasswordReset: true,
+	},
+	user: {
+		additionalFields: {
+			avatarUrl: { type: "string", required: false, input: false, fieldName: "avatarUrl" },
+			bio: { type: "string", required: false, input: false, fieldName: "bio" },
+			role: { type: "string", required: false, input: false, defaultValue: "user", fieldName: "role" },
+		},
+	},
+	plugins: [
+		username({ minUsernameLength: 3, maxUsernameLength: 30 }),
+		// Must be last — handles setting cookies correctly when auth
+		// methods (signInEmail, signUpEmail, etc.) are called from
+		// SvelteKit server actions rather than through the HTTP handler.
+		sveltekitCookies(getRequestEvent),
+	],
+});
 
 // --- App middleware ---
 export function requireUser(event: RequestEvent) {
@@ -165,12 +57,6 @@ export function requireUser(event: RequestEvent) {
 	return event.locals.user;
 }
 
-/**
- * Like requireUser, but also requires the account to be an admin OR
- * owner — used for admin-level app management (arc/saga creation, and
- * viewing the /admin page). For actions that change someone's role
- * specifically, use requireOwner instead.
- */
 export function requireAdmin(event: RequestEvent) {
 	const user = requireUser(event);
 	if (user.role !== "admin" && user.role !== "owner") {
@@ -179,11 +65,6 @@ export function requireAdmin(event: RequestEvent) {
 	return user;
 }
 
-/**
- * Strictly requires the owner role. There's no admin UI to grant this —
- * the owner is set directly via SQL/db:studio. Only the owner can
- * promote/demote admins; regular admins have no role-management power.
- */
 export function requireOwner(event: RequestEvent) {
 	const user = requireUser(event);
 	if (user.role !== "owner") {

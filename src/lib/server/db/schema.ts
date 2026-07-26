@@ -3,7 +3,6 @@ import {
 	type AnyPgColumn,
 	boolean,
 	check,
-	customType,
 	date,
 	index,
 	integer,
@@ -21,23 +20,6 @@ import {
 export * from "../../media-types";
 
 import { EMPTY_METADATA, type MediaMetadata } from "../../media-types";
-
-// ============================================================================
-// TYPES
-// ============================================================================
-const bytea = customType<{ data: Uint8Array; default: false }>({
-	dataType() {
-		return "bytea";
-	},
-	toDriver(value: Uint8Array): Buffer {
-		return Buffer.from(value);
-	},
-	fromDriver(value: unknown): Uint8Array {
-		if (value instanceof Uint8Array) return value;
-		if (Buffer.isBuffer(value)) return new Uint8Array(value);
-		throw new Error("Expected bytea value from database");
-	},
-});
 
 // ============================================================================
 // ENUMS
@@ -71,10 +53,16 @@ export const externalSourceEnum = pgEnum("external_source", [
 export const users = pgTable(
 	"users",
 	{
-		id: uuid("id").primaryKey().defaultRandom(),
+		id: text("id").primaryKey(),
 		email: text("email").notNull(),
+		emailVerified: boolean("email_verified").notNull().default(false),
+		// Better Auth's core user model requires a "name" field. This app has
+		// no separate real-name concept — it's set equal to username at
+		// signup and never shown anywhere; `username` remains the actual
+		// public handle used everywhere in the UI and in profile URLs.
+		name: text("name").notNull(),
 		username: text("username").notNull(),
-		passwordHash: text("password_hash").notNull(),
+		displayUsername: text("display_username"),
 		avatarUrl: text("avatar_url"),
 		bio: text("bio"),
 		// Only the owner can change this via the admin UI — see auth.ts's
@@ -87,20 +75,55 @@ export const users = pgTable(
 	(t) => [uniqueIndex("users_username_unique").on(t.username), uniqueIndex("users_email_unique").on(t.email)],
 );
 
-export const sessions = pgTable("sessions", {
+// ============================================================================
+// BETTER AUTH TABLES
+// Replaces the old hand-rolled `sessions` table and the separate
+// `password_reset_tokens` table — Better Auth's `session`/`account`/
+// `verification` tables subsume both roles. `account` also stores OAuth
+// provider identities once GitHub/Google are added (Stage 4), which is why
+// it's provider-agnostic rather than password-specific.
+// ============================================================================
+export const session = pgTable("session", {
 	id: text("id").primaryKey(),
-	userId: uuid("user_id")
+	userId: text("user_id")
 		.notNull()
 		.references(() => users.id, { onDelete: "cascade" }),
-	secretHash: bytea("secret_hash").notNull(),
-	lastVerifiedAt: timestamp("last_verified_at", {
-		withTimezone: true,
-		mode: "date",
-	}).notNull(),
-	createdAt: timestamp("created_at", {
-		withTimezone: true,
-		mode: "date",
-	}).notNull(),
+	token: text("token").notNull().unique(),
+	expiresAt: timestamp("expires_at", { withTimezone: true }).notNull(),
+	ipAddress: text("ip_address"),
+	userAgent: text("user_agent"),
+	createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+	updatedAt: timestamp("updated_at", { withTimezone: true }).notNull().defaultNow(),
+});
+
+export const account = pgTable("account", {
+	id: text("id").primaryKey(),
+	userId: text("user_id")
+		.notNull()
+		.references(() => users.id, { onDelete: "cascade" }),
+	// "credential" for email/password; "github" / "google" once OAuth is added.
+	providerId: text("provider_id").notNull(),
+	// The provider's own account identifier — for "credential" this is just
+	// the user's id; for OAuth providers this is their subject/user id.
+	accountId: text("account_id").notNull(),
+	password: text("password"), // only populated for providerId: "credential"
+	accessToken: text("access_token"),
+	refreshToken: text("refresh_token"),
+	accessTokenExpiresAt: timestamp("access_token_expires_at", { withTimezone: true }),
+	refreshTokenExpiresAt: timestamp("refresh_token_expires_at", { withTimezone: true }),
+	scope: text("scope"),
+	idToken: text("id_token"),
+	createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+	updatedAt: timestamp("updated_at", { withTimezone: true }).notNull().defaultNow(),
+});
+
+export const verification = pgTable("verification", {
+	id: text("id").primaryKey(),
+	identifier: text("identifier").notNull(),
+	value: text("value").notNull(),
+	expiresAt: timestamp("expires_at", { withTimezone: true }).notNull(),
+	createdAt: timestamp("created_at", { withTimezone: true }).defaultNow(),
+	updatedAt: timestamp("updated_at", { withTimezone: true }).defaultNow(),
 });
 
 // ============================================================================
@@ -238,7 +261,7 @@ export const logs = pgTable(
 	"logs",
 	{
 		id: uuid("id").primaryKey().defaultRandom(),
-		userId: uuid("user_id")
+		userId: text("user_id")
 			.notNull()
 			.references(() => users.id, { onDelete: "cascade" }),
 		mediaItemId: uuid("media_item_id").references(() => mediaItems.id, { onDelete: "cascade" }),
@@ -298,7 +321,7 @@ export const userMediaStatus = pgTable(
 	"user_media_status",
 	{
 		id: uuid("id").primaryKey().defaultRandom(),
-		userId: uuid("user_id")
+		userId: text("user_id")
 			.notNull()
 			.references(() => users.id, { onDelete: "cascade" }),
 		mediaItemId: uuid("media_item_id")
@@ -320,23 +343,6 @@ export const userMediaStatus = pgTable(
 );
 
 // ============================================================================
-// PASSWORD RESET TOKENS
-// ============================================================================
-export const passwordResetTokens = pgTable(
-	"password_reset_tokens",
-	{
-		id: uuid("id").primaryKey().defaultRandom(),
-		userId: uuid("user_id")
-			.notNull()
-			.references(() => users.id, { onDelete: "cascade" }),
-		tokenHash: bytea("token_hash").notNull(),
-		expiresAt: timestamp("expires_at", { withTimezone: true }).notNull(),
-		createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
-	},
-	(t) => [index("password_reset_tokens_user_idx").on(t.userId)],
-);
-
-// ============================================================================
 // FAVORITES
 // One favorite per user per media type — enforced by the unique index below.
 // ============================================================================
@@ -344,7 +350,7 @@ export const favorites = pgTable(
 	"favorites",
 	{
 		id: uuid("id").primaryKey().defaultRandom(),
-		userId: uuid("user_id")
+		userId: text("user_id")
 			.notNull()
 			.references(() => users.id, { onDelete: "cascade" }),
 		mediaType: mediaTypeEnum("media_type").notNull(),
@@ -369,7 +375,7 @@ export const lists = pgTable(
 	"lists",
 	{
 		id: uuid("id").primaryKey().defaultRandom(),
-		userId: uuid("user_id")
+		userId: text("user_id")
 			.notNull()
 			.references(() => users.id, { onDelete: "cascade" }),
 		title: text("title").notNull(),
@@ -406,16 +412,24 @@ export const listItems = pgTable(
 // RELATIONS
 // ============================================================================
 export const usersRelations = relations(users, ({ many }) => ({
-	sessions: many(sessions),
+	sessions: many(session),
+	accounts: many(account),
 	logs: many(logs),
 	statuses: many(userMediaStatus),
 	favorites: many(favorites),
 	lists: many(lists),
 }));
 
-export const sessionsRelations = relations(sessions, ({ one }) => ({
+export const sessionRelations = relations(session, ({ one }) => ({
 	user: one(users, {
-		fields: [sessions.userId],
+		fields: [session.userId],
+		references: [users.id],
+	}),
+}));
+
+export const accountRelations = relations(account, ({ one }) => ({
+	user: one(users, {
+		fields: [account.userId],
 		references: [users.id],
 	}),
 }));

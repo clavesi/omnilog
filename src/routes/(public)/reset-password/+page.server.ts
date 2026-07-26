@@ -1,14 +1,12 @@
-import { hash } from "@node-rs/argon2";
 import { fail, redirect } from "@sveltejs/kit";
-import { eq } from "drizzle-orm";
-import { db } from "$lib/server/db";
-import { sessions, users } from "$lib/server/db/schema";
-import { validateAndConsumeResetToken } from "$lib/server/password-reset";
+import { auth } from "$lib/server/auth";
 import type { Actions, PageServerLoad } from "./$types";
 
-const ARGON2_PARAMS = { memoryCost: 19456, timeCost: 2, outputLen: 32, parallelism: 1 };
-
 export const load: PageServerLoad = (event) => {
+	// A missing token just means someone landed here without a real reset
+	// link — the page itself shows an "invalid link" state for that,
+	// consistent with how an expired/already-used token is only discovered
+	// at submission time (see the action below).
 	return { token: event.url.searchParams.get("token") };
 };
 
@@ -27,18 +25,13 @@ export const actions: Actions = {
 			return fail(400, { message: "Passwords don't match" });
 		}
 
-		const userId = await validateAndConsumeResetToken(token);
-		if (!userId) {
+		try {
+			await auth.api.resetPassword({ body: { newPassword, token } });
+		} catch {
 			return fail(400, { message: "This reset link is invalid or has expired — request a new one." });
 		}
 
-		const passwordHash = await hash(newPassword, ARGON2_PARAMS);
-
-		await db.transaction(async (tx) => {
-			await tx.update(users).set({ passwordHash, updatedAt: new Date() }).where(eq(users.id, userId));
-			await tx.delete(sessions).where(eq(sessions.userId, userId));
-		});
-
+		// Force re-login
 		redirect(303, "/login?reset=success");
 	},
 };
