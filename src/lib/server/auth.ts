@@ -38,6 +38,9 @@ export const auth = betterAuth({
 			bio: { type: "string", required: false, input: false, fieldName: "bio" },
 			role: { type: "string", required: false, input: false, defaultValue: "user", fieldName: "role" },
 		},
+		deleteUser: {
+			enabled: true,
+		},
 	},
 	plugins: [
 		username({ minUsernameLength: 3, maxUsernameLength: 30 }),
