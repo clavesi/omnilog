@@ -8,7 +8,15 @@ import type { Actions, PageServerLoad } from "./$types";
 export const load: PageServerLoad = (event) => {
 	const user = requireUser(event);
 	return {
-		profile: { username: user.username, email: user.email, imageURL: user.image, bio: user.bio },
+		profile: {
+			username: user.username,
+			email: user.email,
+			imageURL: user.image,
+			bio: user.bio,
+			emailVerified: user.emailVerified,
+		},
+		justVerified: event.url.searchParams.get("verified") === "1" && !event.url.searchParams.get("error"),
+		verifyError: event.url.searchParams.get("error"),
 	};
 };
 
@@ -80,6 +88,24 @@ export const actions: Actions = {
 		}
 
 		return { passwordSuccess: true };
+	},
+
+	resendVerification: async (event) => {
+		const user = requireUser(event);
+
+		if (user.emailVerified) return { verificationSuccess: true };
+
+		try {
+			await auth.api.sendVerificationEmail({
+				body: { email: user.email, callbackURL: "/settings?verified=1" },
+				headers: event.request.headers,
+			});
+		} catch (err) {
+			const message = err instanceof Error ? err.message : "Could not send verification email";
+			return fail(400, { verificationError: message });
+		}
+
+		return { verificationSuccess: true };
 	},
 
 	deleteAccount: async (event) => {

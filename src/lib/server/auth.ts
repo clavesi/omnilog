@@ -15,7 +15,7 @@ import {
 } from "$env/static/private";
 import { db } from "./db";
 import { account, session, users, verification } from "./db/schema";
-import { sendPasswordResetEmail } from "./resend";
+import { sendPasswordResetEmail, sendVerificationEmail } from "./resend";
 import { safeRelativePath } from "./safe-path";
 
 const ARGON2_PARAMS = { memoryCost: 19456, timeCost: 2, outputLen: 32, parallelism: 1 };
@@ -39,6 +39,14 @@ export const auth = betterAuth({
 		},
 		revokeSessionsOnPasswordReset: true,
 	},
+
+	emailVerification: {
+		sendVerificationEmail: async ({ user, url }) => {
+			await sendVerificationEmail(user.email, url);
+		},
+		sendOnSignUp: true,
+	},
+
 	socialProviders: {
 		github: { clientId: GITHUB_CLIENT_ID, clientSecret: GITHUB_CLIENT_SECRET },
 		google: { clientId: GOOGLE_CLIENT_ID, clientSecret: GOOGLE_CLIENT_SECRET },

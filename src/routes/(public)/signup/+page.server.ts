@@ -52,6 +52,7 @@ export const actions: Actions = {
 					// this app's UI — username is the real public handle
 					name: username,
 					username,
+					callbackURL: "/settings?verified=1",
 				},
 				headers: event.request.headers,
 			});

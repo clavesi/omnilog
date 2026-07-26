@@ -47,13 +47,13 @@ const inputClass =
 		<input type="hidden" name="next" value={data.next} />
 
 		<label class="flex flex-col gap-1 text-sm text-text-muted">
-			Email
+			Username
 			<input
-				type="email"
-				name="email"
-				value={form?.email ?? ""}
+				type="text"
+				name="username"
+				value={form?.username ?? ""}
 				required
-				autocomplete="email"
+				autocomplete="username"
 				class={inputClass}
 			/>
 		</label>

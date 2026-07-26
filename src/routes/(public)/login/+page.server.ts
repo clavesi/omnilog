@@ -14,22 +14,22 @@ export const load: PageServerLoad = (event) => {
 export const actions: Actions = {
 	default: async (event) => {
 		const formData = await event.request.formData();
-		const email = formData.get("email");
+		const username = formData.get("username");
 		const password = formData.get("password");
 		const nextRaw = formData.get("next");
 		const next = safeRelativePath(typeof nextRaw === "string" ? nextRaw : null);
 
-		const formValues = { email: typeof email === "string" ? email : "" };
+		const formValues = { username: typeof username === "string" ? username : "" };
 
-		if (typeof email !== "string" || typeof password !== "string") {
-			return fail(400, { ...formValues, message: "Email and password are required" });
+		if (typeof username !== "string" || typeof password !== "string") {
+			return fail(400, { ...formValues, message: "Username and password are required" });
 		}
 
 		try {
-			await auth.api.signInEmail({ body: { email, password }, headers: event.request.headers });
+			await auth.api.signInUsername({ body: { username, password }, headers: event.request.headers });
 		} catch {
-			// Generic message regardless of whether the email exists or the password was wrong
-			return fail(400, { ...formValues, message: "Incorrect email or password" });
+			// Generic message regardless of whether the username exists or the password was wrong
+			return fail(400, { ...formValues, message: "Incorrect username or password" });
 		}
 
 		redirect(303, next);

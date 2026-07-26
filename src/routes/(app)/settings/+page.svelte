@@ -36,6 +36,16 @@ let deleteSubmitting = $state(false);
 <div class="mx-auto max-w-150">
 	<h1 class="mb-8 text-2xl">Account settings</h1>
 
+	{#if data.justVerified}
+		<p class="mb-6 rounded-sm border border-accent px-4 py-3 text-sm text-accent">
+			✓ Email verified successfully.
+		</p>
+	{:else if data.verifyError}
+		<p class="mb-6 rounded-sm border border-danger px-4 py-3 text-sm text-danger">
+			That verification link didn't work — it may have expired. Try resending it below.
+		</p>
+	{/if}
+
 	<section class="mb-8 rounded-sm border border-border p-5">
 		<h2 class="mb-4 text-base">Profile</h2>
 		<form
@@ -92,6 +102,26 @@ let deleteSubmitting = $state(false);
 
 	<section class="mb-8 rounded-sm border border-border p-5">
 		<h2 class="mb-4 text-base">Email</h2>
+
+		<div class="mb-4 flex items-center gap-3">
+			{#if data.profile.emailVerified}
+				<span class="rounded-sm border border-accent px-2 py-0.5 font-mono text-xs text-accent">Verified</span>
+			{:else}
+				<span class="rounded-sm border border-border px-2 py-0.5 font-mono text-xs text-text-muted">
+					Not verified
+				</span>
+				<form method="POST" action="?/resendVerification" use:enhance>
+					<button type="submit" class="text-sm text-accent hover:text-text">Resend verification email</button>
+				</form>
+			{/if}
+		</div>
+		{#if form?.verificationError}
+			<p class="m-0 mb-4 text-sm text-danger">{form.verificationError}</p>
+		{/if}
+		{#if form?.verificationSuccess}
+			<p class="m-0 mb-4 text-sm text-accent">Verification email sent — check your inbox.</p>
+		{/if}
+
 		<form
 			method="POST"
 			action="?/updateEmail"
@@ -249,7 +279,7 @@ let deleteSubmitting = $state(false);
 				<div class="flex gap-3">
 					<button
 						type="submit"
-						disabled={deleteSubmitting}
+						disabled={deleteSubmitting || !deletePassword || deleteConfirmText !== "DELETE"}
 						class="rounded-sm bg-danger px-5 py-2 text-bg transition-opacity hover:opacity-90 disabled:opacity-60"
 					>
 						{deleteSubmitting ? "Deleting..." : "Permanently delete account"}
