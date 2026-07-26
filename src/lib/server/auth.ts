@@ -5,7 +5,14 @@ import { drizzleAdapter } from "better-auth/adapters/drizzle";
 import { username } from "better-auth/plugins";
 import { sveltekitCookies } from "better-auth/svelte-kit";
 import { getRequestEvent } from "$app/server";
-import { BETTER_AUTH_SECRET, BETTER_AUTH_URL } from "$env/static/private";
+import {
+	BETTER_AUTH_SECRET,
+	BETTER_AUTH_URL,
+	GITHUB_CLIENT_ID,
+	GITHUB_CLIENT_SECRET,
+	GOOGLE_CLIENT_ID,
+	GOOGLE_CLIENT_SECRET,
+} from "$env/static/private";
 import { db } from "./db";
 import { account, session, users, verification } from "./db/schema";
 import { sendPasswordResetEmail } from "./resend";
@@ -32,14 +39,53 @@ export const auth = betterAuth({
 		},
 		revokeSessionsOnPasswordReset: true,
 	},
+	socialProviders: {
+		github: { clientId: GITHUB_CLIENT_ID, clientSecret: GITHUB_CLIENT_SECRET },
+		google: { clientId: GOOGLE_CLIENT_ID, clientSecret: GOOGLE_CLIENT_SECRET },
+	},
+	account: {
+		accountLinking: {
+			enabled: true,
+			// Both providers verify emails before handing them back to us, so
+			// auto-linking on a matching verified email is safe here.
+			trustedProviders: ["github", "google"],
+		},
+	},
 	user: {
+		deleteUser: { enabled: true },
 		additionalFields: {
-			avatarUrl: { type: "string", required: false, input: false, fieldName: "avatarUrl" },
 			bio: { type: "string", required: false, input: false, fieldName: "bio" },
 			role: { type: "string", required: false, input: false, defaultValue: "user", fieldName: "role" },
+			usernameConfirmed: {
+				type: "boolean",
+				required: false,
+				input: false,
+				defaultValue: true,
+				fieldName: "usernameConfirmed",
+			},
 		},
-		deleteUser: {
-			enabled: true,
+	},
+
+	databaseHooks: {
+		user: {
+			create: {
+				before: async (user, context) => {
+					// Only OAuth-created accounts land here without a real username.
+					// Email/password signup always supplies one via the username plugin already.
+					// The OAuth callback route is /callback/:id.
+					if (!context?.path?.startsWith("/callback/")) return;
+
+					const placeholder = derivePlaceholderUsername(user.email);
+					return {
+						data: {
+							...user,
+							username: placeholder,
+							displayUsername: placeholder,
+							usernameConfirmed: false,
+						},
+					};
+				},
+			},
 		},
 	},
 	plugins: [
@@ -50,6 +96,20 @@ export const auth = betterAuth({
 		sveltekitCookies(getRequestEvent),
 	],
 });
+
+/**
+ * Create a placeholder username until user creates custom username.
+ */
+function derivePlaceholderUsername(email: string): string {
+	const base =
+		email
+			.split("@")[0]
+			.toLowerCase()
+			.replace(/[^a-z0-9_]/g, "")
+			.slice(0, 20) || "user";
+	const suffix = Math.random().toString(36).slice(2, 6);
+	return `${base}_${suffix}`;
+}
 
 // --- App middleware ---
 export function requireUser(event: RequestEvent) {

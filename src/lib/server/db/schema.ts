@@ -63,12 +63,14 @@ export const users = pgTable(
 		name: text("name").notNull(),
 		username: text("username").notNull(),
 		displayUsername: text("display_username"),
-		avatarUrl: text("avatar_url"),
+		image: text("image"),
 		bio: text("bio"),
-		// Only the owner can change this via the admin UI — see auth.ts's
-		// requireOwner(). The owner role itself has no promote-to-owner UI;
-		// set it directly via SQL/db:studio.
+		// Only the owner can change this via the admin UI
 		role: userRoleEnum("role").notNull().default("user"),
+		// Email/password signups pick their own username immediately, so this starts true for them.
+		// OAuth signups get a derived placeholder username and this starts false,
+		// 	 gating them through a one-time "confirm your username" step — see /confirm-username.
+		usernameConfirmed: boolean("username_confirmed").notNull().default(true),
 		createdAt: timestamp("created_at", { withTimezone: true }).defaultNow().notNull(),
 		updatedAt: timestamp("updated_at", { withTimezone: true }).defaultNow().notNull(),
 	},
@@ -84,7 +86,9 @@ export const users = pgTable(
 // it's provider-agnostic rather than password-specific.
 // ============================================================================
 export const session = pgTable("session", {
-	id: text("id").primaryKey(),
+	id: text("id")
+		.primaryKey()
+		.$defaultFn(() => crypto.randomUUID()),
 	userId: text("user_id")
 		.notNull()
 		.references(() => users.id, { onDelete: "cascade" }),
@@ -97,7 +101,9 @@ export const session = pgTable("session", {
 });
 
 export const account = pgTable("account", {
-	id: text("id").primaryKey(),
+	id: text("id")
+		.primaryKey()
+		.$defaultFn(() => crypto.randomUUID()),
 	userId: text("user_id")
 		.notNull()
 		.references(() => users.id, { onDelete: "cascade" }),
@@ -118,7 +124,9 @@ export const account = pgTable("account", {
 });
 
 export const verification = pgTable("verification", {
-	id: text("id").primaryKey(),
+	id: text("id")
+		.primaryKey()
+		.$defaultFn(() => crypto.randomUUID()),
 	identifier: text("identifier").notNull(),
 	value: text("value").notNull(),
 	expiresAt: timestamp("expires_at", { withTimezone: true }).notNull(),

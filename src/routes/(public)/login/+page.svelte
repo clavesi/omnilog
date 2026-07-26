@@ -22,10 +22,31 @@ const inputClass =
 		</p>
 	{/if}
 
-	<form method="post" use:enhance class="mt-6 flex flex-col gap-4">
+	<div class="mt-6 flex flex-col gap-3">
+		<a
+			href="/login/github?next={encodeURIComponent(data.next)}"
+			class="flex items-center justify-center gap-2 rounded-sm border border-border px-4 py-2.5 text-text no-underline transition-colors hover:border-text-muted hover:bg-surface"
+		>
+			Continue with GitHub
+		</a>
+		<a
+			href="/login/google?next={encodeURIComponent(data.next)}"
+			class="flex items-center justify-center gap-2 rounded-sm border border-border px-4 py-2.5 text-text no-underline transition-colors hover:border-text-muted hover:bg-surface"
+		>
+			Continue with Google
+		</a>
+	</div>
+
+	<div class="my-6 flex items-center gap-3 text-sm text-text-muted">
+		<div class="h-px flex-1 bg-border"></div>
+		or
+		<div class="h-px flex-1 bg-border"></div>
+	</div>
+
+	<form method="post" use:enhance class="flex flex-col gap-4">
 		<input type="hidden" name="next" value={data.next} />
 
-		<label class="flex flex-col gap-1 text-sm text-tegap-1ted">
+		<label class="flex flex-col gap-1 text-sm text-text-muted">
 			Email
 			<input
 				type="email"

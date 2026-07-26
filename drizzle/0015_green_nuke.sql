@@ -1,0 +1,1 @@
+ALTER TABLE "users" ADD COLUMN "username_confirmed" boolean DEFAULT true NOT NULL;

@@ -8,7 +8,7 @@ import type { Actions, PageServerLoad } from "./$types";
 export const load: PageServerLoad = (event) => {
 	const user = requireUser(event);
 	return {
-		profile: { username: user.username, email: user.email, avatarUrl: user.avatarUrl, bio: user.bio },
+		profile: { username: user.username, email: user.email, imageURL: user.image, bio: user.bio },
 	};
 };
 
@@ -17,17 +17,17 @@ export const actions: Actions = {
 		const user = requireUser(event);
 		const form = await event.request.formData();
 
-		const avatarUrl = String(form.get("avatarUrl") ?? "").trim() || null;
+		const image = String(form.get("image") ?? "").trim() || null;
 		const bio = String(form.get("bio") ?? "").trim() || null;
 
-		if (avatarUrl && avatarUrl.length > 500) {
-			return fail(400, { profileError: "Avatar URL is too long" });
+		if (image && image.length > 500) {
+			return fail(400, { profileError: "Image URL is too long" });
 		}
 		if (bio && bio.length > 500) {
 			return fail(400, { profileError: "Bio must be 500 characters or fewer" });
 		}
 
-		await db.update(users).set({ avatarUrl, bio, updatedAt: new Date() }).where(eq(users.id, user.id));
+		await db.update(users).set({ image, bio, updatedAt: new Date() }).where(eq(users.id, user.id));
 		return { profileSuccess: true };
 	},
 

@@ -5,7 +5,7 @@ let { data, form } = $props();
 
 // svelte-ignore state_referenced_locally -- intentional; the $effect below
 // resyncs on every data change, this is just the initial value.
-let avatarUrl = $state(data.profile.avatarUrl ?? "");
+let imageURL = $state(data.profile.imageURL ?? "");
 // svelte-ignore state_referenced_locally
 let bio = $state(data.profile.bio ?? "");
 const BIO_MAX = 500;
@@ -17,7 +17,7 @@ let newEmail = $state(data.profile.email);
 let emailSubmitting = $state(false);
 
 $effect(() => {
-	avatarUrl = data.profile.avatarUrl ?? "";
+	imageURL = data.profile.imageURL ?? "";
 	bio = data.profile.bio ?? "";
 	newEmail = data.profile.email;
 });
@@ -52,11 +52,11 @@ let deleteSubmitting = $state(false);
 		>
 			<p class="m-0 font-mono text-sm text-text-muted">Username: {data.profile.username}</p>
 			<label class="flex flex-col gap-1 text-sm">
-				Avatar URL
+				Image URL
 				<input
 					type="text"
-					name="avatarUrl"
-					bind:value={avatarUrl}
+					name="imageURL"
+					bind:value={imageURL}
 					placeholder="https://..."
 					class="w-full rounded-sm border border-border bg-bg px-3 py-2 text-text"
 				/>

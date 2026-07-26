@@ -22,9 +22,9 @@ const orderedShowcase = $derived(
 
 <div>
 	<header class="mb-10 flex items-center gap-5 border-b border-border pb-8">
-		{#if data.profileUser.avatarUrl}
+		{#if data.profileUser.imageURL}
 			<img
-				src={data.profileUser.avatarUrl}
+				src={data.profileUser.imageURL}
 				alt=""
 				class="h-18 w-18 shrink-0 rounded-sm object-cover"
 			/>

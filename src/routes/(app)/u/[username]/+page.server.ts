@@ -12,7 +12,7 @@ export const load: PageServerLoad = async ({ params, locals }) => {
 		.select({
 			id: users.id,
 			username: users.username,
-			avatarUrl: users.avatarUrl,
+			imageURL: users.image,
 			bio: users.bio,
 		})
 		.from(users)
