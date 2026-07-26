@@ -23,6 +23,7 @@ const ARGON2_PARAMS = { memoryCost: 19456, timeCost: 2, outputLen: 32, paralleli
 export const auth = betterAuth({
 	secret: BETTER_AUTH_SECRET,
 	baseURL: BETTER_AUTH_URL,
+	rateLimit: { enabled: true },
 	database: drizzleAdapter(db, {
 		provider: "pg",
 		schema: { user: users, session, account, verification },
@@ -39,14 +40,12 @@ export const auth = betterAuth({
 		},
 		revokeSessionsOnPasswordReset: true,
 	},
-
 	emailVerification: {
 		sendVerificationEmail: async ({ user, url }) => {
 			await sendVerificationEmail(user.email, url);
 		},
 		sendOnSignUp: true,
 	},
-
 	socialProviders: {
 		github: { clientId: GITHUB_CLIENT_ID, clientSecret: GITHUB_CLIENT_SECRET },
 		google: { clientId: GOOGLE_CLIENT_ID, clientSecret: GOOGLE_CLIENT_SECRET },
@@ -73,7 +72,6 @@ export const auth = betterAuth({
 			},
 		},
 	},
-
 	databaseHooks: {
 		user: {
 			create: {
