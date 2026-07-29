@@ -25,7 +25,7 @@ export const actions: Actions = {
 		const user = requireUser(event);
 		const form = await event.request.formData();
 
-		const image = String(form.get("image") ?? "").trim() || null;
+		const image = String(form.get("imageURL") ?? "").trim() || null;
 		const bio = String(form.get("bio") ?? "").trim() || null;
 
 		if (image && image.length > 500) {
