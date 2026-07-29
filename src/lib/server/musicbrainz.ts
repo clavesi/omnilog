@@ -26,6 +26,22 @@ const USER_AGENT = "Omnilog/0.1 (gitclavesi@gmail.com)";
 
 const MIN_REQUEST_GAP_MS = 1100; // just over 1/sec, matches MB's stated limit
 
+/**
+ * MusicBrainz can return partial dates like "1979-12" (year-month) or "1979"
+ * (year-only) when the exact day isn't known — but Postgres's `date` column
+ * requires a full YYYY-MM-DD string. Pad to the first day of the month (or
+ * Jan 1 for year-only) rather than dropping the date entirely, so at least
+ * the year/month are preserved for browsing and sorting.
+ */
+function normalizeDate(raw: string | null | undefined): string | null {
+	if (!raw) return null;
+	const parts = raw.split("-");
+	if (parts.length === 3) return raw; // already YYYY-MM-DD
+	if (parts.length === 2) return `${parts[0]}-${parts[1]}-01`; // YYYY-MM → YYYY-MM-01
+	if (parts.length === 1 && parts[0].length === 4) return `${parts[0]}-01-01`; // YYYY → YYYY-01-01
+	return null; // unrecognized format — better null than a bad date
+}
+
 // ============================================================================
 // Throttle — same pattern as jikan.ts's, but keyed to MusicBrainz's stricter
 // limit and its 503 (not 429) rate-limit response code.
@@ -208,7 +224,7 @@ export async function importAlbum(mbid: string): Promise<string> {
 		fetchFirstLabel(mbid).catch(() => null),
 	]);
 
-	const releaseDate = album["first-release-date"] || null;
+	const releaseDate = normalizeDate(album["first-release-date"]);
 	const artists = (album["artist-credit"] ?? []).map((a) => a.artist.name);
 
 	return db.transaction(async (tx) => {
