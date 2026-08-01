@@ -70,6 +70,13 @@ export const auth = betterAuth({
 				defaultValue: true,
 				fieldName: "usernameConfirmed",
 			},
+			isPrivate: {
+				type: "boolean",
+				required: false,
+				input: false,
+				defaultValue: false,
+				fieldName: "isPrivate",
+			},
 		},
 	},
 	databaseHooks: {

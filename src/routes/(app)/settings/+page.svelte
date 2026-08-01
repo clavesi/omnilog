@@ -10,6 +10,8 @@ let imageURL = $state(data.profile.imageURL ?? "");
 let bio = $state(data.profile.bio ?? "");
 const BIO_MAX = 500;
 const bioRemaining = $derived(BIO_MAX - bio.length);
+// svelte-ignore state_referenced_locally
+let isPrivate = $state(data.profile.isPrivate ?? false);
 let profileSubmitting = $state(false);
 
 // svelte-ignore state_referenced_locally
@@ -20,6 +22,7 @@ $effect(() => {
 	imageURL = data.profile.imageURL ?? "";
 	bio = data.profile.bio ?? "";
 	newEmail = data.profile.email;
+	isPrivate = data.profile.isPrivate ?? false;
 });
 
 let currentPassword = $state("");
@@ -90,6 +93,13 @@ let deleteSubmitting = $state(false);
 			{#if form?.profileSuccess}
 				<p class="m-0 text-sm text-accent">Saved.</p>
 			{/if}
+			<label class="flex items-center gap-2 text-sm">
+				<input type="checkbox" name="isPrivate" bind:checked={isPrivate} />
+				<span>
+					Private account
+					<span class="text-text-muted">— followers must be approved before they can see your logs</span>
+				</span>
+			</label>
 			<button
 				type="submit"
 				disabled={profileSubmitting}

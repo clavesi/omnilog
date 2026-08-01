@@ -1,6 +1,6 @@
-import { and, desc, eq, lt, not, or } from "drizzle-orm";
+import { and, desc, eq, inArray, lt, not, or } from "drizzle-orm";
 import { db } from "./db";
-import { logs, mediaParts, users } from "./db/schema";
+import { follows, logs, mediaParts, users } from "./db/schema";
 import { directMedia, logMediaSelect, parentPart, partMedia } from "./log-media-joins";
 import { logCardSelect } from "./logs";
 
@@ -72,4 +72,54 @@ export async function getFeedPage(opts: { cursorRaw?: string | null; excludeUser
 	const nextCursor = hasMore && last ? encodeCursor({ createdAt: last.createdAt.toISOString(), id: last.id }) : null;
 
 	return { logs: page, nextCursor };
+}
+
+/**
+ * Personalized feed — logs from users the viewer follows.
+ * Falls through to the global feed if the viewer follows nobody yet,
+ */
+export async function getPersonalizedFeedPage(userId: string, opts: { cursorRaw?: string | null } = {}) {
+	const followedRows = await db
+		.select({ followingId: follows.followingId })
+		.from(follows)
+		.where(and(eq(follows.followerId, userId), eq(follows.status, "accepted")));
+
+	if (followedRows.length === 0) {
+		return {
+			logs: (await getFeedPage(opts)).logs,
+			nextCursor: (await getFeedPage(opts)).nextCursor,
+			isPersonalized: false,
+		};
+	}
+
+	const followedIds = followedRows.map((r) => r.followingId);
+	const cursor = decodeCursor(opts.cursorRaw ?? null);
+	const conditions = [eq(logs.isPublic, true), inArray(logs.userId, followedIds)];
+
+	if (cursor) {
+		const cursorCondition = or(
+			lt(logs.createdAt, new Date(cursor.createdAt)),
+			and(eq(logs.createdAt, new Date(cursor.createdAt)), lt(logs.id, cursor.id)),
+		);
+		if (cursorCondition) conditions.push(cursorCondition);
+	}
+
+	const rows = await db
+		.select({ ...logCardSelect, username: users.username, ...logMediaSelect })
+		.from(logs)
+		.innerJoin(users, eq(logs.userId, users.id))
+		.leftJoin(directMedia, eq(logs.mediaItemId, directMedia.id))
+		.leftJoin(mediaParts, eq(logs.mediaPartId, mediaParts.id))
+		.leftJoin(partMedia, eq(mediaParts.mediaItemId, partMedia.id))
+		.leftJoin(parentPart, eq(mediaParts.parentPartId, parentPart.id))
+		.where(and(...conditions))
+		.orderBy(desc(logs.createdAt), desc(logs.id))
+		.limit(PAGE_SIZE + 1);
+
+	const hasMore = rows.length > PAGE_SIZE;
+	const page = hasMore ? rows.slice(0, PAGE_SIZE) : rows;
+	const last = page[page.length - 1];
+	const nextCursor = hasMore && last ? encodeCursor({ createdAt: last.createdAt.toISOString(), id: last.id }) : null;
+
+	return { logs: page, nextCursor, isPersonalized: true };
 }

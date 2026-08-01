@@ -14,6 +14,7 @@ export const load: PageServerLoad = (event) => {
 			imageURL: user.image,
 			bio: user.bio,
 			emailVerified: user.emailVerified,
+			isPrivate: user.isPrivate,
 		},
 		justVerified: event.url.searchParams.get("verified") === "1" && !event.url.searchParams.get("error"),
 		verifyError: event.url.searchParams.get("error"),
@@ -27,6 +28,7 @@ export const actions: Actions = {
 
 		const image = String(form.get("imageURL") ?? "").trim() || null;
 		const bio = String(form.get("bio") ?? "").trim() || null;
+		const isPrivate = form.get("isPrivate") === "on";
 
 		if (image && image.length > 500) {
 			return fail(400, { profileError: "Image URL is too long" });
@@ -35,7 +37,7 @@ export const actions: Actions = {
 			return fail(400, { profileError: "Bio must be 500 characters or fewer" });
 		}
 
-		await db.update(users).set({ image, bio, updatedAt: new Date() }).where(eq(users.id, user.id));
+		await db.update(users).set({ image, bio, isPrivate, updatedAt: new Date() }).where(eq(users.id, user.id));
 		return { profileSuccess: true };
 	},
 

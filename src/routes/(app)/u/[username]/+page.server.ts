@@ -1,11 +1,23 @@
-import { error } from "@sveltejs/kit";
+import { error, fail } from "@sveltejs/kit";
 import { and, eq } from "drizzle-orm";
+import { requireUser } from "$lib/server/auth";
 import { db } from "$lib/server/db";
 import { logs, users } from "$lib/server/db/schema";
 import { getShowcaseForUser } from "$lib/server/favorites";
+import {
+	acceptFollowRequest,
+	follow,
+	getFollowCounts,
+	getFollowers,
+	getFollowing,
+	getFollowStatus,
+	getPendingRequests,
+	rejectFollowRequest,
+	unfollow,
+} from "$lib/server/follows";
 import { getListsForUser } from "$lib/server/lists";
 import { queryLogsWithMedia } from "$lib/server/logs";
-import type { PageServerLoad } from "./$types";
+import type { Actions, PageServerLoad } from "./$types";
 
 export const load: PageServerLoad = async ({ params, locals }) => {
 	const [profileUser] = await db
@@ -14,6 +26,7 @@ export const load: PageServerLoad = async ({ params, locals }) => {
 			username: users.username,
 			imageURL: users.image,
 			bio: users.bio,
+			isPrivate: users.isPrivate,
 		})
 		.from(users)
 		.where(eq(users.username, params.username))
@@ -21,18 +34,32 @@ export const load: PageServerLoad = async ({ params, locals }) => {
 
 	if (!profileUser) throw error(404, "User not found");
 
-	const isOwnProfile = locals.user?.id === profileUser.id;
+	const viewerId = locals.user?.id ?? null;
+	const isOwnProfile = viewerId === profileUser.id;
 
-	// Own profile shows all logs; others see only public entries.
-	const rows = await queryLogsWithMedia({
-		where: isOwnProfile
-			? eq(logs.userId, profileUser.id)
-			: and(eq(logs.userId, profileUser.id), eq(logs.isPublic, true)),
-		limit: 50,
-	});
+	const [followCounts, followStatus, followers, following, pendingRequests] = await Promise.all([
+		getFollowCounts(profileUser.id),
+		viewerId && !isOwnProfile ? getFollowStatus(viewerId, profileUser.id) : Promise.resolve(null),
+		getFollowers(profileUser.id),
+		getFollowing(profileUser.id),
+		isOwnProfile ? getPendingRequests(profileUser.id) : Promise.resolve([]),
+	]);
 
-	const showcase = await getShowcaseForUser(profileUser.id);
-	const lists = await getListsForUser(profileUser.id, isOwnProfile);
+	// Private accounts: non-followers only see the profile header, not logs
+	const canSeeLogs = isOwnProfile || !profileUser.isPrivate || followStatus === "accepted";
+
+	const rows = canSeeLogs
+		? await queryLogsWithMedia({
+				where: isOwnProfile
+					? eq(logs.userId, profileUser.id)
+					: and(eq(logs.userId, profileUser.id), eq(logs.isPublic, true)),
+				limit: 50,
+			})
+		: [];
+
+	const [showcase, lists] = canSeeLogs
+		? await Promise.all([getShowcaseForUser(profileUser.id), getListsForUser(profileUser.id, isOwnProfile)])
+		: [[], []];
 
 	return {
 		profileUser,
@@ -40,5 +67,56 @@ export const load: PageServerLoad = async ({ params, locals }) => {
 		showcase,
 		lists,
 		isOwnProfile,
+		canSeeLogs,
+		followStatus,
+		followCounts,
+		followers,
+		following,
+		pendingRequests,
 	};
+};
+
+export const actions: Actions = {
+	follow: async (event) => {
+		const viewer = requireUser(event);
+		const { params } = event;
+
+		const [target] = await db.select({ id: users.id }).from(users).where(eq(users.username, params.username)).limit(1);
+		if (!target) return fail(404, { error: "User not found" });
+		if (target.id === viewer.id) return fail(400, { error: "Cannot follow yourself" });
+
+		const status = await follow(viewer.id, target.id);
+		return { followStatus: status };
+	},
+
+	unfollow: async (event) => {
+		const viewer = requireUser(event);
+		const { params } = event;
+
+		const [target] = await db.select({ id: users.id }).from(users).where(eq(users.username, params.username)).limit(1);
+		if (!target) return fail(404, { error: "User not found" });
+
+		await unfollow(viewer.id, target.id);
+		return { followStatus: "not_following" as const };
+	},
+
+	acceptRequest: async (event) => {
+		const viewer = requireUser(event);
+		const form = await event.request.formData();
+		const followerId = String(form.get("followerId") ?? "");
+		if (!followerId) return fail(400, { error: "Missing followerId" });
+
+		await acceptFollowRequest(viewer.id, followerId);
+		return { success: true };
+	},
+
+	rejectRequest: async (event) => {
+		const viewer = requireUser(event);
+		const form = await event.request.formData();
+		const followerId = String(form.get("followerId") ?? "");
+		if (!followerId) return fail(400, { error: "Missing followerId" });
+
+		await rejectFollowRequest(viewer.id, followerId);
+		return { success: true };
+	},
 };

@@ -36,6 +36,7 @@ export const mediaStatusEnum = pgEnum("media_status", ["planned", "in_progress",
 // role-management power at all (they just do the arc/saga management
 // admin was originally created for).
 export const userRoleEnum = pgEnum("user_role", ["user", "admin", "owner"]);
+export const followStatusEnum = pgEnum("follow_status", ["pending", "accepted"]);
 
 export const externalSourceEnum = pgEnum("external_source", [
 	"tmdb",
@@ -71,6 +72,8 @@ export const users = pgTable(
 		// OAuth signups get a derived placeholder username and this starts false,
 		// 	 gating them through a one-time "confirm your username" step — see /confirm-username.
 		usernameConfirmed: boolean("username_confirmed").notNull().default(true),
+		// When true, follow requests must be approved before the follower can see this account's logs in their feed
+		isPrivate: boolean("is_private").notNull().default(false),
 		createdAt: timestamp("created_at", { withTimezone: true }).defaultNow().notNull(),
 		updatedAt: timestamp("updated_at", { withTimezone: true }).defaultNow().notNull(),
 	},
@@ -417,6 +420,34 @@ export const listItems = pgTable(
 );
 
 // ============================================================================
+// FOLLOWS
+// A directed follow graph.
+// - status = "pending" while waiting for approval on a private account;
+// - status = "accepted" once approved (or immediately for public accounts).
+// ============================================================================
+export const follows = pgTable(
+	"follows",
+	{
+		id: uuid("id").primaryKey().defaultRandom(),
+		followerId: text("follower_id")
+			.notNull()
+			.references(() => users.id, { onDelete: "cascade" }),
+		followingId: text("following_id")
+			.notNull()
+			.references(() => users.id, { onDelete: "cascade" }),
+		status: followStatusEnum("status").notNull().default("accepted"),
+		createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+		updatedAt: timestamp("updated_at", { withTimezone: true }).notNull().defaultNow(),
+	},
+	(t) => [
+		// The unique constraint prevents duplicate requests.
+		uniqueIndex("follows_follower_following_unique").on(t.followerId, t.followingId),
+		index("follows_follower_idx").on(t.followerId),
+		index("follows_following_idx").on(t.followingId),
+	],
+);
+
+// ============================================================================
 // RELATIONS
 // ============================================================================
 export const usersRelations = relations(users, ({ many }) => ({
@@ -426,6 +457,13 @@ export const usersRelations = relations(users, ({ many }) => ({
 	statuses: many(userMediaStatus),
 	favorites: many(favorites),
 	lists: many(lists),
+	following: many(follows, { relationName: "follower" }),
+	followers: many(follows, { relationName: "following" }),
+}));
+
+export const followsRelations = relations(follows, ({ one }) => ({
+	follower: one(users, { fields: [follows.followerId], references: [users.id], relationName: "follower" }),
+	following: one(users, { fields: [follows.followingId], references: [users.id], relationName: "following" }),
 }));
 
 export const sessionRelations = relations(session, ({ one }) => ({
