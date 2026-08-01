@@ -21,17 +21,14 @@ function decodeCursor(raw: string | null): FeedCursor | null {
 }
 
 /**
- * Global public feed, newest first. Keyset (cursor) pagination — more
- * robust than offset/page-number once logs are being inserted concurrently,
- * since it won't skip or duplicate rows as new logs come in between pages.
- *
+ * Global public feed, newest first. Keyset (cursor) pagination.
  * excludeUserId: pass to hide a user's own logs from a "not mine" view.
- * Currently unused but wired up for later.
  */
 export async function getFeedPage(opts: { cursorRaw?: string | null; excludeUserId?: string } = {}) {
 	const cursor = decodeCursor(opts.cursorRaw ?? null);
 
-	const conditions = [eq(logs.isPublic, true)];
+	// public logs from public accounts
+	const conditions = [eq(logs.isPublic, true), eq(users.isPrivate, false)];
 
 	if (cursor) {
 		// createdAt < cursor.createdAt, OR (createdAt = cursor.createdAt AND id < cursor.id)
@@ -76,20 +73,22 @@ export async function getFeedPage(opts: { cursorRaw?: string | null; excludeUser
 
 /**
  * Personalized feed — logs from users the viewer follows.
- * Falls through to the global feed if the viewer follows nobody yet,
+ *
+ * excludeUserId: always pass the viewer's own id so their own logs don't
+ * appear in either the personalized or the global feed.
  */
-export async function getPersonalizedFeedPage(userId: string, opts: { cursorRaw?: string | null } = {}) {
+export async function getPersonalizedFeedPage(
+	userId: string,
+	opts: { cursorRaw?: string | null; excludeUserId?: string } = {},
+) {
 	const followedRows = await db
 		.select({ followingId: follows.followingId })
 		.from(follows)
 		.where(and(eq(follows.followerId, userId), eq(follows.status, "accepted")));
 
 	if (followedRows.length === 0) {
-		return {
-			logs: (await getFeedPage(opts)).logs,
-			nextCursor: (await getFeedPage(opts)).nextCursor,
-			isPersonalized: false,
-		};
+		const page = await getFeedPage(opts);
+		return { ...page, isPersonalized: false };
 	}
 
 	const followedIds = followedRows.map((r) => r.followingId);
@@ -102,6 +101,10 @@ export async function getPersonalizedFeedPage(userId: string, opts: { cursorRaw?
 			and(eq(logs.createdAt, new Date(cursor.createdAt)), lt(logs.id, cursor.id)),
 		);
 		if (cursorCondition) conditions.push(cursorCondition);
+	}
+
+	if (opts.excludeUserId) {
+		conditions.push(not(eq(logs.userId, opts.excludeUserId)));
 	}
 
 	const rows = await db
