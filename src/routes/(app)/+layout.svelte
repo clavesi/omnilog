@@ -9,6 +9,7 @@ let { data, children }: { data: LayoutData; children: Snippet } = $props();
 
 const path = $derived(page.url.pathname);
 const onFeed = $derived(path === "/feed" || path.startsWith("/feed/"));
+const onBrowse = $derived(path === "/browse" || path.startsWith("/browse/"));
 const onSearch = $derived(path === "/search" || path.startsWith("/search/"));
 const onProfile = $derived(
 	data.user != null && (path === `/u/${data.user.username}` || path.startsWith(`/u/${data.user.username}/`)),
@@ -63,6 +64,13 @@ const navLinkActive = "text-text after:scale-x-100";
 					</Tooltip.Content>
 				</Tooltip.Portal>
 			</Tooltip.Root>
+			<a
+				href="/browse"
+				class="{navLink} {onBrowse ? navLinkActive : ''}"
+				aria-current={onBrowse ? "page" : undefined}
+			>
+				Browse
+			</a>
 			<a
 				href="/feed"
 				class="{navLink} {onFeed ? navLinkActive : ''}"

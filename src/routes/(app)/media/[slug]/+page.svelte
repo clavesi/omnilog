@@ -196,10 +196,13 @@ function handleDeleted(logId: string) {
 			{#if genres.length}
 				<ul class="m-0 mb-6 flex list-none flex-wrap gap-2 p-0">
 					{#each genres as g (g.slug)}
-						<li
-							class="rounded-sm border border-border px-2.5 py-1 text-[0.8125rem] text-text-muted"
-						>
-							{g.name}
+						<li>
+							<a
+								href="/browse/genre/{g.slug}"
+								class="inline-block rounded-sm border border-border px-2.5 py-1 text-[0.8125rem] text-text-muted no-underline transition-colors hover:border-accent hover:text-accent"
+							>
+								{g.name}
+							</a>
 						</li>
 					{/each}
 				</ul>
