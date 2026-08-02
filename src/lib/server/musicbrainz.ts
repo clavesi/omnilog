@@ -1,6 +1,6 @@
 /**
  * No API key needed, but two hard requirements from their usage policy:
- *   1. Rate limit is 1 request/second — stricter than tenrai's 3/sec. Their
+ *   1. Rate limit is 1 request/second — stricter than Tenrai's 3/sec. Their
  *      rate-limit response is 503, not 429.
  *   2. Every request MUST send a descriptive User-Agent identifying the
  *      app and a contact point, or you risk being blocked outright.
@@ -18,13 +18,12 @@ import { db } from "$lib/server/db";
 import { type MusicMetadata, mediaExternalIds, mediaItems, mediaMetadata } from "$lib/server/db/schema";
 import { buildSlug, findExistingMediaId, linkGenres } from "$lib/server/media-import";
 import { createPart, findFlatParts } from "$lib/server/parts";
+import { abortableDelay, createThrottle } from "./rate-limit";
 
 const MB_BASE = "https://musicbrainz.org/ws/2";
 const COVER_ART_BASE = "https://coverartarchive.org";
 
 const USER_AGENT = "Omnilog/0.1 (gitclavesi@gmail.com)";
-
-const MIN_REQUEST_GAP_MS = 1100; // just over 1/sec, matches MB's stated limit
 
 /**
  * MusicBrainz can return partial dates like "1979-12" (year-month) or "1979"
@@ -42,42 +41,7 @@ function normalizeDate(raw: string | null | undefined): string | null {
 	return null; // unrecognized format — better null than a bad date
 }
 
-// ============================================================================
-// Throttle — same pattern as tenrai.ts's, but keyed to MusicBrainz's stricter
-// limit and its 503 (not 429) rate-limit response code.
-// ============================================================================
-
-let lastRequestAt = 0;
-let throttleChain: Promise<void> = Promise.resolve();
-
-/** setTimeout that rejects early if the signal aborts while waiting. */
-function abortableDelay(ms: number, signal?: AbortSignal): Promise<void> {
-	return new Promise((resolve, reject) => {
-		if (signal?.aborted) {
-			reject(signal.reason ?? new DOMException("Aborted", "AbortError"));
-			return;
-		}
-		const timer = setTimeout(resolve, ms);
-		signal?.addEventListener(
-			"abort",
-			() => {
-				clearTimeout(timer);
-				reject(signal.reason ?? new DOMException("Aborted", "AbortError"));
-			},
-			{ once: true },
-		);
-	});
-}
-
-function throttled<T>(fn: () => Promise<T>, signal?: AbortSignal): Promise<T> {
-	const run = throttleChain.then(async () => {
-		const wait = Math.max(0, lastRequestAt + MIN_REQUEST_GAP_MS - Date.now());
-		if (wait > 0) await abortableDelay(wait, signal);
-		lastRequestAt = Date.now();
-	});
-	throttleChain = run.catch(() => {});
-	return run.then(fn);
-}
+const throttled = createThrottle(1100); // just over 1/sec, matches MB's stated limit
 
 async function mbFetch<T>(path: string, signal?: AbortSignal, retriesLeft = 2): Promise<T> {
 	return throttled(async () => {
@@ -135,15 +99,7 @@ type MbCoverArtResponse = {
 // Public: search hit type
 // ============================================================================
 
-export type MusicBrainzSearchHit = {
-	type: "music";
-	id: string; // MBID
-	title: string;
-	artists: string[];
-	year: number | null;
-	primaryType: string | null;
-	coverUrl: string | null;
-};
+import type { MusicBrainzSearchHit } from "$lib/types/search";
 
 // ============================================================================
 // Public: search

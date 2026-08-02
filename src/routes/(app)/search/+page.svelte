@@ -3,14 +3,8 @@ import { enhance } from "$app/forms";
 import MediaTypeMark from "$lib/components/MediaTypeMark.svelte";
 import { igdbImage, openLibraryImage, tmdbImage } from "$lib/media-images";
 import { getMediaTypeColor, getSearchTypeColor, mediaTypeLabel } from "$lib/media-type-colors";
-import type { IgdbSearchHit } from "$lib/server/igdb";
-import type { MusicBrainzSearchHit } from "$lib/server/musicbrainz";
-import type { OpenLibrarySearchHit } from "$lib/server/openlibrary";
-import type { TenraiSearchHit } from "$lib/server/tenrai";
-import type { TmdbSearchHit } from "$lib/server/tmdb";
+import { type SearchHit, type SearchType, VALID_SEARCH_TYPES } from "$lib/types/search";
 
-type SearchHit = TmdbSearchHit | IgdbSearchHit | TenraiSearchHit | MusicBrainzSearchHit | OpenLibrarySearchHit;
-type SearchType = "all" | "movie" | "tv" | "game" | "anime" | "manga" | "music" | "book";
 type DuplicateInfo = { slug: string; title: string; mediaType: string; coverImageUrl: string | null };
 
 const TYPE_OPTIONS: { value: SearchType; label: string }[] = [

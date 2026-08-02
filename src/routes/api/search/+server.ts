@@ -1,18 +1,14 @@
 import { json } from "@sveltejs/kit";
-import { type IgdbSearchHit, searchGames } from "$lib/server/igdb";
-import { type MusicBrainzSearchHit, searchAlbums } from "$lib/server/musicbrainz";
-import { type OpenLibrarySearchHit, searchBooks } from "$lib/server/openlibrary";
-import { searchAnime, searchManga, type TenraiSearchHit } from "$lib/server/tenrai";
-import { searchMoviesAndTv, searchMoviesOnly, searchTvOnly, type TmdbSearchHit } from "$lib/server/tmdb";
+import { searchGames } from "$lib/server/igdb";
+import { searchAlbums } from "$lib/server/musicbrainz";
+import { searchBooks } from "$lib/server/openlibrary";
+import { searchAnime, searchManga } from "$lib/server/tenrai";
+import { searchMoviesAndTv, searchMoviesOnly, searchTvOnly } from "$lib/server/tmdb";
+import { type SearchHit, type SearchType, VALID_SEARCH_TYPES } from "$lib/types/search";
 import type { RequestHandler } from "./$types";
 
-type SearchHit = TmdbSearchHit | IgdbSearchHit | TenraiSearchHit | MusicBrainzSearchHit | OpenLibrarySearchHit;
-type SearchType = "all" | "movie" | "tv" | "game" | "anime" | "manga" | "music" | "book";
-
-const VALID_TYPES: SearchType[] = ["all", "movie", "tv", "game", "anime", "manga", "music", "book"];
-
 function isSearchType(v: string | null): v is SearchType {
-	return VALID_TYPES.includes(v as SearchType);
+	return VALID_SEARCH_TYPES.includes(v as SearchType);
 }
 
 function isAbortError(err: unknown): boolean {

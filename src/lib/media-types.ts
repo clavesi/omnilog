@@ -91,3 +91,17 @@ export const EMPTY_METADATA: UnknownMetadata = { type: "unknown" };
 
 export const isMetadataType = <K extends MediaMetadata["type"]>(m: MediaMetadata, type: K): m is MetadataForType<K> =>
 	m.type === type;
+
+// ============================================================================
+// Media type lists — single source of truth used by browse, search, and profile
+// ============================================================================
+
+/** All trackable media types in display order. */
+export const MEDIA_TYPES = ["movie", "tv", "game", "anime", "manga", "music", "book"] as const;
+export type MediaType = (typeof MEDIA_TYPES)[number];
+
+/**
+ * Showcase order: narrative media first, then interactive, then music/books.
+ * Used by the profile page to sort the favorites grid consistently.
+ */
+export const SHOWCASE_TYPE_ORDER: readonly MediaType[] = ["movie", "tv", "anime", "manga", "game", "music", "book"];

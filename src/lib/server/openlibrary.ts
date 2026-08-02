@@ -55,14 +55,7 @@ type OlEdition = {
 // Public: search hit type
 // ============================================================================
 
-export type OpenLibrarySearchHit = {
-	type: "book";
-	id: string; // work id without the "/works/" prefix, e.g. "OL45804W"
-	title: string;
-	authors: string[];
-	year: number | null;
-	coverId: number | null;
-};
+import type { OpenLibrarySearchHit } from "$lib/types/search";
 
 // ============================================================================
 // Public: search

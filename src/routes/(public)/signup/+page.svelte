@@ -1,7 +1,6 @@
 <script lang="ts">
 import { enhance } from "$app/forms";
-import IconGithub from "$lib/components/IconGithub.svelte";
-import IconGoogle from "$lib/components/IconGoogle.svelte";
+import OAuthButtons from "$lib/components/OAuthButtons.svelte";
 import { INPUT_CLASS } from "$lib/form-styles";
 import type { ActionData, PageData } from "./$types";
 
@@ -15,22 +14,7 @@ let { form, data }: { form: ActionData; data: PageData } = $props();
 <div class="mx-auto my-16 max-w-100 px-4">
 	<h1>Create your account</h1>
 
-	<div class="mt-6 flex flex-col gap-3">
-		<a
-			href="/login/github?next={encodeURIComponent(data.next)}"
-			class="flex items-center justify-center gap-2 rounded-sm border border-border px-4 py-2.5 text-text no-underline transition-colors hover:border-text-muted hover:bg-surface"
-		>
-			<IconGithub size={18} />
-			Continue with GitHub
-		</a>
-		<a
-			href="/login/google?next={encodeURIComponent(data.next)}"
-			class="flex items-center justify-center gap-2 rounded-sm border border-border px-4 py-2.5 text-text no-underline transition-colors hover:border-text-muted hover:bg-surface"
-		>
-			<IconGoogle size={18} />
-			Continue with Google
-		</a>
-	</div>
+	<OAuthButtons next={data.next} />
 
 	<div class="my-6 flex items-center gap-3 text-sm text-text-muted">
 		<div class="h-px flex-1 bg-border"></div>

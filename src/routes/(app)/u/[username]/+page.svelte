@@ -3,6 +3,7 @@ import { enhance } from "$app/forms";
 import LogCard from "$lib/components/LogCard.svelte";
 import MediaTypeMark from "$lib/components/MediaTypeMark.svelte";
 import { getMediaTypeColor, mediaTypeLabel } from "$lib/media-type-colors";
+import { SHOWCASE_TYPE_ORDER } from "$lib/media-types";
 
 let { data } = $props();
 
@@ -19,9 +20,10 @@ function handleDeleted(logId: string) {
 	deletedLogIds = new Set([...deletedLogIds, logId]);
 }
 
-const TYPE_ORDER = ["movie", "tv", "anime", "manga", "game", "music", "book"];
 const orderedShowcase = $derived(
-	[...data.showcase].sort((a, b) => TYPE_ORDER.indexOf(a.mediaType) - TYPE_ORDER.indexOf(b.mediaType)),
+	[...data.showcase].sort(
+		(a, b) => SHOWCASE_TYPE_ORDER.indexOf(a.mediaType as never) - SHOWCASE_TYPE_ORDER.indexOf(b.mediaType as never),
+	),
 );
 </script>
 

@@ -20,46 +20,11 @@ import {
 import { findPossibleDuplicate, PossibleDuplicateError } from "$lib/server/dedupe";
 import { buildSlug, findExistingMediaId, linkGenres } from "$lib/server/media-import";
 import { createPart, findFlatParts } from "$lib/server/parts";
+import { abortableDelay, createThrottle } from "./rate-limit";
 
 const TENRAI_BASE = "https://api.tenrai.org/v1";
-const MIN_REQUEST_GAP_MS = 350; // ~2.8/sec, conservative default inherited from Jikan's limits
 
-// ============================================================================
-// Simple sequential throttle — queues requests so they're spaced out rather
-// than firing concurrently and tripping the rate limit.
-// ============================================================================
-
-let lastRequestAt = 0;
-let throttleChain: Promise<void> = Promise.resolve();
-
-/** setTimeout that rejects early if the signal aborts while waiting. */
-function abortableDelay(ms: number, signal?: AbortSignal): Promise<void> {
-	return new Promise((resolve, reject) => {
-		if (signal?.aborted) {
-			reject(signal.reason ?? new DOMException("Aborted", "AbortError"));
-			return;
-		}
-		const timer = setTimeout(resolve, ms);
-		signal?.addEventListener(
-			"abort",
-			() => {
-				clearTimeout(timer);
-				reject(signal.reason ?? new DOMException("Aborted", "AbortError"));
-			},
-			{ once: true },
-		);
-	});
-}
-
-function throttled<T>(fn: () => Promise<T>, signal?: AbortSignal): Promise<T> {
-	const run = throttleChain.then(async () => {
-		const wait = Math.max(0, lastRequestAt + MIN_REQUEST_GAP_MS - Date.now());
-		if (wait > 0) await abortableDelay(wait, signal);
-		lastRequestAt = Date.now();
-	});
-	throttleChain = run.catch(() => {}); // keep the chain alive even if one call errors
-	return run.then(fn);
-}
+const throttled = createThrottle(350); // ~2.8/sec, conservative default inherited from Jikan/MAL documented limits
 
 const RETRYABLE_STATUSES = new Set([429, 502, 503, 504]);
 
@@ -175,23 +140,7 @@ type TenraiMangaFullRaw = {
 // Public: search hit type
 // ============================================================================
 
-export type TenraiSearchHit =
-	| {
-			type: "anime";
-			id: number;
-			title: string;
-			imageUrl: string | null;
-			year: number | null;
-			episodes: number | null;
-	  }
-	| {
-			type: "manga";
-			id: number;
-			title: string;
-			imageUrl: string | null;
-			year: number | null;
-			chapters: number | null;
-	  };
+import type { TenraiSearchHit } from "$lib/types/search";
 
 // ============================================================================
 // Public: search

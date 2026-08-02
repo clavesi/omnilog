@@ -1,10 +1,9 @@
 <script lang="ts">
+import BrowseFilterBar from "$lib/components/BrowseFilterBar.svelte";
 import MediaGrid from "$lib/components/MediaGrid.svelte";
-import { mediaTypeLabel } from "$lib/media-type-colors";
+import Pagination from "$lib/components/Pagination.svelte";
 
 let { data } = $props();
-
-const mediaTypes = ["movie", "tv", "game", "anime", "manga", "music", "book"] as const;
 
 function filterHref(type: string | null): string {
 	const base = `/browse/decade/${data.decadeLabel}`;
@@ -32,50 +31,7 @@ function pageHref(p: number): string {
 		</p>
 	</header>
 
-	<nav class="mb-8 flex flex-wrap gap-2" aria-label="Filter by media type">
-		<a
-			href={filterHref(null)}
-			class="rounded-sm border px-2.5 py-1 text-sm no-underline transition-colors {data.mediaType === null
-				? 'border-accent text-accent'
-				: 'border-border text-text-muted hover:border-text-muted hover:text-text'}"
-		>
-			All
-		</a>
-		{#each mediaTypes as t (t)}
-			<a
-				href={filterHref(t)}
-				class="rounded-sm border px-2.5 py-1 text-sm no-underline transition-colors {data.mediaType === t
-					? 'border-accent text-accent'
-					: 'border-border text-text-muted hover:border-text-muted hover:text-text'}"
-			>
-				{mediaTypeLabel(t)}
-			</a>
-		{/each}
-	</nav>
-
+	<BrowseFilterBar activeType={data.mediaType} hrefFor={filterHref} />
 	<MediaGrid items={data.items} />
-
-	{#if data.totalPages > 1}
-		<nav class="mt-8 flex items-center justify-center gap-2" aria-label="Pagination">
-			{#if data.page > 1}
-				<a
-					href={pageHref(data.page - 1)}
-					class="rounded-sm border border-border px-3 py-1.5 text-sm text-text-muted no-underline transition-colors hover:border-text-muted hover:text-text"
-				>
-					← Prev
-				</a>
-			{/if}
-			<span class="font-mono text-sm text-text-muted">
-				{data.page} / {data.totalPages}
-			</span>
-			{#if data.page < data.totalPages}
-				<a
-					href={pageHref(data.page + 1)}
-					class="rounded-sm border border-border px-3 py-1.5 text-sm text-text-muted no-underline transition-colors hover:border-text-muted hover:text-text"
-				>
-					Next →
-				</a>
-			{/if}
-		</nav>
-	{/if}
+	<Pagination page={data.page} totalPages={data.totalPages} hrefFor={pageHref} />
 </div>

@@ -87,15 +87,7 @@ type IgdbGameRaw = {
 	total_rating?: number;
 };
 
-export type IgdbSearchHit = {
-	type: "game";
-	id: number;
-	name: string;
-	summary: string;
-	firstReleaseDate: number | null; // unix seconds
-	coverImageId: string | null;
-	platforms: string[];
-};
+import type { IgdbSearchHit } from "$lib/types/search";
 
 // ============================================================================
 // Public: search

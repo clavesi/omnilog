@@ -19,29 +19,7 @@ if (!TMDB_API_KEY) throw new Error("TMDB_API_KEY is not set");
 // TYPES — only what we use from TMDB, not their full schema
 // ============================================================================
 
-export type TmdbSearchHit =
-	| {
-			type: "movie";
-			id: number;
-			title: string;
-			original_title: string;
-			overview: string;
-			release_date: string; // "YYYY-MM-DD" or ""
-			poster_path: string | null;
-			backdrop_path: string | null;
-			vote_average: number;
-	  }
-	| {
-			type: "tv";
-			id: number;
-			name: string;
-			original_name: string;
-			overview: string;
-			first_air_date: string;
-			poster_path: string | null;
-			backdrop_path: string | null;
-			vote_average: number;
-	  };
+import type { TmdbSearchHit } from "$lib/types/search";
 
 type TmdbMovieSearchResult = {
 	id: number;
