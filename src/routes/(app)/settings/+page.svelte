@@ -1,5 +1,6 @@
 <script lang="ts">
 import { enhance } from "$app/forms";
+import Checkbox from "$lib/components/Checkbox.svelte";
 
 let { data, form } = $props();
 
@@ -94,7 +95,7 @@ let deleteSubmitting = $state(false);
 				<p class="m-0 text-sm text-accent">Saved.</p>
 			{/if}
 			<label class="flex items-center gap-2 text-sm">
-				<input type="checkbox" name="isPrivate" bind:checked={isPrivate} />
+				<Checkbox name="isPrivate" bind:checked={isPrivate} />
 				<span>
 					Private account
 					<span class="text-text-muted">— followers must be approved before they can see your logs</span>

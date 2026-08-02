@@ -1,5 +1,6 @@
 <script lang="ts">
 import { Search } from "@lucide/svelte";
+import { Tooltip } from "bits-ui";
 import type { Snippet } from "svelte";
 import { page } from "$app/state";
 import type { LayoutData } from "./$types";
@@ -18,6 +19,7 @@ const navLink =
 const navLinkActive = "text-text after:scale-x-100";
 </script>
 
+<Tooltip.Provider delayDuration={400}>
 <header class="border-b border-border/80 bg-bg">
 	<div class="mx-auto flex max-w-225 items-center justify-between px-6 py-4">
 		<div class="flex items-center gap-4">
@@ -41,14 +43,26 @@ const navLinkActive = "text-text after:scale-x-100";
 			{/if}
 		</div>
 		<nav class="flex items-center gap-5 text-sm">
-			<a
-				href="/search"
-				class="{navLink} {onSearch ? navLinkActive : ''}"
-				aria-label="Search"
-				aria-current={onSearch ? "page" : undefined}
-			>
-				<Search size={20} aria-hidden="true" />
-			</a>
+			<Tooltip.Root>
+				<Tooltip.Trigger class="contents">
+					<a
+						href="/search"
+						class="{navLink} {onSearch ? navLinkActive : ''}"
+						aria-label="Search"
+						aria-current={onSearch ? "page" : undefined}
+					>
+						<Search size={20} aria-hidden="true" />
+					</a>
+				</Tooltip.Trigger>
+				<Tooltip.Portal>
+					<Tooltip.Content
+						class="z-50 rounded-sm bg-surface px-2 py-1 text-xs text-text shadow-md"
+						sideOffset={6}
+					>
+						Search
+					</Tooltip.Content>
+				</Tooltip.Portal>
+			</Tooltip.Root>
 			<a
 				href="/feed"
 				class="{navLink} {onFeed ? navLinkActive : ''}"
@@ -93,3 +107,4 @@ const navLinkActive = "text-text after:scale-x-100";
 <main class="mx-auto max-w-200 px-6 py-10">
 	{@render children()}
 </main>
+</Tooltip.Provider>

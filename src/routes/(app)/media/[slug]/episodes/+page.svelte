@@ -1,5 +1,7 @@
 <script lang="ts">
+import { Select } from "bits-ui";
 import { enhance } from "$app/forms";
+import Checkbox from "$lib/components/Checkbox.svelte";
 import ConfirmDialog from "$lib/components/ConfirmDialog.svelte";
 import MediaTypeMark from "$lib/components/MediaTypeMark.svelte";
 
@@ -161,7 +163,7 @@ async function deletePart(id: string) {
 			/>
 		</label>
 		<label class="flex items-center gap-2 text-sm text-text-muted">
-			<input type="checkbox" name="isFiller" bind:checked={addFiller} />
+			<Checkbox name="isFiller" bind:checked={addFiller} />
 			Filler
 		</label>
 		<button
@@ -215,7 +217,7 @@ async function deletePart(id: string) {
 			/>
 		</label>
 		<label class="flex items-center gap-2 text-sm text-text-muted">
-			<input type="checkbox" name="isFiller" bind:checked={editFiller} />
+			<Checkbox name="isFiller" bind:checked={editFiller} />
 			Filler
 		</label>
 		<button
@@ -305,26 +307,68 @@ async function deletePart(id: string) {
 		{/if}
 
 		{#if data.arcs.length > 0 || data.sagas.length > 0}
-			<label class="mb-6 flex items-center gap-2 text-sm text-text-muted">
+			<div class="mb-6 flex items-center gap-2 text-sm text-text-muted">
 				View
-				<select bind:value={selectedView} class="rounded-sm border border-border bg-bg px-3 py-2 text-text">
-					<option value="all">All episodes</option>
-					{#if data.sagas.length > 0}
-						<optgroup label="Sagas">
-							{#each data.sagas as saga (saga.id)}
-								<option value="saga:{saga.id}">{saga.title}</option>
-							{/each}
-						</optgroup>
-					{/if}
-					{#if data.arcs.length > 0}
-						<optgroup label="Arcs">
-							{#each data.arcs as arc (arc.id)}
-								<option value="arc:{arc.id}">{arc.title}</option>
-							{/each}
-						</optgroup>
-					{/if}
-				</select>
-			</label>
+				<Select.Root
+					type="single"
+					bind:value={selectedView}
+					onValueChange={(v) => { if (v) selectedView = v; }}
+				>
+					<Select.Trigger
+						class="flex items-center gap-1.5 rounded-sm border border-border bg-bg px-3 py-2 text-text focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-accent"
+					>
+						<Select.Value placeholder="All episodes" />
+					</Select.Trigger>
+					<Select.Portal>
+						<Select.Content
+							class="z-50 min-w-48 rounded-sm border border-border bg-bg shadow-lg"
+							sideOffset={4}
+						>
+							<Select.Viewport class="p-1">
+								<Select.Item
+									value="all"
+									label="All episodes"
+									class="flex cursor-pointer items-center rounded-sm px-3 py-2 text-sm text-text data-highlighted:bg-surface"
+								>
+									All episodes
+								</Select.Item>
+								{#if data.sagas.length > 0}
+									<Select.Group>
+										<Select.GroupHeading class="px-3 py-1.5 text-xs font-medium text-text-muted">
+											Sagas
+										</Select.GroupHeading>
+										{#each data.sagas as saga (saga.id)}
+											<Select.Item
+												value="saga:{saga.id}"
+												label={saga.title ?? ""}
+												class="flex cursor-pointer items-center rounded-sm px-3 py-2 text-sm text-text data-highlighted:bg-surface"
+											>
+												{saga.title}
+											</Select.Item>
+										{/each}
+									</Select.Group>
+								{/if}
+								{#if data.arcs.length > 0}
+									<Select.Group>
+										<Select.GroupHeading class="px-3 py-1.5 text-xs font-medium text-text-muted">
+											Arcs
+										</Select.GroupHeading>
+										{#each data.arcs as arc (arc.id)}
+											<Select.Item
+												value="arc:{arc.id}"
+												label={arc.title ?? ""}
+												class="flex cursor-pointer items-center rounded-sm px-3 py-2 text-sm text-text data-highlighted:bg-surface"
+											>
+												{arc.title}
+											</Select.Item>
+										{/each}
+									</Select.Group>
+								{/if}
+							</Select.Viewport>
+						</Select.Content>
+					</Select.Portal>
+				</Select.Root>
+			</div>
 		{/if}
 
 		{#if filteredView.mode === "all"}

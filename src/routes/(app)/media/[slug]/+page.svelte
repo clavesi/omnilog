@@ -1,6 +1,6 @@
 <script lang="ts">
 import { ArrowRight, Bookmark, Check, Star } from "@lucide/svelte";
-import { Popover } from "bits-ui";
+import { Popover, Tooltip } from "bits-ui";
 import { enhance } from "$app/forms";
 import LogCard from "$lib/components/LogCard.svelte";
 import MediaTypeMark from "$lib/components/MediaTypeMark.svelte";
@@ -218,27 +218,35 @@ function handleDeleted(logId: string) {
 				</a>
 
 				{#if data.currentUserId}
-					<form method="POST" action="?/toggleFavorite" use:enhance>
-						<button
-							type="submit"
-							aria-label={data.isFavorite ? `Remove ${mediaTypeLabel(item.mediaType)} favorite` : "Set as favorite"}
-							title={data.isFavorite ? `${mediaTypeLabel(item.mediaType)} favorite` : "Set as favorite"}
-							class="flex h-10 w-10 cursor-pointer items-center justify-center rounded-sm border transition-colors {data.isFavorite
-								? 'border-accent text-accent'
-								: 'border-border text-text hover:border-text-muted hover:bg-surface'}"
-						>
-							<Star
-								size={18}
-								aria-hidden="true"
-								fill={data.isFavorite ? "currentColor" : "none"}
-							/>
-						</button>
-					</form>
+					<Tooltip.Root>
+						<form method="POST" action="?/toggleFavorite" use:enhance>
+							<Tooltip.Trigger
+								type="submit"
+								aria-label={data.isFavorite ? `Remove ${mediaTypeLabel(item.mediaType)} favorite` : "Set as favorite"}
+								class="flex h-10 w-10 cursor-pointer items-center justify-center rounded-sm border transition-colors {data.isFavorite
+									? 'border-accent text-accent'
+									: 'border-border text-text hover:border-text-muted hover:bg-surface'}"
+							>
+								<Star
+									size={18}
+									aria-hidden="true"
+									fill={data.isFavorite ? "currentColor" : "none"}
+								/>
+							</Tooltip.Trigger>
+						</form>
+						<Tooltip.Portal>
+							<Tooltip.Content
+								class="z-50 rounded-sm bg-surface px-2 py-1 text-xs text-text shadow-md"
+								sideOffset={6}
+							>
+								{data.isFavorite ? `Remove ${mediaTypeLabel(item.mediaType)} favorite` : "Set as favorite"}
+							</Tooltip.Content>
+						</Tooltip.Portal>
+					</Tooltip.Root>
 
 					<Popover.Root onOpenChange={(open) => { if (!open) showNewListInput = false; }}>
 						<Popover.Trigger
 							aria-label="Add to list"
-							title="Add to list"
 							class="flex h-10 w-10 cursor-pointer items-center justify-center rounded-sm border transition-colors {userLists.some(
 								(l) => l.inList,
 							)

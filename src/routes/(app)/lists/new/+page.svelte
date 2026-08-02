@@ -1,5 +1,6 @@
 <script lang="ts">
 import { enhance } from "$app/forms";
+import Checkbox from "$lib/components/Checkbox.svelte";
 
 let { form } = $props();
 
@@ -40,7 +41,7 @@ let submitting = $state(false);
 			></textarea>
 		</label>
 		<label class="flex items-center gap-2 text-sm text-text-muted">
-			<input type="checkbox" name="isPublic" checked />
+			<Checkbox name="isPublic" checked />
 			Public
 		</label>
 

@@ -1,5 +1,6 @@
 <script lang="ts">
 import { enhance } from "$app/forms";
+import Checkbox from "$lib/components/Checkbox.svelte";
 import MediaTypeMark from "$lib/components/MediaTypeMark.svelte";
 
 let { data, form } = $props();
@@ -54,7 +55,7 @@ function startEditingMeta() {
 				></textarea>
 			</label>
 			<label class="flex items-center gap-2 text-sm text-text-muted">
-				<input type="checkbox" name="isPublic" bind:checked={editPublic} />
+				<Checkbox name="isPublic" bind:checked={editPublic} />
 				Public
 			</label>
 			<div class="flex gap-3">

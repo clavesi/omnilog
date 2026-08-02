@@ -5,6 +5,7 @@
  */
 import { enhance } from "$app/forms";
 import type { LogFormInitial } from "$lib/types/log";
+import Checkbox from "./Checkbox.svelte";
 import StarRating from "./StarRating.svelte";
 
 type Props = {
@@ -61,13 +62,7 @@ const inputClass =
 
 	<div class="mb-6">
 		<label class="flex items-center gap-2 text-sm text-text-muted">
-			<input
-				type="checkbox"
-				name="isPublic"
-				value="on"
-				bind:checked={isPublic}
-				class="rounded-sm border-border text-accent focus:ring-accent"
-			/>
+			<Checkbox name="isPublic" bind:checked={isPublic} />
 			Public — visible to others
 		</label>
 	</div>
@@ -111,12 +106,7 @@ const inputClass =
 				class="mt-2 w-full resize-y {inputClass}"
 			></textarea>
 			<label class="mt-3 flex items-center gap-2 text-sm text-text-muted">
-				<input
-					type="checkbox"
-					name="containsSpoilers"
-					bind:checked={containsSpoilers}
-					class="rounded-sm border-border text-accent focus:ring-accent"
-				/>
+				<Checkbox name="containsSpoilers" bind:checked={containsSpoilers} />
 				Contains spoilers
 			</label>
 		{/if}
