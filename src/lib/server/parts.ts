@@ -10,10 +10,10 @@
 
 import { and, eq, isNull } from "drizzle-orm";
 import { db } from "./db";
-import { mediaParts } from "./db/schema";
+import { mediaParts, type partTypeEnum } from "./db/schema";
 
 type DbTransaction = Parameters<Parameters<typeof db.transaction>[0]>[0];
-export type PartType = "season" | "episode" | "chapter" | "volume" | "arc" | "saga" | "track";
+export type PartType = (typeof partTypeEnum.enumValues)[number];
 
 export async function findPart(
 	mediaItemId: string,

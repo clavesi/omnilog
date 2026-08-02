@@ -1,9 +1,9 @@
 import { fail, redirect } from "@sveltejs/kit";
 import { requireUser } from "$lib/server/auth";
 import { createList } from "$lib/server/lists";
-import type { Actions } from "./$types";
+import type { Actions, PageServerLoad } from "./$types";
 
-export const load = (event) => {
+export const load: PageServerLoad = (event) => {
 	requireUser(event);
 };
 

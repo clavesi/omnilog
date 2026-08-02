@@ -8,7 +8,7 @@ const PAGE_SIZE = 20;
 
 export type FeedCursor = { createdAt: string; id: string };
 
-export function encodeCursor(c: FeedCursor): string {
+function encodeCursor(c: FeedCursor): string {
 	return `${c.createdAt}_${c.id}`;
 }
 

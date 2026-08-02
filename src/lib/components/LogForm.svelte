@@ -4,6 +4,7 @@
  * field state and POST handling. Pass `initial` for edit mode (pre-filled values).
  */
 import { enhance } from "$app/forms";
+import { INPUT_CLASS } from "$lib/form-styles";
 import type { LogFormInitial } from "$lib/types/log";
 import Checkbox from "./Checkbox.svelte";
 import StarRating from "./StarRating.svelte";
@@ -35,9 +36,6 @@ let isPublic = $state(initial?.isPublic ?? true);
 // svelte-ignore state_referenced_locally
 let showReview = $state(initial?.showReview ?? false);
 let submitting = $state(false);
-
-const inputClass =
-	"w-full rounded-sm border border-border bg-surface px-3 py-2 font-[inherit] text-text focus:border-accent focus:ring-1 focus:ring-accent";
 </script>
 
 <form
@@ -75,7 +73,7 @@ const inputClass =
 			name="loggedAt"
 			bind:value={loggedAt}
 			max={today}
-			class="{inputClass} font-mono"
+			class="{INPUT_CLASS} font-mono"
 		/>
 	</section>
 
@@ -95,7 +93,7 @@ const inputClass =
 				name="reviewTitle"
 				placeholder="Title (optional)"
 				bind:value={reviewTitle}
-				class="mb-2 {inputClass}"
+				class="mb-2 {INPUT_CLASS}"
 			/>
 			<textarea
 				id="reviewBody"
@@ -103,7 +101,7 @@ const inputClass =
 				rows="6"
 				placeholder="Your thoughts..."
 				bind:value={reviewBody}
-				class="mt-2 w-full resize-y {inputClass}"
+				class="mt-2 w-full resize-y {INPUT_CLASS}"
 			></textarea>
 			<label class="mt-3 flex items-center gap-2 text-sm text-text-muted">
 				<Checkbox name="containsSpoilers" bind:checked={containsSpoilers} />

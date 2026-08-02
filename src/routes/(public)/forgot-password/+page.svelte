@@ -1,10 +1,8 @@
 <script lang="ts">
 import { enhance } from "$app/forms";
+import { INPUT_CLASS } from "$lib/form-styles";
 
 let { form } = $props();
-
-const inputClass =
-	"w-full rounded-sm border border-border bg-surface px-3 py-2 font-[inherit] text-text focus:border-accent focus:ring-1 focus:ring-accent";
 
 let submitting = $state(false);
 </script>
@@ -42,7 +40,7 @@ let submitting = $state(false);
 					value={form?.email ?? ""}
 					required
 					autocomplete="email"
-					class={inputClass}
+					class={INPUT_CLASS}
 				/>
 			</label>
 

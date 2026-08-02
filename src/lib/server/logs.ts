@@ -35,10 +35,12 @@ export type PartMediaContext = {
 };
 
 /** Public logs for everyone; include the viewer's own private logs when signed in. */
-export function logVisibilityCondition(currentUserId: string | null): SQL {
-	if (!currentUserId) return eq(logs.isPublic, true);
-	const condition = or(eq(logs.isPublic, true), eq(logs.userId, currentUserId));
-	return condition ?? eq(logs.isPublic, true);
+function logVisibilityCondition(currentUserId: string | null): SQL {
+	const publicOnly = eq(logs.isPublic, true);
+	if (!currentUserId) return publicOnly;
+	// or() is typed as possibly-undefined (it returns undefined for an empty arg list),
+	// so the fallback is a type guard rather than a real branch.
+	return or(publicOnly, eq(logs.userId, currentUserId)) ?? publicOnly;
 }
 
 export async function countUserLogsForItem(userId: string, mediaItemId: string) {

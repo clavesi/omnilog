@@ -256,11 +256,11 @@ export async function searchTvOnly(query: string, signal?: AbortSignal): Promise
 // Public: fetch details (for preview pages)
 // ============================================================================
 
-export async function fetchMovieDetails(tmdbId: number) {
+async function fetchMovieDetails(tmdbId: number) {
 	return tmdb<TmdbMovieDetails>(`/movie/${tmdbId}`);
 }
 
-export async function fetchTvDetails(tmdbId: number) {
+async function fetchTvDetails(tmdbId: number) {
 	return tmdb<TmdbTvDetails>(`/tv/${tmdbId}`);
 }
 

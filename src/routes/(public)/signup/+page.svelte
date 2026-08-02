@@ -2,13 +2,10 @@
 import { enhance } from "$app/forms";
 import IconGithub from "$lib/components/IconGithub.svelte";
 import IconGoogle from "$lib/components/IconGoogle.svelte";
+import { INPUT_CLASS } from "$lib/form-styles";
 import type { ActionData, PageData } from "./$types";
 
 let { form, data }: { form: ActionData; data: PageData } = $props();
-
-// bg-surface keeps inputs on-theme; unset background renders white in most browsers.
-const inputClass =
-	"w-full rounded-sm border border-border bg-surface px-3 py-2 font-[inherit] text-text focus:border-accent focus:ring-1 focus:ring-accent";
 </script>
 
 <svelte:head>
@@ -52,7 +49,7 @@ const inputClass =
 				value={form?.email ?? ""}
 				required
 				autocomplete="email"
-				class={inputClass}
+				class={INPUT_CLASS}
 			/>
 		</label>
 
@@ -66,7 +63,7 @@ const inputClass =
 				autocomplete="username"
 				minlength="3"
 				maxlength="31"
-				class={inputClass}
+				class={INPUT_CLASS}
 			/>
 		</label>
 
@@ -78,7 +75,7 @@ const inputClass =
 				required
 				autocomplete="new-password"
 				minlength="8"
-				class={inputClass}
+				class={INPUT_CLASS}
 			/>
 		</label>
 

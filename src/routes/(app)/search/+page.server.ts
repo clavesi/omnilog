@@ -9,8 +9,9 @@ import { importAnime, importManga } from "$lib/server/jikan";
 import { importAlbum } from "$lib/server/musicbrainz";
 import { importBook } from "$lib/server/openlibrary";
 import { importMovie, importTv } from "$lib/server/tmdb";
+import type { Actions } from "./$types";
 
-export const actions = {
+export const actions: Actions = {
 	pickResult: async (event) => {
 		requireUser(event);
 

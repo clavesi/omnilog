@@ -1,12 +1,20 @@
 import { and, eq } from "drizzle-orm";
 import { db } from "$lib/server/db";
-import { genres, mediaExternalIds, mediaGenres } from "$lib/server/db/schema";
+import { type externalSourceEnum, genres, mediaExternalIds, mediaGenres } from "$lib/server/db/schema";
 
 type DbTransaction = Parameters<Parameters<typeof db.transaction>[0]>[0];
 
-export type MediaExternalSource = "tmdb" | "igdb" | "mal" | "musicbrainz" | "openlibrary";
+/**
+ * The subset of external_source values this app actually imports from.
+ * Written as an Extract of the DB enum rather than a standalone union so that
+ * dropping a value from the enum fails to compile here instead of drifting silently.
+ */
+type MediaExternalSource = Extract<
+	(typeof externalSourceEnum.enumValues)[number],
+	"tmdb" | "igdb" | "mal" | "musicbrainz" | "openlibrary"
+>;
 
-export function slugify(s: string): string {
+function slugify(s: string): string {
 	return s
 		.toLowerCase()
 		.normalize("NFKD")

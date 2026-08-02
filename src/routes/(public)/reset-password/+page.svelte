@@ -1,10 +1,8 @@
 <script lang="ts">
 import { enhance } from "$app/forms";
+import { INPUT_CLASS } from "$lib/form-styles";
 
 let { data, form } = $props();
-
-const inputClass =
-	"w-full rounded-sm border border-border bg-surface px-3 py-2 font-[inherit] text-text focus:border-accent focus:ring-1 focus:ring-accent";
 
 let submitting = $state(false);
 </script>
@@ -41,7 +39,7 @@ let submitting = $state(false);
 					name="newPassword"
 					required
 					autocomplete="new-password"
-					class={inputClass}
+					class={INPUT_CLASS}
 				/>
 			</label>
 
@@ -52,7 +50,7 @@ let submitting = $state(false);
 					name="confirmPassword"
 					required
 					autocomplete="new-password"
-					class={inputClass}
+					class={INPUT_CLASS}
 				/>
 			</label>
 

@@ -7,9 +7,11 @@ A SvelteKit app for discovering and logging media.
 ## Stack
 
 - **Framework:** [SvelteKit](https://kit.svelte.dev/) (Svelte 5), [Vite](https://vitejs.dev/), TypeScript
-- **Auth:** [Lucia](https://lucia-auth.com/)-style sessions, [Oslo](https://oslojs.dev/), and [Arctic](https://arcticjs.dev/) for OAuth, `@node-rs/argon2` for password hashes
-- **UI:** [Tailwind CSS](https://tailwindcss.com/)
+- **Auth:** [Better Auth](https://www.better-auth.com/) with the username plugin and GitHub/Google OAuth, `@node-rs/argon2` for password hashes. Server-only — all calls go through `auth.api.*` from SvelteKit actions, with no client-side auth client.
+- **UI:** [Tailwind CSS](https://tailwindcss.com/), [bits-ui](https://bits-ui.com/) primitives, [Lucide](https://lucide.dev/) icons
+- **Email:** [Resend](https://resend.com/) (verification and password reset)
 - **Database:** [PostgreSQL](https://www.postgresql.org/) via [Drizzle ORM](https://orm.drizzle.team/)
+- **External data:** TMDB (film/TV), IGDB (games), Tenrai (anime/manga), MusicBrainz (albums), Open Library (books)
 - **Hosting:** [Vercel](https://vercel.com/) with `@sveltejs/adapter-vercel`
 - **Tooling:** [Biome](https://biomejs.dev/) (lint/format)
 
