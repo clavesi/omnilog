@@ -1,3 +1,4 @@
+import { type ActionFailure, fail } from "@sveltejs/kit";
 import { and, asc, eq, sql } from "drizzle-orm";
 import { db } from "./db";
 import { listItems, lists, mediaItems } from "./db/schema";
@@ -157,6 +158,23 @@ export async function addItemToList(listId: string, mediaItemId: string) {
 
 export async function removeItemFromList(listId: string, mediaItemId: string) {
 	await db.delete(listItems).where(and(eq(listItems.listId, listId), eq(listItems.mediaItemId, mediaItemId)));
+}
+
+/**
+ * Verify a list exists and is owned by userId. Returns an ActionFailure on
+ * any mismatch so actions can early-return it directly.
+ *
+ * Does a single-column select (userId only) rather than loading all list
+ * items via getListWithItems — the ownership check doesn't need item data.
+ */
+export async function requireListOwner(
+	listId: string,
+	userId: string | undefined,
+): Promise<{ listUserId: string } | ActionFailure<{ error: string }>> {
+	const [row] = await db.select({ listUserId: lists.userId }).from(lists).where(eq(lists.id, listId)).limit(1);
+	if (!row) return fail(404, { error: "List not found" });
+	if (!userId || row.listUserId !== userId) return fail(403, { error: "Not your list" });
+	return { listUserId: row.listUserId };
 }
 
 /**

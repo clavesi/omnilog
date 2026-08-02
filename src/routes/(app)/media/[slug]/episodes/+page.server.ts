@@ -1,8 +1,9 @@
-import { error, fail } from "@sveltejs/kit";
-import { and, eq, inArray } from "drizzle-orm";
+import { fail } from "@sveltejs/kit";
+import { and, eq } from "drizzle-orm";
 import { requireAdmin } from "$lib/server/auth";
 import { db } from "$lib/server/db";
-import { logs, mediaItems, mediaParts } from "$lib/server/db/schema";
+import { mediaItems, mediaParts } from "$lib/server/db/schema";
+import { getUserLogIdsForParts, requireItemBySlugOfType } from "$lib/server/log-routes";
 import { createPart, findFlatParts, type PartType } from "$lib/server/parts";
 import { importAnimeEpisodes } from "$lib/server/tenrai";
 import type { Actions, PageServerLoad } from "./$types";
@@ -133,37 +134,14 @@ function toRangeParts(parts: { id: string; title: string | null; metadata: unkno
 }
 
 export const load: PageServerLoad = async ({ params, locals }) => {
-	const [item] = await db
-		.select({ id: mediaItems.id, slug: mediaItems.slug, title: mediaItems.title, mediaType: mediaItems.mediaType })
-		.from(mediaItems)
-		.where(eq(mediaItems.slug, params.slug))
-		.limit(1);
-
-	if (!item) throw error(404, "Not found");
-	if (item.mediaType !== "anime") throw error(400, "Not an anime");
-
+	const item = await requireItemBySlugOfType(params.slug, "anime");
 	const episodes = await importAnimeEpisodes(item.id);
 	const arcParts = await findFlatParts(item.id, "arc");
 	const sagaParts = await findFlatParts(item.id, "saga");
-
-	const loggedPartLogIds = new Map<string, string>();
-	if (locals.user && episodes.length > 0) {
-		const userLogs = await db
-			.select({ id: logs.id, mediaPartId: logs.mediaPartId })
-			.from(logs)
-			.where(
-				and(
-					eq(logs.userId, locals.user.id),
-					inArray(
-						logs.mediaPartId,
-						episodes.map((e) => e.id),
-					),
-				),
-			);
-		for (const l of userLogs) {
-			if (l.mediaPartId) loggedPartLogIds.set(l.mediaPartId, l.id);
-		}
-	}
+	const loggedPartLogIds = await getUserLogIdsForParts(
+		locals.user?.id ?? null,
+		episodes.map((e) => e.id),
+	);
 
 	const episodeDisplays: EpisodeDisplay[] = episodes.map((e) => ({
 		id: e.id,

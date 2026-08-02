@@ -1,7 +1,7 @@
 import { type ActionFailure, error, fail } from "@sveltejs/kit";
-import { and, eq } from "drizzle-orm";
+import { and, eq, inArray } from "drizzle-orm";
 import { db } from "./db";
-import { logs, mediaItems, mediaParts } from "./db/schema";
+import { logs, mediaExternalIds, mediaItems, mediaParts } from "./db/schema";
 
 type ItemRow = {
 	id: string;
@@ -98,4 +98,65 @@ export async function requireOwnedLogForPartAction(logId: string, partId: string
 	if (!existingLog || existingLog.mediaPartId !== partId) return fail(404, { error: "Log not found" });
 	if (existingLog.userId !== userId) return fail(403, { error: "Not your log" });
 	return existingLog;
+}
+
+/**
+ * Returns a Map<partId, logId> for whichever of the given part ids the user
+ * has already logged. Used by episodes/season/tracks loaders to show an
+ * "Edit log" link instead of "Log" for already-logged parts.
+ *
+ * Returns an empty map when userId is null (unauthenticated) or partIds is empty.
+ */
+export async function getUserLogIdsForParts(userId: string | null, partIds: string[]): Promise<Map<string, string>> {
+	const map = new Map<string, string>();
+	if (!userId || partIds.length === 0) return map;
+
+	const rows = await db
+		.select({ id: logs.id, mediaPartId: logs.mediaPartId })
+		.from(logs)
+		.where(and(eq(logs.userId, userId), inArray(logs.mediaPartId, partIds)));
+
+	for (const row of rows) {
+		if (row.mediaPartId) map.set(row.mediaPartId, row.id);
+	}
+	return map;
+}
+
+type SubMediaItem = { id: string; slug: string; title: string; mediaType: string };
+
+/**
+ * Load a media item by slug, asserting it matches the expected media type.
+ * Used by episodes, season, tracks, and chapters loaders which all start with
+ * the same two-step lookup → type-guard sequence.
+ */
+export async function requireItemBySlugOfType(slug: string, expectedType: string): Promise<SubMediaItem> {
+	const [item] = await db
+		.select({ id: mediaItems.id, slug: mediaItems.slug, title: mediaItems.title, mediaType: mediaItems.mediaType })
+		.from(mediaItems)
+		.where(eq(mediaItems.slug, slug))
+		.limit(1);
+
+	if (!item) throw error(404, "Not found");
+	if (item.mediaType !== expectedType) throw error(400, `Not a ${expectedType}`);
+	return item;
+}
+
+/**
+ * Fetch the external id string for a media item from a specific source,
+ * throwing 500 if it's missing. Used by season and tracks loaders which both
+ * need to look up a source-specific id before calling an import function.
+ */
+export async function requireExternalId(
+	mediaItemId: string,
+	source: "tmdb" | "musicbrainz",
+	label: string,
+): Promise<string> {
+	const [ext] = await db
+		.select({ externalId: mediaExternalIds.externalId })
+		.from(mediaExternalIds)
+		.where(and(eq(mediaExternalIds.mediaItemId, mediaItemId), eq(mediaExternalIds.source, source)))
+		.limit(1);
+
+	if (!ext) throw error(500, `No ${label} external id found`);
+	return ext.externalId;
 }
