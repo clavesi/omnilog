@@ -7,6 +7,8 @@ let { data } = $props();
 let feedLogs = $state(data.initialLogs);
 // svelte-ignore state_referenced_locally
 let cursor = $state(data.initialCursor);
+// svelte-ignore state_referenced_locally
+let isPersonalized = $state(data.isPersonalized);
 let loadingMore = $state(false);
 let loadError = $state<string | null>(null);
 
@@ -17,6 +19,7 @@ let loadError = $state<string | null>(null);
 $effect(() => {
 	feedLogs = data.initialLogs;
 	cursor = data.initialCursor;
+	isPersonalized = data.isPersonalized;
 });
 
 function handleDeleted(logId: string) {
@@ -51,7 +54,9 @@ async function loadMore() {
 			<span class="h-0.5 w-10 rounded-full bg-accent"></span>
 			<span class="h-px flex-1 bg-border"></span>
 		</div>
-		<p class="mt-3 font-mono text-sm text-text-muted">Latest logs from everyone</p>
+		<p class="mt-3 font-mono text-sm text-text-muted">
+			{isPersonalized ? "Latest logs from people you follow" : "Latest logs from everyone"}
+		</p>
 	</header>
 
 	{#if feedLogs.length === 0}
