@@ -1,5 +1,7 @@
 <script lang="ts">
 import { enhance } from "$app/forms";
+import IconGithub from "$lib/components/IconGithub.svelte";
+import IconGoogle from "$lib/components/IconGoogle.svelte";
 import type { ActionData, PageData } from "./$types";
 
 let { form, data }: { form: ActionData; data: PageData } = $props();
@@ -21,12 +23,14 @@ const inputClass =
 			href="/login/github?next={encodeURIComponent(data.next)}"
 			class="flex items-center justify-center gap-2 rounded-sm border border-border px-4 py-2.5 text-text no-underline transition-colors hover:border-text-muted hover:bg-surface"
 		>
+			<IconGithub size={18} />
 			Continue with GitHub
 		</a>
 		<a
 			href="/login/google?next={encodeURIComponent(data.next)}"
 			class="flex items-center justify-center gap-2 rounded-sm border border-border px-4 py-2.5 text-text no-underline transition-colors hover:border-text-muted hover:bg-surface"
 		>
+			<IconGoogle size={18} />
 			Continue with Google
 		</a>
 	</div>

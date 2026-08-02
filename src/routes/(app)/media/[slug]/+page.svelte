@@ -1,4 +1,5 @@
 <script lang="ts">
+import { ArrowRight, Bookmark, Check, Star } from "@lucide/svelte";
 import { enhance } from "$app/forms";
 import LogCard from "$lib/components/LogCard.svelte";
 import MediaTypeMark from "$lib/components/MediaTypeMark.svelte";
@@ -222,11 +223,15 @@ function handleDeleted(logId: string) {
 							type="submit"
 							aria-label={data.isFavorite ? `Remove ${mediaTypeLabel(item.mediaType)} favorite` : "Set as favorite"}
 							title={data.isFavorite ? `${mediaTypeLabel(item.mediaType)} favorite` : "Set as favorite"}
-							class="flex h-10 w-10 cursor-pointer items-center justify-center rounded-sm border text-lg transition-colors {data.isFavorite
+							class="flex h-10 w-10 cursor-pointer items-center justify-center rounded-sm border transition-colors {data.isFavorite
 								? 'border-accent text-accent'
 								: 'border-border text-text hover:border-text-muted hover:bg-surface'}"
 						>
-							{data.isFavorite ? "★" : "☆"}
+							<Star
+								size={18}
+								aria-hidden="true"
+								fill={data.isFavorite ? "currentColor" : "none"}
+							/>
 						</button>
 					</form>
 
@@ -242,9 +247,11 @@ function handleDeleted(logId: string) {
 								: 'border-border hover:border-text-muted hover:bg-surface'}"
 							onclick={() => (showListPicker = !showListPicker)}
 						>
-							<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="18" height="18">
-								<path d="M6 3a1 1 0 0 0-1 1v17l7-4 7 4V4a1 1 0 0 0-1-1H6z" />
-							</svg>
+							<Bookmark
+								size={18}
+								aria-hidden="true"
+								fill={userLists.some((l) => l.inList) ? "currentColor" : "none"}
+							/>
 						</button>
 
 						{#if showListPicker}
@@ -275,7 +282,9 @@ function handleDeleted(logId: string) {
 														type="submit"
 														class="flex w-full cursor-pointer items-center gap-2 rounded-sm px-2 py-1.5 text-left text-sm text-text hover:bg-surface"
 													>
-														<span class="w-4 shrink-0">{list.inList ? "✓" : ""}</span>
+														<span class="w-4 shrink-0">
+															{#if list.inList}<Check size={14} aria-hidden="true" />{/if}
+														</span>
 														{list.title}
 													</button>
 												</form>
@@ -338,28 +347,28 @@ function handleDeleted(logId: string) {
 					href="/media/{item.slug}/season/1"
 					class="mt-3 inline-flex items-center gap-1 text-sm text-accent no-underline hover:text-text"
 				>
-					Track episodes →
+					Track episodes <ArrowRight size={14} aria-hidden="true" />
 				</a>
 			{:else if item.mediaType === "anime"}
 				<a
 					href="/media/{item.slug}/episodes"
 					class="mt-3 inline-flex items-center gap-1 text-sm text-accent no-underline hover:text-text"
 				>
-					Track episodes →
+					Track episodes <ArrowRight size={14} aria-hidden="true" />
 				</a>
 			{:else if item.mediaType === "manga"}
 				<a
 					href="/media/{item.slug}/chapters"
 					class="mt-3 inline-flex items-center gap-1 text-sm text-accent no-underline hover:text-text"
 				>
-					Chapters →
+					Chapters <ArrowRight size={14} aria-hidden="true" />
 				</a>
 			{:else if item.mediaType === "music"}
 				<a
 					href="/media/{item.slug}/tracks"
 					class="mt-3 inline-flex items-center gap-1 text-sm text-accent no-underline hover:text-text"
 				>
-					Track songs →
+					Track songs <ArrowRight size={14} aria-hidden="true" />
 				</a>
 			{/if}
 

@@ -1,4 +1,5 @@
 <script lang="ts">
+import { Search } from "@lucide/svelte";
 import type { Snippet } from "svelte";
 import { page } from "$app/state";
 import type { LayoutData } from "./$types";
@@ -46,16 +47,7 @@ const navLinkActive = "text-text after:scale-x-100";
 				aria-label="Search"
 				aria-current={onSearch ? "page" : undefined}
 			>
-				<svg class="h-5 w-5" viewBox="0 0 24 24" aria-hidden="true">
-					<circle cx="11" cy="11" r="6" fill="none" stroke="currentColor" stroke-width="2" />
-					<path
-						fill="none"
-						stroke="currentColor"
-						stroke-width="2"
-						stroke-linecap="round"
-						d="M15.5 15.5 20 20"
-					/>
-				</svg>
+				<Search size={20} aria-hidden="true" />
 			</a>
 			<a
 				href="/feed"
