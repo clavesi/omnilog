@@ -1,5 +1,6 @@
 <script lang="ts">
 import { enhance } from "$app/forms";
+import ConfirmDialog from "$lib/components/ConfirmDialog.svelte";
 import MediaTypeMark from "$lib/components/MediaTypeMark.svelte";
 
 let { data, form } = $props();
@@ -55,6 +56,7 @@ let editTitle = $state("");
 let editEpisodes = $state("");
 let editFiller = $state(false);
 let deletingId = $state<string | null>(null);
+let confirmDelete = $state<{ id: string; label: string } | null>(null);
 
 function startAdding(tier: Tier) {
 	showAddForm = tier;
@@ -70,8 +72,7 @@ function startEditing(tier: Tier, part: { id: string; title: string | null; rang
 	editFiller = part.isFiller;
 }
 
-async function deletePart(id: string, label: string) {
-	if (!confirm(`Delete this ${label}? Episodes inside it aren't affected — they just go back to ungrouped.`)) return;
+async function deletePart(id: string) {
 	deletingId = id;
 	const body = new FormData();
 	body.set("partId", id);
@@ -250,7 +251,7 @@ async function deletePart(id: string, label: string) {
 				type="button"
 				class="font-mono text-xs text-text-muted hover:text-danger"
 				disabled={deletingId === part.id}
-				onclick={() => deletePart(part.id, tier)}
+				onclick={() => (confirmDelete = { id: part.id, label: tier })}
 			>
 				{deletingId === part.id ? "Deleting..." : "Delete"}
 			</button>
@@ -378,3 +379,15 @@ async function deletePart(id: string, label: string) {
 		{/if}
 	{/if}
 </div>
+
+<ConfirmDialog
+	open={!!confirmDelete}
+	title="Delete {confirmDelete?.label ?? ''}"
+	description="Episodes inside it aren't affected — they just go back to ungrouped."
+	confirmLabel="Delete"
+	danger
+	onconfirm={() => {
+		if (confirmDelete) deletePart(confirmDelete.id);
+		confirmDelete = null;
+	}}
+/>

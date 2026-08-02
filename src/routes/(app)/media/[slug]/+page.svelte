@@ -1,5 +1,6 @@
 <script lang="ts">
 import { ArrowRight, Bookmark, Check, Star } from "@lucide/svelte";
+import { Popover } from "bits-ui";
 import { enhance } from "$app/forms";
 import LogCard from "$lib/components/LogCard.svelte";
 import MediaTypeMark from "$lib/components/MediaTypeMark.svelte";
@@ -18,7 +19,6 @@ const typeColor = $derived(getMediaTypeColor(item.mediaType));
 let deletedLogIds = $state(new Set<string>());
 const visibleLogs = $derived(data.logs.filter((l) => !deletedLogIds.has(l.id)));
 
-let showListPicker = $state(false);
 // svelte-ignore state_referenced_locally -- intentional; the $effect below
 // resyncs on every data change, this is just the initial value.
 let userLists = $state(data.userLists);
@@ -235,110 +235,109 @@ function handleDeleted(logId: string) {
 						</button>
 					</form>
 
-					<div class="relative">
-						<button
-							type="button"
+					<Popover.Root onOpenChange={(open) => { if (!open) showNewListInput = false; }}>
+						<Popover.Trigger
 							aria-label="Add to list"
 							title="Add to list"
-							class="flex h-10 w-10 cursor-pointer items-center justify-center rounded-sm border text-text transition-colors {userLists.some(
+							class="flex h-10 w-10 cursor-pointer items-center justify-center rounded-sm border transition-colors {userLists.some(
 								(l) => l.inList,
 							)
 								? 'border-accent text-accent'
-								: 'border-border hover:border-text-muted hover:bg-surface'}"
-							onclick={() => (showListPicker = !showListPicker)}
+								: 'border-border text-text hover:border-text-muted hover:bg-surface'}"
 						>
 							<Bookmark
 								size={18}
 								aria-hidden="true"
 								fill={userLists.some((l) => l.inList) ? "currentColor" : "none"}
 							/>
-						</button>
+						</Popover.Trigger>
 
-						{#if showListPicker}
-							<div
-								class="absolute top-full left-0 z-10 mt-2 w-64 rounded-sm border border-border bg-bg p-3 shadow-lg"
-							>
-								{#if userLists.length === 0}
-									<p class="m-0 mb-2 text-sm text-text-muted">No lists yet.</p>
-								{:else}
-									<ul class="m-0 mb-2 max-h-48 list-none overflow-y-auto p-0">
-										{#each userLists as list (list.id)}
-											<li>
-												<form
-													method="POST"
-													action="?/toggleListItem"
-													use:enhance={() => {
-														return async ({ result, update }) => {
-															await update({ reset: false });
-															if (result.type === "success" && result.data?.userLists) {
-																userLists = result.data.userLists as typeof userLists;
-															}
-														};
-													}}
+						<Popover.Content
+							side="bottom"
+							align="start"
+							sideOffset={8}
+							class="z-10 w-64 rounded-sm border border-border bg-bg p-3 shadow-lg"
+						>
+							{#if userLists.length === 0}
+								<p class="m-0 mb-2 text-sm text-text-muted">No lists yet.</p>
+							{:else}
+								<ul class="m-0 mb-2 max-h-48 list-none overflow-y-auto p-0">
+									{#each userLists as list (list.id)}
+										<li>
+											<form
+												method="POST"
+												action="?/toggleListItem"
+												use:enhance={() => {
+													return async ({ result, update }) => {
+														await update({ reset: false });
+														if (result.type === "success" && result.data?.userLists) {
+															userLists = result.data.userLists as typeof userLists;
+														}
+													};
+												}}
+											>
+												<input type="hidden" name="listId" value={list.id} />
+												<input type="hidden" name="inList" value={String(list.inList)} />
+												<button
+													type="submit"
+													class="flex w-full cursor-pointer items-center gap-2 rounded-sm px-2 py-1.5 text-left text-sm text-text hover:bg-surface"
 												>
-													<input type="hidden" name="listId" value={list.id} />
-													<input type="hidden" name="inList" value={String(list.inList)} />
-													<button
-														type="submit"
-														class="flex w-full cursor-pointer items-center gap-2 rounded-sm px-2 py-1.5 text-left text-sm text-text hover:bg-surface"
-													>
-														<span class="w-4 shrink-0">
-															{#if list.inList}<Check size={14} aria-hidden="true" />{/if}
-														</span>
-														{list.title}
-													</button>
-												</form>
-											</li>
-										{/each}
-									</ul>
-								{/if}
+													<span class="w-4 shrink-0">
+														{#if list.inList}<Check size={14} aria-hidden="true" />{/if}
+													</span>
+													{list.title}
+												</button>
+											</form>
+										</li>
+									{/each}
+								</ul>
+							{/if}
 
-								{#if showNewListInput}
-									<form
-										method="POST"
-										action="?/createListWithItem"
-										use:enhance={() => {
-											creatingList = true;
-											return async ({ result, update }) => {
-												await update({ reset: false });
-												creatingList = false;
-												if (result.type === "success" && result.data?.userLists) {
-													userLists = result.data.userLists as typeof userLists;
-													showNewListInput = false;
-													newListTitle = "";
-												}
-											};
-										}}
-										class="flex gap-2 border-t border-border pt-2"
-									>
-										<input
-											type="text"
-											name="title"
-											bind:value={newListTitle}
-											placeholder="List name"
-											required
-											class="min-w-0 flex-1 rounded-sm border border-border bg-bg px-2 py-1 text-sm text-text"
-										/>
-										<button
-											type="submit"
-											disabled={creatingList}
-											class="shrink-0 rounded-sm bg-accent px-2 py-1 text-sm text-bg disabled:opacity-60"
-										>
-											{creatingList ? "..." : "Add"}
-										</button>
-									</form>
-								{:else}
+							{#if showNewListInput}
+								<form
+									method="POST"
+									action="?/createListWithItem"
+									use:enhance={() => {
+										creatingList = true;
+										return async ({ result, update }) => {
+											await update({ reset: false });
+											creatingList = false;
+											if (result.type === "success" && result.data?.userLists) {
+												userLists = result.data.userLists as typeof userLists;
+												showNewListInput = false;
+												newListTitle = "";
+											}
+										};
+									}}
+									class="flex gap-2 border-t border-border pt-2"
+								>
+									<input
+										type="text"
+										name="title"
+										bind:value={newListTitle}
+										placeholder="List name"
+										required
+										class="min-w-0 flex-1 rounded-sm border border-border bg-bg px-2 py-1 text-sm text-text"
+									/>
 									<button
-										type="button"
-										class="w-full border-t border-border pt-2 text-left text-sm text-accent hover:text-text"
-										onclick={() => (showNewListInput = true)}
+										type="submit"
+										disabled={creatingList}
+										class="shrink-0 rounded-sm bg-accent px-2 py-1 text-sm text-bg disabled:opacity-60"
 									>
-										+ Create new list
+										{creatingList ? "..." : "Add"}
 									</button>
-								{/if}
-							</div>
-						{/if}
-					</div>
+								</form>
+							{:else}
+								<button
+									type="button"
+									class="w-full border-t border-border pt-2 text-left text-sm text-accent hover:text-text"
+									onclick={() => (showNewListInput = true)}
+								>
+									+ Create new list
+								</button>
+							{/if}
+						</Popover.Content>
+					</Popover.Root>
 				{/if}
 			</div>
 

@@ -4,6 +4,7 @@ import { getMediaTypeColor } from "$lib/media-type-colors";
 import { formatPartLabel } from "$lib/part-label";
 import type { LogCardData } from "$lib/types/log";
 import { formatWatchLabel } from "$lib/watch-label";
+import ConfirmDialog from "./ConfirmDialog.svelte";
 import MediaTypeMark from "./MediaTypeMark.svelte";
 import StaticStars from "./StaticStars.svelte";
 
@@ -36,9 +37,9 @@ const displayDate = $derived.by(() => {
 });
 
 let deleting = $state(false);
+let confirmDeleteOpen = $state(false);
 
 async function handleDelete() {
-	if (!confirm("Delete this log? This can't be undone.")) return;
 	deleting = true;
 	try {
 		const res = await fetch(`/api/logs/${log.id}`, {
@@ -202,7 +203,7 @@ const typeColor = $derived(log.mediaType ? getMediaTypeColor(log.mediaType) : nu
 					<button
 						type="button"
 						class="cursor-pointer border-none bg-transparent p-0 text-[0.8125rem] text-danger transition-opacity duration-200 hover:opacity-80"
-						onclick={handleDelete}
+						onclick={() => (confirmDeleteOpen = true)}
 						disabled={deleting}
 					>
 						{deleting ? "Deleting..." : "Delete"}
@@ -212,3 +213,12 @@ const typeColor = $derived(log.mediaType ? getMediaTypeColor(log.mediaType) : nu
 		</div>
 	</div>
 </article>
+
+<ConfirmDialog
+	bind:open={confirmDeleteOpen}
+	title="Delete log"
+	description="Delete this log? This can't be undone."
+	confirmLabel="Delete"
+	danger
+	onconfirm={handleDelete}
+/>

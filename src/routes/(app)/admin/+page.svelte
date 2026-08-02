@@ -1,10 +1,12 @@
 <script lang="ts">
 import { enhance } from "$app/forms";
+import ConfirmDialog from "$lib/components/ConfirmDialog.svelte";
 
 let { data, form } = $props();
 
 let search = $state("");
 let togglingId = $state<string | null>(null);
+let confirmUser = $state<(typeof data.users)[number] | null>(null);
 
 const filtered = $derived.by(() => {
 	const q = search.trim().toLowerCase();
@@ -19,6 +21,10 @@ const regular = $derived(filtered.filter((u) => u.role === "user"));
 
 function roleLabel(role: string): string {
 	return role === "owner" ? "Owner" : role === "admin" ? "Admin" : "";
+}
+
+function confirmTitle(user: (typeof data.users)[number]) {
+	return user.role === "admin" ? `Remove admin from ${user.username}?` : `Make ${user.username} an admin?`;
 }
 </script>
 
@@ -39,32 +45,14 @@ function roleLabel(role: string): string {
 		{#if user.id === data.currentUserId}
 			<span class="font-mono text-sm text-text-muted">(you)</span>
 		{:else if data.isOwner && user.role !== "owner"}
-			<form
-				method="POST"
-				action="?/toggleAdmin"
-				use:enhance={({ cancel }) => {
-					const verb = user.role === "admin" ? "Remove admin from" : "Make";
-					const suffix = user.role === "admin" ? "" : " an admin";
-					if (!confirm(`${verb} ${user.username}${suffix}?`)) {
-						cancel();
-						return;
-					}
-					togglingId = user.id;
-					return async ({ update }) => {
-						await update();
-						togglingId = null;
-					};
-				}}
+			<button
+				type="button"
+				disabled={togglingId === user.id}
+				class="rounded-sm border border-border px-4 py-2 text-sm text-text no-underline transition-colors hover:border-text-muted hover:bg-surface disabled:opacity-60"
+				onclick={() => (confirmUser = user)}
 			>
-				<input type="hidden" name="userId" value={user.id} />
-				<button
-					type="submit"
-					disabled={togglingId === user.id}
-					class="rounded-sm border border-border px-4 py-2 text-sm text-text no-underline transition-colors hover:border-text-muted hover:bg-surface disabled:opacity-60"
-				>
-					{togglingId === user.id ? "Saving..." : user.role === "admin" ? "Remove admin" : "Make admin"}
-				</button>
-			</form>
+				{togglingId === user.id ? "Saving..." : user.role === "admin" ? "Remove admin" : "Make admin"}
+			</button>
 		{/if}
 	</li>
 {/snippet}
@@ -112,3 +100,32 @@ function roleLabel(role: string): string {
 		{/if}
 	{/if}
 </div>
+
+<!-- Hidden form submitted programmatically after dialog confirmation -->
+<form
+	id="toggle-admin-form"
+	method="POST"
+	action="?/toggleAdmin"
+	use:enhance={() => {
+		togglingId = confirmUser?.id ?? null;
+		return async ({ update }) => {
+			await update();
+			togglingId = null;
+			confirmUser = null;
+		};
+	}}
+>
+	<input type="hidden" name="userId" value={confirmUser?.id ?? ""} />
+</form>
+
+<ConfirmDialog
+	open={!!confirmUser}
+	title={confirmUser ? confirmTitle(confirmUser) : ""}
+	description={confirmUser?.role === "admin"
+		? "This will remove their admin access. They'll still have a normal account."
+		: "This will give them admin access to manage arcs, sagas, and view all users."}
+	confirmLabel={confirmUser?.role === "admin" ? "Remove admin" : "Make admin"}
+	onconfirm={() => {
+		(document.getElementById("toggle-admin-form") as HTMLFormElement | null)?.requestSubmit();
+	}}
+/>
