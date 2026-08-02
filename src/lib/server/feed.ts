@@ -1,4 +1,4 @@
-import { and, desc, eq, inArray, lt, not, or } from "drizzle-orm";
+import { and, desc, eq, inArray, lt, not, or, type SQL } from "drizzle-orm";
 import { db } from "./db";
 import { follows, logs, mediaParts, users } from "./db/schema";
 import { directMedia, logMediaSelect, parentPart, partMedia } from "./log-media-joins";
@@ -21,14 +21,13 @@ function decodeCursor(raw: string | null): FeedCursor | null {
 }
 
 /**
- * Global public feed, newest first. Keyset (cursor) pagination.
- * excludeUserId: pass to hide a user's own logs from a "not mine" view.
+ * Shared query runner for both feed variants. Callers pass their base
+ * conditions (public-only vs followed-users-only); cursor and excludeUserId
+ * are appended here so that logic never has to be duplicated.
  */
-export async function getFeedPage(opts: { cursorRaw?: string | null; excludeUserId?: string } = {}) {
+async function queryFeedPage(baseConditions: SQL[], opts: { cursorRaw?: string | null; excludeUserId?: string }) {
+	const conditions = [...baseConditions];
 	const cursor = decodeCursor(opts.cursorRaw ?? null);
-
-	// public logs from public accounts
-	const conditions = [eq(logs.isPublic, true), eq(users.isPrivate, false)];
 
 	if (cursor) {
 		// createdAt < cursor.createdAt, OR (createdAt = cursor.createdAt AND id < cursor.id)
@@ -37,9 +36,7 @@ export async function getFeedPage(opts: { cursorRaw?: string | null; excludeUser
 			lt(logs.createdAt, new Date(cursor.createdAt)),
 			and(eq(logs.createdAt, new Date(cursor.createdAt)), lt(logs.id, cursor.id)),
 		);
-		if (cursorCondition) {
-			conditions.push(cursorCondition);
-		}
+		if (cursorCondition) conditions.push(cursorCondition);
 	}
 
 	if (opts.excludeUserId) {
@@ -47,11 +44,7 @@ export async function getFeedPage(opts: { cursorRaw?: string | null; excludeUser
 	}
 
 	const rows = await db
-		.select({
-			...logCardSelect,
-			username: users.username,
-			...logMediaSelect,
-		})
+		.select({ ...logCardSelect, username: users.username, ...logMediaSelect })
 		.from(logs)
 		.innerJoin(users, eq(logs.userId, users.id))
 		.leftJoin(directMedia, eq(logs.mediaItemId, directMedia.id))
@@ -64,11 +57,19 @@ export async function getFeedPage(opts: { cursorRaw?: string | null; excludeUser
 
 	const hasMore = rows.length > PAGE_SIZE;
 	const page = hasMore ? rows.slice(0, PAGE_SIZE) : rows;
-
 	const last = page[page.length - 1];
 	const nextCursor = hasMore && last ? encodeCursor({ createdAt: last.createdAt.toISOString(), id: last.id }) : null;
 
 	return { logs: page, nextCursor };
+}
+
+/**
+ * Global public feed, newest first. Keyset (cursor) pagination.
+ * excludeUserId: pass to hide a user's own logs from a "not mine" view.
+ */
+export async function getFeedPage(opts: { cursorRaw?: string | null; excludeUserId?: string } = {}) {
+	// public logs from public accounts only
+	return queryFeedPage([eq(logs.isPublic, true), eq(users.isPrivate, false)], opts);
 }
 
 /**
@@ -92,37 +93,6 @@ export async function getPersonalizedFeedPage(
 	}
 
 	const followedIds = followedRows.map((r) => r.followingId);
-	const cursor = decodeCursor(opts.cursorRaw ?? null);
-	const conditions = [eq(logs.isPublic, true), inArray(logs.userId, followedIds)];
-
-	if (cursor) {
-		const cursorCondition = or(
-			lt(logs.createdAt, new Date(cursor.createdAt)),
-			and(eq(logs.createdAt, new Date(cursor.createdAt)), lt(logs.id, cursor.id)),
-		);
-		if (cursorCondition) conditions.push(cursorCondition);
-	}
-
-	if (opts.excludeUserId) {
-		conditions.push(not(eq(logs.userId, opts.excludeUserId)));
-	}
-
-	const rows = await db
-		.select({ ...logCardSelect, username: users.username, ...logMediaSelect })
-		.from(logs)
-		.innerJoin(users, eq(logs.userId, users.id))
-		.leftJoin(directMedia, eq(logs.mediaItemId, directMedia.id))
-		.leftJoin(mediaParts, eq(logs.mediaPartId, mediaParts.id))
-		.leftJoin(partMedia, eq(mediaParts.mediaItemId, partMedia.id))
-		.leftJoin(parentPart, eq(mediaParts.parentPartId, parentPart.id))
-		.where(and(...conditions))
-		.orderBy(desc(logs.createdAt), desc(logs.id))
-		.limit(PAGE_SIZE + 1);
-
-	const hasMore = rows.length > PAGE_SIZE;
-	const page = hasMore ? rows.slice(0, PAGE_SIZE) : rows;
-	const last = page[page.length - 1];
-	const nextCursor = hasMore && last ? encodeCursor({ createdAt: last.createdAt.toISOString(), id: last.id }) : null;
-
-	return { logs: page, nextCursor, isPersonalized: true };
+	const result = await queryFeedPage([eq(logs.isPublic, true), inArray(logs.userId, followedIds)], opts);
+	return { ...result, isPersonalized: true };
 }
