@@ -5,9 +5,9 @@ import { db } from "$lib/server/db";
 import { mediaItems } from "$lib/server/db/schema";
 import { PossibleDuplicateError } from "$lib/server/dedupe";
 import { importGame } from "$lib/server/igdb";
-import { importAnime, importManga } from "$lib/server/jikan";
 import { importAlbum } from "$lib/server/musicbrainz";
 import { importBook } from "$lib/server/openlibrary";
+import { importAnime, importManga } from "$lib/server/tenrai";
 import { importMovie, importTv } from "$lib/server/tmdb";
 import type { Actions } from "./$types";
 
@@ -21,7 +21,7 @@ export const actions: Actions = {
 		const externalIdRaw = form.get("externalId");
 		const allowDuplicate = form.get("confirmDuplicate") === "true";
 
-		// Numeric-ID sources (TMDB, IGDB, Jikan) vs string-ID sources
+		// Numeric-ID sources (TMDB, IGDB, Tenrai) vs string-ID sources
 		// (MusicBrainz MBIDs, Open Library work keys) need different parsing.
 		const numericId = Number(externalIdRaw);
 		const stringId = typeof externalIdRaw === "string" ? externalIdRaw : "";

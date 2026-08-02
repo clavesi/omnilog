@@ -108,7 +108,7 @@ function normalizeDescription(d: OlDescription | undefined): string | null {
  * Open Library's publish_date is free text with no consistent format —
  * could be "1997", "June 26, 1997", "1997-06-26", or occasionally garbage.
  * Extract whatever 4-digit year we can find and normalize to Jan 1 of that
- * year, same convention used for Jikan's anime year-only dates.
+ * year, same convention used for Tenrai's anime year-only dates.
  */
 function parsePublishDateToIso(raw: string | undefined): string | null {
 	if (!raw) return null;

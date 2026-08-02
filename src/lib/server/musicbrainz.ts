@@ -1,6 +1,6 @@
 /**
  * No API key needed, but two hard requirements from their usage policy:
- *   1. Rate limit is 1 request/second — stricter than Jikan's 3/sec. Their
+ *   1. Rate limit is 1 request/second — stricter than tenrai's 3/sec. Their
  *      rate-limit response is 503, not 429.
  *   2. Every request MUST send a descriptive User-Agent identifying the
  *      app and a contact point, or you risk being blocked outright.
@@ -43,7 +43,7 @@ function normalizeDate(raw: string | null | undefined): string | null {
 }
 
 // ============================================================================
-// Throttle — same pattern as jikan.ts's, but keyed to MusicBrainz's stricter
+// Throttle — same pattern as tenrai.ts's, but keyed to MusicBrainz's stricter
 // limit and its 503 (not 429) rate-limit response code.
 // ============================================================================
 

@@ -1,12 +1,12 @@
 import { json } from "@sveltejs/kit";
 import { type IgdbSearchHit, searchGames } from "$lib/server/igdb";
-import { type JikanSearchHit, searchAnime, searchManga } from "$lib/server/jikan";
 import { type MusicBrainzSearchHit, searchAlbums } from "$lib/server/musicbrainz";
 import { type OpenLibrarySearchHit, searchBooks } from "$lib/server/openlibrary";
+import { searchAnime, searchManga, type TenraiSearchHit } from "$lib/server/tenrai";
 import { searchMoviesAndTv, searchMoviesOnly, searchTvOnly, type TmdbSearchHit } from "$lib/server/tmdb";
 import type { RequestHandler } from "./$types";
 
-type SearchHit = TmdbSearchHit | IgdbSearchHit | JikanSearchHit | MusicBrainzSearchHit | OpenLibrarySearchHit;
+type SearchHit = TmdbSearchHit | IgdbSearchHit | TenraiSearchHit | MusicBrainzSearchHit | OpenLibrarySearchHit;
 type SearchType = "all" | "movie" | "tv" | "game" | "anime" | "manga" | "music" | "book";
 
 const VALID_TYPES: SearchType[] = ["all", "movie", "tv", "game", "anime", "manga", "music", "book"];

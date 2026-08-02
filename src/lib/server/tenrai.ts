@@ -69,13 +69,13 @@ const RETRYABLE_STATUSES = new Set([429, 502, 503, 504]);
  * (abortableDelay) and mid-flight (fetch's own signal support) — instead
  * of quietly finishing (and retrying) in the background. Without this,
  * rapid typing can pile up stale, still-running searches behind the
- * shared throttle queue, which can itself trip Jikan's real rate limit
+ * shared throttle queue, which can itself trip Tenrai's real rate limit
  * for the searches that actually still matter.
  *
  * Returns the full response envelope (data + pagination, when present) —
- * jikanFetch() below is the common case that just wants `.data`.
+ * tenraiFetch() below is the common case that just wants `.data`.
  */
-async function jikanFetchRaw<T>(
+async function tenraiFetchRaw<T>(
 	path: string,
 	signal?: AbortSignal,
 	retriesLeft = 2,
@@ -95,7 +95,7 @@ async function jikanFetchRaw<T>(
 			const retryAfterHeader = res.headers.get("Retry-After");
 			const retryAfterMs = retryAfterHeader ? Number(retryAfterHeader) * 1000 : 1000;
 			await abortableDelay(retryAfterMs, signal);
-			return jikanFetchRaw<T>(path, signal, retriesLeft - 1);
+			return tenraiFetchRaw<T>(path, signal, retriesLeft - 1);
 		}
 
 		if (!res.ok) {
@@ -105,8 +105,8 @@ async function jikanFetchRaw<T>(
 	}, signal);
 }
 
-async function jikanFetch<T>(path: string, signal?: AbortSignal, retriesLeft = 2): Promise<T> {
-	const envelope = await jikanFetchRaw<T>(path, signal, retriesLeft);
+async function tenraiFetch<T>(path: string, signal?: AbortSignal, retriesLeft = 2): Promise<T> {
+	const envelope = await tenraiFetchRaw<T>(path, signal, retriesLeft);
 	return envelope.data;
 }
 
@@ -114,36 +114,36 @@ async function jikanFetch<T>(path: string, signal?: AbortSignal, retriesLeft = 2
 // Raw response shapes (only the fields we use)
 // ============================================================================
 
-type JikanImages = {
+type TenraiImages = {
 	jpg: { image_url: string | null; large_image_url: string | null };
 };
 
-type JikanAnimeSearchRaw = {
+type TenraiAnimeSearchRaw = {
 	mal_id: number;
 	title: string;
 	title_english: string | null;
-	images: JikanImages;
+	images: TenraiImages;
 	year: number | null;
 	episodes: number | null;
 };
 
-type JikanMangaSearchRaw = {
+type TenraiMangaSearchRaw = {
 	mal_id: number;
 	title: string;
 	title_english: string | null;
-	images: JikanImages;
+	images: TenraiImages;
 	published: { from: string | null };
 	chapters: number | null;
 };
 
-type JikanAnimeFullRaw = {
+type TenraiAnimeFullRaw = {
 	mal_id: number;
 	title: string; // MAL's "default" title — usually the romaji/native title, NOT English
 	title_english: string | null;
 	title_japanese: string | null;
 	title_synonyms: string[];
 	synopsis: string | null;
-	images: JikanImages;
+	images: TenraiImages;
 	episodes: number | null;
 	duration: string | null; // e.g. "24 min per ep" or "2 hr 5 min"
 	studios: { name: string }[];
@@ -154,14 +154,14 @@ type JikanAnimeFullRaw = {
 	genres: { mal_id: number; name: string }[];
 };
 
-type JikanMangaFullRaw = {
+type TenraiMangaFullRaw = {
 	mal_id: number;
 	title: string; // same "default" caveat as anime — often romaji, not English
 	title_english: string | null;
 	title_japanese: string | null;
 	title_synonyms: string[];
 	synopsis: string | null;
-	images: JikanImages;
+	images: TenraiImages;
 	chapters: number | null;
 	volumes: number | null;
 	authors: { name: string }[];
@@ -175,7 +175,7 @@ type JikanMangaFullRaw = {
 // Public: search hit type
 // ============================================================================
 
-export type JikanSearchHit =
+export type TenraiSearchHit =
 	| {
 			type: "anime";
 			id: number;
@@ -197,15 +197,15 @@ export type JikanSearchHit =
 // Public: search
 // ============================================================================
 
-export async function searchAnime(query: string, signal?: AbortSignal): Promise<JikanSearchHit[]> {
+export async function searchAnime(query: string, signal?: AbortSignal): Promise<TenraiSearchHit[]> {
 	if (!query.trim()) return [];
 
-	const results = await jikanFetch<JikanAnimeSearchRaw[]>(
+	const results = await tenraiFetch<TenraiAnimeSearchRaw[]>(
 		`/anime?q=${encodeURIComponent(query)}&limit=10&sfw=true`,
 		signal,
 	);
 
-	// Jikan occasionally returns the same mal_id twice in one search
+	// Tenrai occasionally returns the same mal_id twice in one search
 	// response — dedupe before mapping to avoid duplicate keys downstream.
 	const seen = new Set<number>();
 	const deduped = results.filter((r) => {
@@ -215,7 +215,7 @@ export async function searchAnime(query: string, signal?: AbortSignal): Promise<
 	});
 
 	return deduped.map(
-		(r): JikanSearchHit => ({
+		(r): TenraiSearchHit => ({
 			type: "anime",
 			id: r.mal_id,
 			title: r.title_english || r.title,
@@ -226,15 +226,15 @@ export async function searchAnime(query: string, signal?: AbortSignal): Promise<
 	);
 }
 
-export async function searchManga(query: string, signal?: AbortSignal): Promise<JikanSearchHit[]> {
+export async function searchManga(query: string, signal?: AbortSignal): Promise<TenraiSearchHit[]> {
 	if (!query.trim()) return [];
 
-	const results = await jikanFetch<JikanMangaSearchRaw[]>(
+	const results = await tenraiFetch<TenraiMangaSearchRaw[]>(
 		`/manga?q=${encodeURIComponent(query)}&limit=10&sfw=true`,
 		signal,
 	);
 
-	// Same dedupe as searchAnime — Jikan's search index can return a manga
+	// Same dedupe as searchAnime — Tenrai's search index can return a manga
 	// twice (e.g. once for the main entry, once via a cross-reference).
 	const seen = new Set<number>();
 	const deduped = results.filter((r) => {
@@ -244,7 +244,7 @@ export async function searchManga(query: string, signal?: AbortSignal): Promise<
 	});
 
 	return deduped.map(
-		(r): JikanSearchHit => ({
+		(r): TenraiSearchHit => ({
 			type: "manga",
 			id: r.mal_id,
 			title: r.title_english || r.title,
@@ -259,16 +259,16 @@ export async function searchManga(query: string, signal?: AbortSignal): Promise<
 // Public: fetch full details (for import)
 // ============================================================================
 
-async function fetchAnimeDetails(malId: number): Promise<JikanAnimeFullRaw> {
-	return jikanFetch<JikanAnimeFullRaw>(`/anime/${malId}/full`);
+async function fetchAnimeDetails(malId: number): Promise<TenraiAnimeFullRaw> {
+	return tenraiFetch<TenraiAnimeFullRaw>(`/anime/${malId}/full`);
 }
 
-async function fetchMangaDetails(malId: number): Promise<JikanMangaFullRaw> {
-	return jikanFetch<JikanMangaFullRaw>(`/manga/${malId}/full`);
+async function fetchMangaDetails(malId: number): Promise<TenraiMangaFullRaw> {
+	return tenraiFetch<TenraiMangaFullRaw>(`/manga/${malId}/full`);
 }
 
 // ============================================================================
-// Duration parsing — Jikan gives free-text like "24 min per ep" or
+// Duration parsing — Tenrai gives free-text like "24 min per ep" or
 // "2 hr 5 min". Extract total minutes per episode.
 // ============================================================================
 
@@ -425,7 +425,7 @@ export async function importManga(malId: number): Promise<string> {
 // build here, unlike TV. Lazy + cached in media_parts, same as TV seasons.
 // ============================================================================
 
-type JikanEpisodeRaw = {
+type TenraiEpisodeRaw = {
 	mal_id: number; // this IS the episode number in this endpoint's context
 	title: string;
 	aired: string | null;
@@ -433,17 +433,17 @@ type JikanEpisodeRaw = {
 	recap: boolean;
 };
 
-async function fetchAnimeEpisodes(malId: number): Promise<JikanEpisodeRaw[]> {
-	// Jikan/Tenrai paginates this endpoint at 100/page.
+async function fetchAnimeEpisodes(malId: number): Promise<TenraiEpisodeRaw[]> {
+	// Tenrai paginates this endpoint at 100/page.
 	// Long-running shows (i.e. One Piece) can have 1000+ episodes, so a single-page fetch silently truncated most of the list
 	// This loops until the API itself reports no more pages.
 	const MAX_PAGES = 50; // 5000 episodes — comfortably above any real anime,
 
-	const all: JikanEpisodeRaw[] = [];
+	const all: TenraiEpisodeRaw[] = [];
 	let page = 1;
 
 	while (page <= MAX_PAGES) {
-		const envelope = await jikanFetchRaw<JikanEpisodeRaw[]>(`/anime/${malId}/episodes?page=${page}`);
+		const envelope = await tenraiFetchRaw<TenraiEpisodeRaw[]>(`/anime/${malId}/episodes?page=${page}`);
 		all.push(...envelope.data);
 
 		if (!envelope.pagination?.has_next_page) break;

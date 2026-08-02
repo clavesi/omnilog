@@ -1,6 +1,6 @@
 /**
  * Cross-source duplicate detection for media that can be indexed by more than one catalog
- * — e.g. an anime film exists in both TMDB (as a movie) and MAL/Jikan (as an anime).
+ * — e.g. an anime film exists in both TMDB (as a movie) and MAL/Tenrai (as an anime).
  *
  * Deliberately scoped to movie/tv/anime only. Games and manga are excluded:
  * a movie/show and a game can share a title while being genuinely distinct

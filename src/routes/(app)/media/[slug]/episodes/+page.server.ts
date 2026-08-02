@@ -3,8 +3,8 @@ import { and, eq, inArray } from "drizzle-orm";
 import { requireAdmin } from "$lib/server/auth";
 import { db } from "$lib/server/db";
 import { logs, mediaItems, mediaParts } from "$lib/server/db/schema";
-import { importAnimeEpisodes } from "$lib/server/jikan";
 import { createPart, findFlatParts, type PartType } from "$lib/server/parts";
+import { importAnimeEpisodes } from "$lib/server/tenrai";
 import type { Actions, PageServerLoad } from "./$types";
 
 type EpisodeDisplay = {

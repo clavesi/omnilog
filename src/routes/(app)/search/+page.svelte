@@ -4,12 +4,12 @@ import MediaTypeMark from "$lib/components/MediaTypeMark.svelte";
 import { igdbImage, openLibraryImage, tmdbImage } from "$lib/media-images";
 import { getMediaTypeColor, getSearchTypeColor, mediaTypeLabel } from "$lib/media-type-colors";
 import type { IgdbSearchHit } from "$lib/server/igdb";
-import type { JikanSearchHit } from "$lib/server/jikan";
 import type { MusicBrainzSearchHit } from "$lib/server/musicbrainz";
 import type { OpenLibrarySearchHit } from "$lib/server/openlibrary";
+import type { TenraiSearchHit } from "$lib/server/tenrai";
 import type { TmdbSearchHit } from "$lib/server/tmdb";
 
-type SearchHit = TmdbSearchHit | IgdbSearchHit | JikanSearchHit | MusicBrainzSearchHit | OpenLibrarySearchHit;
+type SearchHit = TmdbSearchHit | IgdbSearchHit | TenraiSearchHit | MusicBrainzSearchHit | OpenLibrarySearchHit;
 type SearchType = "all" | "movie" | "tv" | "game" | "anime" | "manga" | "music" | "book";
 type DuplicateInfo = { slug: string; title: string; mediaType: string; coverImageUrl: string | null };
 
