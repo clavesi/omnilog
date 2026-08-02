@@ -7,6 +7,7 @@ let { data, form } = $props();
 let search = $state("");
 let togglingId = $state<string | null>(null);
 let confirmUser = $state<(typeof data.users)[number] | null>(null);
+let confirmDialogOpen = $state(false);
 
 const filtered = $derived.by(() => {
 	const q = search.trim().toLowerCase();
@@ -49,7 +50,7 @@ function confirmTitle(user: (typeof data.users)[number]) {
 				type="button"
 				disabled={togglingId === user.id}
 				class="rounded-sm border border-border px-4 py-2 text-sm text-text no-underline transition-colors hover:border-text-muted hover:bg-surface disabled:opacity-60"
-				onclick={() => (confirmUser = user)}
+				onclick={() => { confirmUser = user; confirmDialogOpen = true; }}
 			>
 				{togglingId === user.id ? "Saving..." : user.role === "admin" ? "Remove admin" : "Make admin"}
 			</button>
@@ -119,7 +120,7 @@ function confirmTitle(user: (typeof data.users)[number]) {
 </form>
 
 <ConfirmDialog
-	open={!!confirmUser}
+	bind:open={confirmDialogOpen}
 	title={confirmUser ? confirmTitle(confirmUser) : ""}
 	description={confirmUser?.role === "admin"
 		? "This will remove their admin access. They'll still have a normal account."
@@ -128,4 +129,5 @@ function confirmTitle(user: (typeof data.users)[number]) {
 	onconfirm={() => {
 		(document.getElementById("toggle-admin-form") as HTMLFormElement | null)?.requestSubmit();
 	}}
+	oncancel={() => { confirmUser = null; }}
 />

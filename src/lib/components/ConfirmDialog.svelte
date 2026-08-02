@@ -9,6 +9,7 @@ let {
 	cancelLabel = "Cancel",
 	danger = false,
 	onconfirm,
+	oncancel,
 }: {
 	open?: boolean;
 	title: string;
@@ -17,6 +18,7 @@ let {
 	cancelLabel?: string;
 	danger?: boolean;
 	onconfirm: () => void;
+	oncancel?: () => void;
 } = $props();
 </script>
 
@@ -37,6 +39,7 @@ let {
 			<div class="flex justify-end gap-3">
 				<Dialog.Close
 					class="rounded-sm border border-border px-4 py-2 text-sm text-text transition-colors hover:border-text-muted hover:bg-surface"
+					onclick={() => oncancel?.()}
 				>
 					{cancelLabel}
 				</Dialog.Close>

@@ -59,6 +59,7 @@ let editEpisodes = $state("");
 let editFiller = $state(false);
 let deletingId = $state<string | null>(null);
 let confirmDelete = $state<{ id: string; label: string } | null>(null);
+let confirmDialogOpen = $state(false);
 
 function startAdding(tier: Tier) {
 	showAddForm = tier;
@@ -74,13 +75,9 @@ function startEditing(tier: Tier, part: { id: string; title: string | null; rang
 	editFiller = part.isFiller;
 }
 
-async function deletePart(id: string) {
-	deletingId = id;
-	const body = new FormData();
-	body.set("partId", id);
-	await fetch("?/deleteTier", { method: "POST", body });
-	deletingId = null;
-	location.reload();
+function openDeleteConfirm(part: { id: string; label: string }) {
+	confirmDelete = part;
+	confirmDialogOpen = true;
 }
 </script>
 
@@ -253,7 +250,7 @@ async function deletePart(id: string) {
 				type="button"
 				class="font-mono text-xs text-text-muted hover:text-danger"
 				disabled={deletingId === part.id}
-				onclick={() => (confirmDelete = { id: part.id, label: tier })}
+				onclick={() => openDeleteConfirm({ id: part.id, label: tier })}
 			>
 				{deletingId === part.id ? "Deleting..." : "Delete"}
 			</button>
@@ -419,14 +416,32 @@ async function deletePart(id: string) {
 	{/if}
 </div>
 
+<!-- Hidden form for deleting an arc/saga — submitted programmatically after dialog confirmation -->
+<form
+	id="delete-tier-form"
+	method="POST"
+	action="?/deleteTier"
+	use:enhance={() => {
+		deletingId = confirmDelete?.id ?? null;
+		return async ({ update }) => {
+			await update();
+			deletingId = null;
+			confirmDelete = null;
+		};
+	}}
+>
+	<input type="hidden" name="partId" value={confirmDelete?.id ?? ""} />
+	<input type="hidden" name="tier" value={confirmDelete?.label ?? ""} />
+</form>
+
 <ConfirmDialog
-	open={!!confirmDelete}
+	bind:open={confirmDialogOpen}
 	title="Delete {confirmDelete?.label ?? ''}"
 	description="Episodes inside it aren't affected — they just go back to ungrouped."
 	confirmLabel="Delete"
 	danger
 	onconfirm={() => {
-		if (confirmDelete) deletePart(confirmDelete.id);
-		confirmDelete = null;
+		(document.getElementById("delete-tier-form") as HTMLFormElement | null)?.requestSubmit();
 	}}
+	oncancel={() => { confirmDelete = null; }}
 />
