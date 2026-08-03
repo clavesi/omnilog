@@ -47,15 +47,6 @@ export async function getFollowing(userId: string): Promise<FollowUser[]> {
 		.where(and(eq(follows.followerId, userId), eq(follows.status, "accepted")));
 }
 
-/** Pending incoming follow requests — only the target user sees these. */
-export async function getPendingRequests(userId: string): Promise<FollowUser[]> {
-	return db
-		.select({ id: users.id, username: users.username, image: users.image })
-		.from(follows)
-		.innerJoin(users, eq(follows.followerId, users.id))
-		.where(and(eq(follows.followingId, userId), eq(follows.status, "pending")));
-}
-
 /**
  * Sends a follow request or immediately follows, depending on whether
  * the target account is private. Returns the resulting status.
