@@ -46,7 +46,7 @@ let { form, data }: { form: ActionData; data: PageData } = $props();
 				required
 				autocomplete="username"
 				minlength="3"
-				maxlength="31"
+				maxlength="30"
 				class={INPUT_CLASS}
 			/>
 		</label>
