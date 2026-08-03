@@ -37,29 +37,29 @@ export const load: PageServerLoad = async ({ params, locals }) => {
 	const viewerId = locals.user?.id ?? null;
 	const isOwnProfile = viewerId === profileUser.id;
 
-	const [followCounts, followStatus, followers, following, pendingRequests] = await Promise.all([
+	const [followCounts, followStatus, pendingRequests] = await Promise.all([
 		getFollowCounts(profileUser.id),
 		viewerId && !isOwnProfile ? getFollowStatus(viewerId, profileUser.id) : Promise.resolve(null),
-		getFollowers(profileUser.id),
-		getFollowing(profileUser.id),
 		isOwnProfile ? getPendingRequests(profileUser.id) : Promise.resolve([]),
 	]);
 
-	// Private accounts: non-followers only see the profile header, not logs
+	// Private accounts: non-followers only see the profile header, not logs or social graph
 	const canSeeLogs = isOwnProfile || !profileUser.isPrivate || followStatus === "accepted";
 
-	const rows = canSeeLogs
-		? await queryLogsWithMedia({
-				where: isOwnProfile
-					? eq(logs.userId, profileUser.id)
-					: and(eq(logs.userId, profileUser.id), eq(logs.isPublic, true)),
-				limit: 50,
-			})
-		: [];
-
-	const [showcase, lists] = canSeeLogs
-		? await Promise.all([getShowcaseForUser(profileUser.id), getListsForUser(profileUser.id, isOwnProfile)])
-		: [[], []];
+	const [rows, showcase, lists, followers, following] = canSeeLogs
+		? await Promise.all([
+				queryLogsWithMedia({
+					where: isOwnProfile
+						? eq(logs.userId, profileUser.id)
+						: and(eq(logs.userId, profileUser.id), eq(logs.isPublic, true)),
+					limit: 50,
+				}),
+				getShowcaseForUser(profileUser.id),
+				getListsForUser(profileUser.id, isOwnProfile),
+				getFollowers(profileUser.id),
+				getFollowing(profileUser.id),
+			])
+		: [[], [], [], [], []];
 
 	return {
 		profileUser,
