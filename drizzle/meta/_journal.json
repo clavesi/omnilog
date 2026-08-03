@@ -127,6 +127,13 @@
 			"when": 1785578866152,
 			"tag": "0017_aromatic_ironclad",
 			"breakpoints": true
+		},
+		{
+			"idx": 18,
+			"version": "7",
+			"when": 1785799067873,
+			"tag": "0018_lush_echo",
+			"breakpoints": true
 		}
 	]
 }
