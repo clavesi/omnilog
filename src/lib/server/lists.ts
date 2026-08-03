@@ -1,5 +1,5 @@
 import { type ActionFailure, fail } from "@sveltejs/kit";
-import { and, asc, eq, sql } from "drizzle-orm";
+import { and, asc, eq, inArray, sql } from "drizzle-orm";
 import { db } from "./db";
 import { listItems, lists, mediaItems } from "./db/schema";
 
@@ -64,29 +64,47 @@ export async function getListsForUser(userId: string, includePrivate: boolean): 
 		.where(includePrivate ? eq(lists.userId, userId) : and(eq(lists.userId, userId), eq(lists.isPublic, true)))
 		.orderBy(sql`${lists.createdAt} desc`);
 
-	const summaries: ListSummary[] = [];
-	for (const row of rows) {
-		const [{ count }] = await db
-			.select({ count: sql<number>`count(*)::int` })
-			.from(listItems)
-			.where(eq(listItems.listId, row.id));
+	if (rows.length === 0) return [];
 
-		const covers = await db
-			.select({ coverImageUrl: mediaItems.coverImageUrl })
-			.from(listItems)
-			.innerJoin(mediaItems, eq(listItems.mediaItemId, mediaItems.id))
-			.where(eq(listItems.listId, row.id))
-			.orderBy(asc(listItems.position))
-			.limit(4);
+	const listIds = rows.map((r) => r.id);
 
-		summaries.push({
-			...row,
-			itemCount: count,
-			coverImageUrls: covers.map((c) => c.coverImageUrl).filter((u): u is string => !!u),
-		});
+	// One grouped count for every list at once, instead of one query per list.
+	const countRows = await db
+		.select({ listId: listItems.listId, count: sql<number>`count(*)::int` })
+		.from(listItems)
+		.where(inArray(listItems.listId, listIds))
+		.groupBy(listItems.listId);
+	const countByListId = new Map(countRows.map((r) => [r.listId, r.count]));
+
+	// First 4 covers per list, in one query via row_number() partitioned by list, instead of one query per list.
+	// Drizzle doesn't expose window functions directly, so this uses a raw subquery.
+	const coverRows = await db.execute<{ list_id: string; cover_image_url: string | null }>(sql`
+		select list_id, cover_image_url
+		from (
+			select
+				${listItems.listId} as list_id,
+				${mediaItems.coverImageUrl} as cover_image_url,
+				row_number() over (partition by ${listItems.listId} order by ${listItems.position} asc) as rn
+			from ${listItems}
+			inner join ${mediaItems} on ${mediaItems.id} = ${listItems.mediaItemId}
+			where ${inArray(listItems.listId, listIds)}
+		) ranked
+		where rn <= 4
+	`);
+	const coversByListId = new Map<string, string[]>();
+
+	for (const row of coverRows) {
+		if (!row.cover_image_url) continue;
+		const existing = coversByListId.get(row.list_id) ?? [];
+		existing.push(row.cover_image_url);
+		coversByListId.set(row.list_id, existing);
 	}
 
-	return summaries;
+	return rows.map((row) => ({
+		...row,
+		itemCount: countByListId.get(row.id) ?? 0,
+		coverImageUrls: coversByListId.get(row.id) ?? [],
+	}));
 }
 
 export async function getListWithItems(listId: string): Promise<{
