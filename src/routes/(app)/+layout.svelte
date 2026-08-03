@@ -1,5 +1,5 @@
 <script lang="ts">
-import { Search } from "@lucide/svelte";
+import { Bell, Search } from "@lucide/svelte";
 import { Tooltip } from "bits-ui";
 import type { Snippet } from "svelte";
 import { page } from "$app/state";
@@ -10,6 +10,7 @@ let { data, children }: { data: LayoutData; children: Snippet } = $props();
 const path = $derived(page.url.pathname);
 const onFeed = $derived(path === "/feed" || path.startsWith("/feed/"));
 const onBrowse = $derived(path === "/browse" || path.startsWith("/browse/"));
+const onNotifications = $derived(path === "/notifications" || path.startsWith("/notifications/"));
 const onSearch = $derived(path === "/search" || path.startsWith("/search/"));
 const onProfile = $derived(
 	data.user != null && (path === `/u/${data.user.username}` || path.startsWith(`/u/${data.user.username}/`)),
@@ -79,6 +80,33 @@ const navLinkActive = "text-text after:scale-x-100";
 				Feed
 			</a>
 			{#if data.user}
+				<Tooltip.Root>
+					<Tooltip.Trigger class="contents">
+						<a
+							href="/notifications"
+							class="relative {navLink} {onNotifications ? navLinkActive : ''}"
+							aria-label="Notifications"
+							aria-current={onNotifications ? "page" : undefined}
+						>
+							<Bell size={20} aria-hidden="true" />
+							{#if data.unreadNotificationCount > 0}
+								<span
+									class="absolute -top-1.5 -right-1.5 flex h-4 min-w-4 items-center justify-center rounded-full bg-accent px-1 font-mono text-[0.625rem] leading-none font-semibold text-bg"
+								>
+									{data.unreadNotificationCount > 99 ? "99+" : data.unreadNotificationCount}
+								</span>
+							{/if}
+						</a>
+					</Tooltip.Trigger>
+					<Tooltip.Portal>
+						<Tooltip.Content
+							class="z-50 rounded-sm bg-surface px-2 py-1 text-xs text-text shadow-md"
+							sideOffset={6}
+						>
+							Notifications
+						</Tooltip.Content>
+					</Tooltip.Portal>
+				</Tooltip.Root>
 				<a
 					href="/u/{data.user.username}"
 					class="{navLink} {onProfile ? navLinkActive : ''}"

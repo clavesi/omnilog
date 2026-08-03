@@ -37,6 +37,7 @@ export const mediaStatusEnum = pgEnum("media_status", ["planned", "in_progress",
 // admin was originally created for).
 export const userRoleEnum = pgEnum("user_role", ["user", "admin", "owner"]);
 export const followStatusEnum = pgEnum("follow_status", ["pending", "accepted"]);
+export const notificationTypeEnum = pgEnum("notification_type", ["follow", "follow_request", "follow_accepted"]);
 
 export const externalSourceEnum = pgEnum("external_source", [
 	"tmdb",
@@ -448,6 +449,32 @@ export const follows = pgTable(
 );
 
 // ============================================================================
+// NOTIFICATIONS
+// ============================================================================
+export const notifications = pgTable(
+	"notifications",
+	{
+		id: uuid("id").primaryKey().defaultRandom(),
+		userId: text("user_id")
+			.notNull()
+			.references(() => users.id, { onDelete: "cascade" }),
+		actorId: text("actor_id")
+			.notNull()
+			.references(() => users.id, { onDelete: "cascade" }),
+		type: notificationTypeEnum("type").notNull(),
+		read: boolean("read").notNull().default(false),
+		createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+	},
+	(t) => [
+		// One notification per (recipient, actor, type). Re-triggering the same
+		// event bumps the existing row instead of creating a duplicate.
+		uniqueIndex("notifications_user_actor_type_unique").on(t.userId, t.actorId, t.type),
+		index("notifications_user_id_idx").on(t.userId),
+		index("notifications_user_read_idx").on(t.userId, t.read),
+	],
+);
+
+// ============================================================================
 // RELATIONS
 // ============================================================================
 export const usersRelations = relations(users, ({ many }) => ({
@@ -459,11 +486,17 @@ export const usersRelations = relations(users, ({ many }) => ({
 	lists: many(lists),
 	following: many(follows, { relationName: "follower" }),
 	followers: many(follows, { relationName: "following" }),
+	notifications: many(notifications, { relationName: "recipient" }),
 }));
 
 export const followsRelations = relations(follows, ({ one }) => ({
 	follower: one(users, { fields: [follows.followerId], references: [users.id], relationName: "follower" }),
 	following: one(users, { fields: [follows.followingId], references: [users.id], relationName: "following" }),
+}));
+
+export const notificationsRelations = relations(notifications, ({ one }) => ({
+	user: one(users, { fields: [notifications.userId], references: [users.id], relationName: "recipient" }),
+	actor: one(users, { fields: [notifications.actorId], references: [users.id], relationName: "actor" }),
 }));
 
 export const sessionRelations = relations(session, ({ one }) => ({

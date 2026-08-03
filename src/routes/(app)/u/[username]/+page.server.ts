@@ -4,17 +4,7 @@ import { requireUser } from "$lib/server/auth";
 import { db } from "$lib/server/db";
 import { logs, users } from "$lib/server/db/schema";
 import { getShowcaseForUser } from "$lib/server/favorites";
-import {
-	acceptFollowRequest,
-	follow,
-	getFollowCounts,
-	getFollowers,
-	getFollowing,
-	getFollowStatus,
-	getPendingRequests,
-	rejectFollowRequest,
-	unfollow,
-} from "$lib/server/follows";
+import { follow, getFollowCounts, getFollowers, getFollowing, getFollowStatus, unfollow } from "$lib/server/follows";
 import { getListsForUser } from "$lib/server/lists";
 import { queryLogsWithMedia } from "$lib/server/logs";
 import type { Actions, PageServerLoad } from "./$types";
@@ -37,10 +27,9 @@ export const load: PageServerLoad = async ({ params, locals }) => {
 	const viewerId = locals.user?.id ?? null;
 	const isOwnProfile = viewerId === profileUser.id;
 
-	const [followCounts, followStatus, pendingRequests] = await Promise.all([
+	const [followCounts, followStatus] = await Promise.all([
 		getFollowCounts(profileUser.id),
 		viewerId && !isOwnProfile ? getFollowStatus(viewerId, profileUser.id) : Promise.resolve(null),
-		isOwnProfile ? getPendingRequests(profileUser.id) : Promise.resolve([]),
 	]);
 
 	// Private accounts: non-followers only see the profile header, not logs or social graph
@@ -72,7 +61,6 @@ export const load: PageServerLoad = async ({ params, locals }) => {
 		followCounts,
 		followers,
 		following,
-		pendingRequests,
 	};
 };
 
@@ -98,25 +86,5 @@ export const actions: Actions = {
 
 		await unfollow(viewer.id, target.id);
 		return { followStatus: "not_following" as const };
-	},
-
-	acceptRequest: async (event) => {
-		const viewer = requireUser(event);
-		const form = await event.request.formData();
-		const followerId = String(form.get("followerId") ?? "");
-		if (!followerId) return fail(400, { error: "Missing followerId" });
-
-		await acceptFollowRequest(viewer.id, followerId);
-		return { success: true };
-	},
-
-	rejectRequest: async (event) => {
-		const viewer = requireUser(event);
-		const form = await event.request.formData();
-		const followerId = String(form.get("followerId") ?? "");
-		if (!followerId) return fail(400, { error: "Missing followerId" });
-
-		await rejectFollowRequest(viewer.id, followerId);
-		return { success: true };
 	},
 };

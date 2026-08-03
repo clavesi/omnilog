@@ -9,10 +9,6 @@ let { data } = $props();
 
 let deletedLogIds = $state(new Set<string>());
 let visibleLogs = $derived(data.logs.filter((l) => !deletedLogIds.has(l.id)));
-// svelte-ignore state_referenced_locally -- intentional, updated via enhance callbacks below
-let followStatus = $state(data.followStatus);
-// svelte-ignore state_referenced_locally -- intentional, filtered via enhance callbacks below
-let pendingRequests = $state(data.pendingRequests);
 let showFollowers = $state(false);
 let showFollowing = $state(false);
 
@@ -73,17 +69,8 @@ const orderedShowcase = $derived(
 
 		{#if !data.isOwnProfile && data.followStatus !== null}
 			<div class="shrink-0">
-				{#if followStatus === "accepted"}
-					<form
-						method="POST"
-						action="?/unfollow"
-						use:enhance={() => {
-							return async ({ update, result }) => {
-								await update({ reset: false });
-								if (result.type === "success") followStatus = "not_following";
-							};
-						}}
-					>
+				{#if data.followStatus === "accepted"}
+					<form method="POST" action="?/unfollow" use:enhance>
 						<button
 							type="submit"
 							class="rounded-sm border border-border px-4 py-2 text-sm text-text transition-colors hover:border-text-muted hover:bg-surface"
@@ -91,17 +78,8 @@ const orderedShowcase = $derived(
 							Following
 						</button>
 					</form>
-				{:else if followStatus === "pending"}
-					<form
-						method="POST"
-						action="?/unfollow"
-						use:enhance={() => {
-							return async ({ update, result }) => {
-								await update({ reset: false });
-								if (result.type === "success") followStatus = "not_following";
-							};
-						}}
-					>
+				{:else if data.followStatus === "pending"}
+					<form method="POST" action="?/unfollow" use:enhance>
 						<button
 							type="submit"
 							class="rounded-sm border border-border px-4 py-2 text-sm text-text-muted transition-colors hover:border-text-muted hover:bg-surface"
@@ -110,18 +88,7 @@ const orderedShowcase = $derived(
 						</button>
 					</form>
 				{:else}
-					<form
-						method="POST"
-						action="?/follow"
-						use:enhance={() => {
-							return async ({ update, result }) => {
-								await update({ reset: false });
-								if (result.type === "success" && result.data?.followStatus) {
-									followStatus = result.data.followStatus as typeof followStatus;
-								}
-							};
-						}}
-					>
+					<form method="POST" action="?/follow" use:enhance>
 						<button
 							type="submit"
 							class="rounded-sm bg-accent px-4 py-2 text-sm text-bg transition-opacity hover:opacity-90"
@@ -169,59 +136,6 @@ const orderedShowcase = $derived(
 					{/each}
 				</ul>
 			{/if}
-		</section>
-	{/if}
-
-	{#if data.isOwnProfile && pendingRequests.length > 0}
-		<section class="mb-6 rounded-sm border border-border p-4">
-			<h2 class="mb-3 text-sm font-medium">Follow requests</h2>
-			<ul class="m-0 list-none divide-y divide-border p-0">
-				{#each pendingRequests as req (req.id)}
-					<li class="flex items-center justify-between gap-4 py-3">
-						<a href="/u/{req.username}" class="text-sm text-accent no-underline hover:text-text">
-							{req.username}
-						</a>
-						<div class="flex gap-2">
-							<form
-								method="POST"
-								action="?/acceptRequest"
-								use:enhance={() => {
-									return async ({ update }) => {
-										await update({ reset: false });
-										pendingRequests = pendingRequests.filter((r) => r.id !== req.id);
-									};
-								}}
-							>
-								<input type="hidden" name="followerId" value={req.id} />
-								<button
-									type="submit"
-									class="rounded-sm bg-accent px-3 py-1 text-xs text-bg transition-opacity hover:opacity-90"
-								>
-									Accept
-								</button>
-							</form>
-							<form
-								method="POST"
-								action="?/rejectRequest"
-								use:enhance={() => {
-									return async ({ update }) => {
-										await update({ reset: false });
-										pendingRequests = pendingRequests.filter((r) => r.id !== req.id);
-									};
-								}}
-							>
-								<input type="hidden" name="followerId" value={req.id} />
-								<button
-									type="submit"
-									class="rounded-sm border border-border px-3 py-1 text-xs text-text-muted transition-colors hover:border-danger hover:text-danger"
-								>
-									Decline
-								</button>
-							</form>
-						</div>
-					</li>
-				{/each}
-			</ul>
 		</section>
 	{/if}
 

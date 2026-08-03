@@ -1,6 +1,7 @@
 import { and, eq, sql } from "drizzle-orm";
 import { db } from "./db";
 import { follows, users } from "./db/schema";
+import { createNotification, resolveFollowRequestNotification } from "./notifications";
 
 export type FollowStatus = "accepted" | "pending" | "not_following";
 
@@ -71,7 +72,16 @@ export async function follow(followerId: string, followingId: string): Promise<F
 
 	const status = target.isPrivate ? "pending" : "accepted";
 
-	await db.insert(follows).values({ followerId, followingId, status }).onConflictDoNothing();
+	const inserted = await db
+		.insert(follows)
+		.values({ followerId, followingId, status })
+		.onConflictDoNothing()
+		.returning({ id: follows.id });
+
+	// No row inserted means the follow already existed — don't re-notify.
+	if (inserted.length > 0) {
+		await createNotification(followingId, followerId, status === "accepted" ? "follow" : "follow_request");
+	}
 
 	return status;
 }
@@ -88,6 +98,10 @@ export async function acceptFollowRequest(followingId: string, followerId: strin
 		.where(
 			and(eq(follows.followerId, followerId), eq(follows.followingId, followingId), eq(follows.status, "pending")),
 		);
+
+	// Clear the request from the target's notifications, and tell the requester.
+	await resolveFollowRequestNotification(followingId, followerId, "accepted");
+	await createNotification(followerId, followingId, "follow_accepted");
 }
 
 /** Reject/delete a pending follow request — only the target can do this. */
@@ -97,4 +111,8 @@ export async function rejectFollowRequest(followingId: string, followerId: strin
 		.where(
 			and(eq(follows.followerId, followerId), eq(follows.followingId, followingId), eq(follows.status, "pending")),
 		);
+
+	// Declining removes the request from the target's notifications entirely.
+	// The requester isn't told — same as most social apps.
+	await resolveFollowRequestNotification(followingId, followerId, "declined");
 }
