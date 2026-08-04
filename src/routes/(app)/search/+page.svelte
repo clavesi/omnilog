@@ -85,6 +85,14 @@ function titleOf(hit: SearchHit): string {
 function subtitleOf(hit: SearchHit): string {
 	if (hit.type === "music") return hit.artists.join(", ");
 	if (hit.type === "book") return hit.authors.join(", ");
+	if (hit.type === "game") {
+		// Developer is the useful signal for telling real releases from shovelware.
+		// Fall back to publisher when IGDB has no developer credited,
+		// and cap the list so long co-dev credits don't wrap.
+		const names = hit.developers.length > 0 ? hit.developers : hit.publishers;
+		if (names.length === 0) return "";
+		return names.length > 2 ? `${names.slice(0, 2).join(", ")} +${names.length - 2}` : names.join(", ");
+	}
 	return "";
 }
 

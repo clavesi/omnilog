@@ -36,6 +36,8 @@ export type IgdbSearchHit = {
 	firstReleaseDate: number | null; // unix seconds
 	coverImageId: string | null;
 	platforms: string[];
+	developers: string[];
+	publishers: string[];
 };
 
 export type TenraiSearchHit =

@@ -93,7 +93,21 @@ import type { IgdbSearchHit } from "$lib/types/search";
 // Public: search
 // ============================================================================
 
-const SEARCH_FIELDS = "name,summary,first_release_date,cover.image_id,platforms.name";
+const SEARCH_FIELDS =
+	"name,summary,first_release_date,cover.image_id,platforms.name,involved_companies.company.name,involved_companies.developer,involved_companies.publisher";
+
+/**
+ * IGDB returns one `involved_companies` row per company with boolean role
+ * flags — a company can be both developer and publisher. Split into the two
+ * lists we care about. Shared by search and import so they can't drift.
+ */
+function splitCompanies(game: IgdbGameRaw): { developers: string[]; publishers: string[] } {
+	const involved = game.involved_companies ?? [];
+	return {
+		developers: involved.filter((c) => c.developer).map((c) => c.company.name),
+		publishers: involved.filter((c) => c.publisher).map((c) => c.company.name),
+	};
+}
 
 export async function searchGames(query: string, signal?: AbortSignal): Promise<IgdbSearchHit[]> {
 	if (!query.trim()) return [];
@@ -106,15 +120,20 @@ export async function searchGames(query: string, signal?: AbortSignal): Promise<
 
 	const results = await igdb<IgdbGameRaw[]>("games", body, signal);
 
-	return results.map((g) => ({
-		type: "game" as const,
-		id: g.id,
-		name: g.name,
-		summary: g.summary ?? "",
-		firstReleaseDate: g.first_release_date ?? null,
-		coverImageId: g.cover?.image_id ?? null,
-		platforms: (g.platforms ?? []).map((p) => p.name),
-	}));
+	return results.map((g) => {
+		const { developers, publishers } = splitCompanies(g);
+		return {
+			type: "game" as const,
+			id: g.id,
+			name: g.name,
+			summary: g.summary ?? "",
+			firstReleaseDate: g.first_release_date ?? null,
+			coverImageId: g.cover?.image_id ?? null,
+			platforms: (g.platforms ?? []).map((p) => p.name),
+			developers,
+			publishers,
+		};
+	});
 }
 
 // ============================================================================
@@ -169,8 +188,7 @@ export async function importGame(igdbId: number): Promise<string> {
 			url: `https://www.igdb.com/games/${game.slug}`,
 		});
 
-		const developers = (game.involved_companies ?? []).filter((c) => c.developer).map((c) => c.company.name);
-		const publishers = (game.involved_companies ?? []).filter((c) => c.publisher).map((c) => c.company.name);
+		const { developers, publishers } = splitCompanies(game);
 
 		const metadata: GameMetadata = {
 			type: "game",
