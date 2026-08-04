@@ -380,6 +380,13 @@ function handleDeleted(logId: string) {
 				>
 					Track songs <ArrowRight size={14} aria-hidden="true" />
 				</a>
+			{:else if item.mediaType === "game"}
+				<a
+					href="/media/{item.slug}/dlc"
+					class="mt-3 inline-flex items-center gap-1 text-sm text-accent no-underline hover:text-text"
+				>
+					DLC &amp; expansions <ArrowRight size={14} aria-hidden="true" />
+				</a>
 			{/if}
 
 			{#if metadata && isMetadataType(metadata, "tv") && metadata.number_of_seasons}

@@ -26,7 +26,17 @@ import { EMPTY_METADATA, type MediaMetadata } from "../../media-types";
 // ============================================================================
 export const mediaTypeEnum = pgEnum("media_type", ["movie", "tv", "book", "game", "music", "anime", "manga", "comic"]);
 
-export const partTypeEnum = pgEnum("part_type", ["season", "episode", "chapter", "volume", "arc", "saga", "track"]);
+export const partTypeEnum = pgEnum("part_type", [
+	"season",
+	"episode",
+	"chapter",
+	"volume",
+	"arc",
+	"saga",
+	"track",
+	"dlc",
+	"expansion",
+]);
 
 export const mediaStatusEnum = pgEnum("media_status", ["planned", "in_progress", "completed", "dropped", "on_hold"]);
 

@@ -8,7 +8,7 @@
  * source. "Does this part already exist" is just a direct lookup.
  */
 
-import { and, eq, isNull } from "drizzle-orm";
+import { and, eq, inArray, isNull } from "drizzle-orm";
 import { db } from "./db";
 import { mediaParts, type partTypeEnum } from "./db/schema";
 
@@ -46,6 +46,25 @@ export async function findFlatParts(mediaItemId: string, partType: PartType) {
 		.from(mediaParts)
 		.where(
 			and(eq(mediaParts.mediaItemId, mediaItemId), eq(mediaParts.partType, partType), isNull(mediaParts.parentPartId)),
+		)
+		.orderBy(mediaParts.partNumber);
+}
+
+/**
+ * Same as findFlatParts but across several part types at once — games list
+ * DLC and expansions together on one page, since the distinction is IGDB's
+ * and not something a user browsing add-ons cares to have split up.
+ */
+export async function findFlatPartsOfTypes(mediaItemId: string, partTypes: PartType[]) {
+	return db
+		.select()
+		.from(mediaParts)
+		.where(
+			and(
+				eq(mediaParts.mediaItemId, mediaItemId),
+				inArray(mediaParts.partType, partTypes),
+				isNull(mediaParts.parentPartId),
+			),
 		)
 		.orderBy(mediaParts.partNumber);
 }

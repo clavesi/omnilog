@@ -148,7 +148,7 @@ export async function requireItemBySlugOfType(slug: string, expectedType: string
  */
 export async function requireExternalId(
 	mediaItemId: string,
-	source: "tmdb" | "musicbrainz",
+	source: "tmdb" | "musicbrainz" | "igdb",
 	label: string,
 ): Promise<string> {
 	const [ext] = await db
