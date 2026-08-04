@@ -1,41 +1,22 @@
-import { error, fail } from "@sveltejs/kit";
+import { fail } from "@sveltejs/kit";
 import { and, eq } from "drizzle-orm";
 import { requireUser } from "$lib/server/auth";
 import { db } from "$lib/server/db";
 import { logs, users } from "$lib/server/db/schema";
 import { getShowcaseForUser } from "$lib/server/favorites";
-import { follow, getFollowCounts, getFollowers, getFollowing, getFollowStatus, unfollow } from "$lib/server/follows";
+import { follow, unfollow } from "$lib/server/follows";
 import { getListsForUser } from "$lib/server/lists";
 import { queryLogsWithMedia } from "$lib/server/logs";
+import { getProfileContext } from "$lib/server/profile";
 import type { Actions, PageServerLoad } from "./$types";
 
 export const load: PageServerLoad = async ({ params, locals }) => {
-	const [profileUser] = await db
-		.select({
-			id: users.id,
-			username: users.username,
-			imageURL: users.image,
-			bio: users.bio,
-			isPrivate: users.isPrivate,
-		})
-		.from(users)
-		.where(eq(users.username, params.username))
-		.limit(1);
+	const { profileUser, isOwnProfile, followStatus, followCounts, canSeeContent } = await getProfileContext(
+		params.username,
+		locals.user?.id ?? null,
+	);
 
-	if (!profileUser) throw error(404, "User not found");
-
-	const viewerId = locals.user?.id ?? null;
-	const isOwnProfile = viewerId === profileUser.id;
-
-	const [followCounts, followStatus] = await Promise.all([
-		getFollowCounts(profileUser.id),
-		viewerId && !isOwnProfile ? getFollowStatus(viewerId, profileUser.id) : Promise.resolve(null),
-	]);
-
-	// Private accounts: non-followers only see the profile header, not logs or social graph
-	const canSeeLogs = isOwnProfile || !profileUser.isPrivate || followStatus === "accepted";
-
-	const [rows, showcase, lists, followers, following] = canSeeLogs
+	const [rows, showcase, lists] = canSeeContent
 		? await Promise.all([
 				queryLogsWithMedia({
 					where: isOwnProfile
@@ -45,10 +26,8 @@ export const load: PageServerLoad = async ({ params, locals }) => {
 				}),
 				getShowcaseForUser(profileUser.id),
 				getListsForUser(profileUser.id, isOwnProfile),
-				getFollowers(profileUser.id),
-				getFollowing(profileUser.id),
 			])
-		: [[], [], [], [], []];
+		: [[], [], []];
 
 	return {
 		profileUser,
@@ -56,11 +35,9 @@ export const load: PageServerLoad = async ({ params, locals }) => {
 		showcase,
 		lists,
 		isOwnProfile,
-		canSeeLogs,
+		canSeeLogs: canSeeContent,
 		followStatus,
 		followCounts,
-		followers,
-		following,
 	};
 };
 

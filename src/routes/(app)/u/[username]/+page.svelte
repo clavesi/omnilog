@@ -9,8 +9,6 @@ let { data } = $props();
 
 let deletedLogIds = $state(new Set<string>());
 let visibleLogs = $derived(data.logs.filter((l) => !deletedLogIds.has(l.id)));
-let showFollowers = $state(false);
-let showFollowing = $state(false);
 
 function handleDeleted(logId: string) {
 	deletedLogIds = new Set([...deletedLogIds, logId]);
@@ -50,20 +48,18 @@ const orderedShowcase = $derived(
 			{/if}
 			<div class="flex items-center gap-4 font-mono text-sm text-text-muted">
 				<span>{visibleLogs.length} log{visibleLogs.length === 1 ? "" : "s"}</span>
-				<button
-					type="button"
-					class="hover:text-text"
-					onclick={() => (showFollowers = !showFollowers)}
+				<a
+					href="/u/{data.profileUser.username}/followers"
+					class="text-text-muted no-underline hover:text-text"
 				>
 					{data.followCounts.followers} follower{data.followCounts.followers === 1 ? "" : "s"}
-				</button>
-				<button
-					type="button"
-					class="hover:text-text"
-					onclick={() => (showFollowing = !showFollowing)}
+				</a>
+				<a
+					href="/u/{data.profileUser.username}/following"
+					class="text-text-muted no-underline hover:text-text"
 				>
 					{data.followCounts.following} following
-				</button>
+				</a>
 			</div>
 		</div>
 
@@ -100,44 +96,6 @@ const orderedShowcase = $derived(
 			</div>
 		{/if}
 	</header>
-
-	{#if showFollowers}
-		<section class="mb-6 rounded-sm border border-border p-4">
-			<h2 class="mb-3 text-sm font-medium">Followers</h2>
-			{#if data.followers.length === 0}
-				<p class="text-sm text-text-muted">No followers yet.</p>
-			{:else}
-				<ul class="m-0 list-none p-0 flex flex-wrap gap-3">
-					{#each data.followers as f (f.id)}
-						<li>
-							<a href="/u/{f.username}" class="text-sm text-accent no-underline hover:text-text">
-								{f.username}
-							</a>
-						</li>
-					{/each}
-				</ul>
-			{/if}
-		</section>
-	{/if}
-
-	{#if showFollowing}
-		<section class="mb-6 rounded-sm border border-border p-4">
-			<h2 class="mb-3 text-sm font-medium">Following</h2>
-			{#if data.following.length === 0}
-				<p class="text-sm text-text-muted">Not following anyone yet.</p>
-			{:else}
-				<ul class="m-0 list-none p-0 flex flex-wrap gap-3">
-					{#each data.following as f (f.id)}
-						<li>
-							<a href="/u/{f.username}" class="text-sm text-accent no-underline hover:text-text">
-								{f.username}
-							</a>
-						</li>
-					{/each}
-				</ul>
-			{/if}
-		</section>
-	{/if}
 
 	{#if !data.canSeeLogs}
 		<div class="py-16 text-center text-text-muted">
