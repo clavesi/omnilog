@@ -74,7 +74,11 @@ type MbArtistCredit = { name: string; artist: { name: string } };
 type MbReleaseGroupSearchRaw = {
 	id: string; // MBID, a UUID string — not an integer like other sources
 	title: string;
+	score?: number | string; // Lucene relevance, 0-100; MB serialises it as a string
+	count?: number | string; // number of releases (pressings/reissues) in the group
+	releases?: { id: string }[];
 	"primary-type"?: string; // "Album", "EP", "Single", "Compilation"
+	"secondary-types"?: string[]; // "Compilation", "Live", "Remix", "Soundtrack", ...
 	"first-release-date"?: string;
 	"artist-credit"?: MbArtistCredit[];
 };
@@ -99,27 +103,154 @@ type MbCoverArtResponse = {
 // Public: search hit type
 // ============================================================================
 
-import type { MusicBrainzSearchHit } from "$lib/types/search";
+import type { MusicBrainzSearchHit, MusicPrimaryType } from "$lib/types/search";
 
 // ============================================================================
 // Public: search
 // ============================================================================
 
-export async function searchAlbums(query: string, signal?: AbortSignal): Promise<MusicBrainzSearchHit[]> {
-	if (!query.trim()) return [];
+/**
+ * Only DISPLAY results are shown, but MusicBrainz scores every exact title
+ * match identically — searching "Rumours" returns a wall of tied hits and the
+ * famous one isn't necessarily among the first ten. Over-fetch, re-rank, then
+ * slice.
+ */
+const MB_SEARCH_FETCH_LIMIT = 25;
+const MB_SEARCH_DISPLAY_LIMIT = 10;
 
+/**
+ * Secondary types that describe a repackaging rather than an original
+ * release. Demoted rather than excluded — people do log live albums and
+ * soundtracks, they just shouldn't outrank the studio album someone is
+ * almost certainly looking for.
+ */
+const DEMOTED_SECONDARY_TYPES = new Set(["Compilation", "Live", "Remix", "DJ-mix", "Mixtape/Street", "Demo"]);
+
+const SECONDARY_TYPE_PENALTY = 25;
+
+/**
+ * Singles are included so the type filter has something to show, but they're
+ * a large share of what a bare title search returns and rarely what someone
+ * means. Penalised more lightly than a repackaging — an exact single match
+ * still beats a loose album match.
+ */
+const SINGLE_PENALTY = 12;
+
+/** Maps our filter values onto MusicBrainz's `primarytype` field. */
+const PRIMARY_TYPE_QUERY: Record<Exclude<MusicPrimaryType, "all">, string> = {
+	album: "Album",
+	ep: "EP",
+	single: "Single",
+};
+
+const ALL_PRIMARY_TYPES = "Album OR EP OR Single";
+
+/**
+ * Escape characters with meaning in Lucene, which is what MusicBrainz's
+ * search server parses. Their docs are explicit that a literal search
+ * requires this on top of URL encoding.
+ *
+ * Without it, "AC/DC" opens a regex, and a stray ":" or "-" silently changes
+ * the query's meaning. Returns null when nothing usable survives.
+ */
+function escapeLucene(query: string): string | null {
+	const trimmed = query.trim();
+	if (!trimmed) return null;
+	// Single pass — escaping in two passes would re-escape the backslashes
+	// added by the first. `&` and `|` are escaped individually rather than as
+	// the `&&`/`||` operators, which is equivalent and avoids the ordering
+	// problem entirely.
+	const escaped = trimmed.replace(/[+\-&|!(){}[\]^"~*?:\\/]/g, "\\$&");
+	return escaped.trim().length > 0 ? escaped : null;
+}
+
+/**
+ * How many releases (pressings, reissues, regional editions) belong to this
+ * group. MusicBrainz has no popularity metric, but this is a decent proxy:
+ * Fleetwood Mac's "Rumours" has been pressed dozens of times, an obscure
+ * album of the same name once. Serves the role total_rating_count does for
+ * games.
+ */
+function releaseCount(g: MbReleaseGroupSearchRaw): number {
+	const declared = Number(g.count ?? 0) || 0;
+	return declared > 0 ? declared : (g.releases?.length ?? 0);
+}
+
+/**
+ * Relevance with type penalties applied. MusicBrainz's own score dominates;
+ * the penalties only reorder things it considered equally good.
+ */
+function rankScore(g: MbReleaseGroupSearchRaw): number {
+	// MusicBrainz serialises `score` as a string; coerce rather than trust it.
+	const base = Number(g.score ?? 0) || 0;
+	const secondary = g["secondary-types"] ?? [];
+	const repackaged = secondary.some((t) => DEMOTED_SECONDARY_TYPES.has(t));
+	const isSingle = g["primary-type"] === "Single";
+	return base - (repackaged ? SECONDARY_TYPE_PENALTY : 0) - (isSingle ? SINGLE_PENALTY : 0);
+}
+
+/**
+ * Rank, then break ties on release count.
+ *
+ * The tiebreak is the important half: MusicBrainz hands back a pile of
+ * identical 100s for any well-known title, and release count is what
+ * separates the famous album from everything else sharing its name.
+ */
+function compareByRelevance(a: MbReleaseGroupSearchRaw, b: MbReleaseGroupSearchRaw): number {
+	const byScore = rankScore(b) - rankScore(a);
+	if (byScore !== 0) return byScore;
+	return releaseCount(b) - releaseCount(a);
+}
+
+/**
+ * Match the query against the title *or* the artist, so both "rumours" and
+ * "fleetwood mac" work, and "rumours fleetwood mac" ranks the right album
+ * highest — Lucene ORs the terms, so the release group matching all three
+ * scores above ones matching only some.
+ */
+function buildSearchQuery(escaped: string, primaryType: MusicPrimaryType): string {
+	const types = primaryType === "all" ? ALL_PRIMARY_TYPES : PRIMARY_TYPE_QUERY[primaryType];
+	return `(releasegroup:(${escaped}) OR artist:(${escaped})) AND primarytype:(${types})`;
+}
+
+async function fetchReleaseGroups(luceneQuery: string, signal?: AbortSignal): Promise<MbReleaseGroupSearchRaw[]> {
 	const data = await mbFetch<{ "release-groups": MbReleaseGroupSearchRaw[] }>(
-		`/release-group/?query=${encodeURIComponent(query)}&fmt=json&limit=10`,
+		`/release-group/?query=${encodeURIComponent(luceneQuery)}&fmt=json&limit=${MB_SEARCH_FETCH_LIMIT}`,
 		signal,
 	);
+	return data["release-groups"] ?? [];
+}
 
-	const groups = data["release-groups"] ?? [];
+export async function searchAlbums(
+	query: string,
+	signal?: AbortSignal,
+	opts: { primaryType?: MusicPrimaryType } = {},
+): Promise<MusicBrainzSearchHit[]> {
+	const escaped = escapeLucene(query);
+	if (!escaped) return [];
 
-	// Cover art requires a separate per-item lookup (no batch endpoint), and
-	// a given release-group frequently has no registered art at all — treat
+	const primaryType = opts.primaryType ?? "all";
+
+	let groups: MbReleaseGroupSearchRaw[];
+	try {
+		groups = await fetchReleaseGroups(buildSearchQuery(escaped, primaryType), signal);
+	} catch (err) {
+		if (signal?.aborted) throw err;
+		// A malformed structured query shouldn't take music search down —
+		// retry with the bare escaped terms, which is the older query shape.
+		console.error("MusicBrainz structured search failed, falling back to plain query:", err);
+		groups = await fetchReleaseGroups(escaped, signal);
+	}
+
+	// Rank before slicing, so the cover art lookups below only run for the
+	// results actually being returned. Cover Art Archive has no batch
+	// endpoint — each one is its own request.
+	const ranked = groups.sort(compareByRelevance).slice(0, MB_SEARCH_DISPLAY_LIMIT);
+
+	// A given release group frequently has no registered art at all — treat
 	// a failure/404 here as "no cover", not an error worth surfacing.
 	const withCovers = await Promise.all(
-		groups.map(async (g) => {
+		ranked.map(async (g) => {
 			const coverUrl = await fetchCoverArtUrl(g.id, signal).catch(() => null);
 			return { g, coverUrl };
 		}),

@@ -3,7 +3,7 @@ import { enhance } from "$app/forms";
 import MediaTypeMark from "$lib/components/MediaTypeMark.svelte";
 import { igdbImage, openLibraryImage, tmdbImage } from "$lib/media-images";
 import { getMediaTypeColor, getSearchTypeColor, mediaTypeLabel } from "$lib/media-type-colors";
-import { type SearchHit, type SearchType, VALID_SEARCH_TYPES } from "$lib/types/search";
+import { type MusicPrimaryType, type SearchHit, type SearchType, VALID_SEARCH_TYPES } from "$lib/types/search";
 
 type DuplicateInfo = { slug: string; title: string; mediaType: string; coverImageUrl: string | null };
 
@@ -18,8 +18,16 @@ const TYPE_OPTIONS: { value: SearchType; label: string }[] = [
 	{ value: "book", label: "Books" },
 ];
 
+const MUSIC_TYPE_OPTIONS: { value: MusicPrimaryType; label: string }[] = [
+	{ value: "all", label: "All" },
+	{ value: "album", label: "Albums" },
+	{ value: "ep", label: "EPs" },
+	{ value: "single", label: "Singles" },
+];
+
 let query = $state("");
 let selectedType = $state<SearchType>("all");
+let selectedMusicType = $state<MusicPrimaryType>("all");
 let results = $state<SearchHit[]>([]);
 let loading = $state(false);
 let error = $state<string | null>(null);
@@ -53,6 +61,15 @@ function onTypeChange(type: SearchType) {
 	}
 }
 
+function onMusicTypeChange(type: MusicPrimaryType) {
+	selectedMusicType = type;
+	clearTimeout(debounceTimer);
+	if (query.trim().length >= 2) {
+		loading = true;
+		runSearch();
+	}
+}
+
 async function runSearch() {
 	const q = query.trim();
 	if (q.length < 2) return;
@@ -60,7 +77,10 @@ async function runSearch() {
 	abortController = new AbortController();
 
 	try {
-		const res = await fetch(`/api/search?q=${encodeURIComponent(q)}&type=${selectedType}`, {
+		const params = new URLSearchParams({ q, type: selectedType });
+		if (selectedType === "music") params.set("musicType", selectedMusicType);
+
+		const res = await fetch(`/api/search?${params}`, {
 			signal: abortController.signal,
 		});
 		const data = await res.json();
@@ -162,6 +182,24 @@ function dismissWarning(itemKey: string) {
 			</button>
 		{/each}
 	</div>
+
+	{#if selectedType === "music"}
+		<div class="mt-3 flex flex-wrap items-center gap-2">
+			<span class="font-mono text-xs text-text-muted">Type</span>
+			{#each MUSIC_TYPE_OPTIONS as opt (opt.value)}
+				<button
+					type="button"
+					class="rounded-sm border px-2.5 py-1 text-xs motion-safe:transition-colors {selectedMusicType ===
+					opt.value
+						? 'border-accent text-accent'
+						: 'border-border text-text-muted hover:border-text-muted hover:text-text'}"
+					onclick={() => onMusicTypeChange(opt.value)}
+				>
+					{opt.label}
+				</button>
+			{/each}
+		</div>
+	{/if}
 
 	{#if loading}
 		<p class="mt-6 font-mono text-sm text-text-muted">Searching...</p>

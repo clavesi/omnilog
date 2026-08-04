@@ -4,11 +4,21 @@ import { searchAlbums } from "$lib/server/musicbrainz";
 import { searchBooks } from "$lib/server/openlibrary";
 import { searchAnime, searchManga } from "$lib/server/tenrai";
 import { searchMoviesAndTv, searchMoviesOnly, searchTvOnly } from "$lib/server/tmdb";
-import { type SearchHit, type SearchType, VALID_SEARCH_TYPES } from "$lib/types/search";
+import {
+	type MusicPrimaryType,
+	type SearchHit,
+	type SearchType,
+	VALID_MUSIC_PRIMARY_TYPES,
+	VALID_SEARCH_TYPES,
+} from "$lib/types/search";
 import type { RequestHandler } from "./$types";
 
 function isSearchType(v: string | null): v is SearchType {
 	return VALID_SEARCH_TYPES.includes(v as SearchType);
+}
+
+function isMusicPrimaryType(v: string | null): v is MusicPrimaryType {
+	return VALID_MUSIC_PRIMARY_TYPES.includes(v as MusicPrimaryType);
 }
 
 function isAbortError(err: unknown): boolean {
@@ -26,6 +36,10 @@ export const GET: RequestHandler = async ({ url, request }) => {
 	//   e.g. a newer typeahead keystroke superseded this search
 	// this lets in-flight or still-queued requests actually stop instead of quietly finishing (and retrying) in the background.
 	const signal = request.signal;
+
+	// Only meaningful when type === "music"; ignored otherwise.
+	const musicTypeParam = url.searchParams.get("musicType");
+	const musicPrimaryType: MusicPrimaryType = isMusicPrimaryType(musicTypeParam) ? musicTypeParam : "all";
 
 	async function single(fn: () => Promise<SearchHit[]>, label: string) {
 		try {
@@ -45,7 +59,7 @@ export const GET: RequestHandler = async ({ url, request }) => {
 	if (type === "game") return single(() => searchGames(q, signal), "IGDB");
 	if (type === "anime") return single(() => searchAnime(q, signal), "Tenrai anime");
 	if (type === "manga") return single(() => searchManga(q, signal), "Tenrai manga");
-	if (type === "music") return single(() => searchAlbums(q, signal), "MusicBrainz");
+	if (type === "music") return single(() => searchAlbums(q, signal, { primaryType: musicPrimaryType }), "MusicBrainz");
 	if (type === "book") return single(() => searchBooks(q, signal), "Open Library");
 
 	// type === "all" — query everything in parallel, degrade gracefully

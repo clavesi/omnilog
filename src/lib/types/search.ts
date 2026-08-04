@@ -81,4 +81,9 @@ export type SearchHit = TmdbSearchHit | IgdbSearchHit | TenraiSearchHit | MusicB
 
 export type SearchType = "all" | "movie" | "tv" | "game" | "anime" | "manga" | "music" | "book";
 
+/** Sub-filter for music results — MusicBrainz's release-group primary type. */
+export type MusicPrimaryType = "all" | "album" | "ep" | "single";
+
+export const VALID_MUSIC_PRIMARY_TYPES: MusicPrimaryType[] = ["all", "album", "ep", "single"];
+
 export const VALID_SEARCH_TYPES: SearchType[] = ["all", "movie", "tv", "game", "anime", "manga", "music", "book"];
