@@ -4,6 +4,7 @@ import { searchAlbums } from "$lib/server/musicbrainz";
 import { searchBooks } from "$lib/server/openlibrary";
 import { searchAnime, searchManga } from "$lib/server/tenrai";
 import { searchMoviesAndTv, searchMoviesOnly, searchTvOnly } from "$lib/server/tmdb";
+import { upstreamMessageOf } from "$lib/server/upstream-error";
 import {
 	type MusicPrimaryType,
 	type SearchHit,
@@ -50,7 +51,10 @@ export const GET: RequestHandler = async ({ url, request }) => {
 				return json({ results: [] });
 			}
 			console.error(`${label} search failed`, err);
-			return json({ results: [], error: "search failed" }, { status: 500 });
+			// Prefer the provider's own explanation — it's usually specific
+			// ("q must be at least 3 characters") where ours can only be vague.
+			const detail = upstreamMessageOf(err);
+			return json({ results: [], error: detail ?? `${label} search failed` }, { status: 500 });
 		}
 	}
 
@@ -88,7 +92,13 @@ export const GET: RequestHandler = async ({ url, request }) => {
 		// Only surface 500 if something actually broke.
 		const allAborted = sources.every((s) => s.status === "rejected" && isAbortError(s.reason));
 		if (allAborted) return json({ results: [] });
-		return json({ results: [], error: "search failed" }, { status: 500 });
+
+		// Everything failed. If any source explained itself, that beats a
+		// generic message even though other sources may have failed differently.
+		const detail = sources
+			.map((s) => (s.status === "rejected" ? upstreamMessageOf(s.reason) : null))
+			.find((m): m is string => m !== null);
+		return json({ results: [], error: detail ?? "search failed" }, { status: 500 });
 	}
 
 	return json({ results });

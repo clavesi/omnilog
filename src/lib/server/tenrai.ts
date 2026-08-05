@@ -21,6 +21,7 @@ import { findPossibleDuplicate, PossibleDuplicateError } from "$lib/server/dedup
 import { buildSlug, findExistingMediaId, linkGenres } from "$lib/server/media-import";
 import { createPart, findFlatParts } from "$lib/server/parts";
 import { abortableDelay, createThrottle } from "./rate-limit";
+import { readUpstreamMessage, UpstreamApiError } from "./upstream-error";
 
 const TENRAI_BASE = "https://api.tenrai.org/v1";
 
@@ -50,7 +51,15 @@ async function tenraiFetchRaw<T>(
 
 		if (RETRYABLE_STATUSES.has(res.status)) {
 			if (retriesLeft <= 0) {
-				throw new Error(`Tenrai ${path} failed: ${res.status} ${res.statusText}, retries exhausted`);
+				const upstreamMessage = await readUpstreamMessage(res);
+				throw new UpstreamApiError({
+					source: "Tenrai",
+					status: res.status,
+					upstreamMessage,
+					message: `Tenrai ${path} failed: ${res.status} ${res.statusText}, retries exhausted${
+						upstreamMessage ? ` — ${upstreamMessage}` : ""
+					}`,
+				});
 			}
 			// Respect Retry-After if the upstream sends one (mainly a 429
 			// thing). For 502/503/504 there's usually no such header — back
@@ -64,7 +73,17 @@ async function tenraiFetchRaw<T>(
 		}
 
 		if (!res.ok) {
-			throw new Error(`Tenrai ${path} failed: ${res.status} ${res.statusText}`);
+			// Tenrai explains validation failures in the body; a bare status
+			// line ("400 Bad Request") tells the user nothing actionable.
+			const upstreamMessage = await readUpstreamMessage(res);
+			throw new UpstreamApiError({
+				source: "Tenrai",
+				status: res.status,
+				upstreamMessage,
+				message: `Tenrai ${path} failed: ${res.status} ${res.statusText}${
+					upstreamMessage ? ` — ${upstreamMessage}` : ""
+				}`,
+			});
 		}
 		return res.json();
 	}, signal);

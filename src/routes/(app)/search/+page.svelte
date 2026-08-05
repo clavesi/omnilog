@@ -84,6 +84,16 @@ async function runSearch() {
 			signal: abortController.signal,
 		});
 		const data = await res.json();
+
+		// A failed search still returns parseable JSON, so checking res.ok is
+		// the only thing separating "no matches" from "the provider rejected
+		// the query". Without this the user just sees an empty list.
+		if (!res.ok || data.error) {
+			error = data.error ?? "Search failed";
+			results = [];
+			return;
+		}
+
 		results = data.results ?? [];
 		duplicateWarnings = {};
 	} catch (err) {
