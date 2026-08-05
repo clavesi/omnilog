@@ -89,7 +89,6 @@ type TenraiAnimeSearchRaw = {
 	title_english: string | null;
 	images: TenraiImages;
 	year: number | null;
-	episodes: number | null;
 };
 
 type TenraiMangaSearchRaw = {
@@ -98,7 +97,6 @@ type TenraiMangaSearchRaw = {
 	title_english: string | null;
 	images: TenraiImages;
 	published: { from: string | null };
-	chapters: number | null;
 };
 
 type TenraiAnimeFullRaw = {
@@ -170,7 +168,6 @@ export async function searchAnime(query: string, signal?: AbortSignal): Promise<
 			title: r.title_english || r.title,
 			imageUrl: r.images.jpg.large_image_url ?? r.images.jpg.image_url,
 			year: r.year,
-			episodes: r.episodes,
 		}),
 	);
 }
@@ -199,7 +196,6 @@ export async function searchManga(query: string, signal?: AbortSignal): Promise<
 			title: r.title_english || r.title,
 			imageUrl: r.images.jpg.large_image_url ?? r.images.jpg.image_url,
 			year: r.published.from ? new Date(r.published.from).getFullYear() : null,
-			chapters: r.chapters,
 		}),
 	);
 }

@@ -24,23 +24,15 @@ import type { TmdbSearchHit } from "$lib/types/search";
 type TmdbMovieSearchResult = {
 	id: number;
 	title: string;
-	original_title: string;
-	overview?: string;
 	release_date?: string;
 	poster_path: string | null;
-	backdrop_path: string | null;
-	vote_average?: number;
 };
 
 type TmdbTvSearchResult = {
 	id: number;
 	name: string;
-	original_name: string;
-	overview?: string;
 	first_air_date?: string;
 	poster_path: string | null;
-	backdrop_path: string | null;
-	vote_average?: number;
 };
 
 type TmdbMovieDetails = {
@@ -144,24 +136,16 @@ export async function searchMoviesAndTv(query: string, signal?: AbortSignal): Pr
 				type: "movie",
 				id: r.id as number,
 				title: r.title as string,
-				original_title: r.original_title as string,
-				overview: (r.overview as string) ?? "",
 				release_date: (r.release_date as string) ?? "",
 				poster_path: (r.poster_path as string | null) ?? null,
-				backdrop_path: (r.backdrop_path as string | null) ?? null,
-				vote_average: (r.vote_average as number) ?? 0,
 			});
 		} else if (r.media_type === "tv") {
 			hits.push({
 				type: "tv",
 				id: r.id as number,
 				name: r.name as string,
-				original_name: r.original_name as string,
-				overview: (r.overview as string) ?? "",
 				first_air_date: (r.first_air_date as string) ?? "",
 				poster_path: (r.poster_path as string | null) ?? null,
-				backdrop_path: (r.backdrop_path as string | null) ?? null,
-				vote_average: (r.vote_average as number) ?? 0,
 			});
 		}
 		// skip people
@@ -193,12 +177,8 @@ export async function searchMoviesOnly(query: string, signal?: AbortSignal): Pro
 			type: "movie" as const,
 			id: r.id,
 			title: r.title,
-			original_title: r.original_title,
-			overview: r.overview ?? "",
 			release_date: r.release_date ?? "",
 			poster_path: r.poster_path ?? null,
-			backdrop_path: r.backdrop_path ?? null,
-			vote_average: r.vote_average ?? 0,
 		}))
 		.slice(0, 10);
 }
@@ -220,12 +200,8 @@ export async function searchTvOnly(query: string, signal?: AbortSignal): Promise
 			type: "tv" as const,
 			id: r.id,
 			name: r.name,
-			original_name: r.original_name,
-			overview: r.overview ?? "",
 			first_air_date: r.first_air_date ?? "",
 			poster_path: r.poster_path ?? null,
-			backdrop_path: r.backdrop_path ?? null,
-			vote_average: r.vote_average ?? 0,
 		}))
 		.slice(0, 10);
 }

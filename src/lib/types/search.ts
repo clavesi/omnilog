@@ -2,6 +2,11 @@
  * Search hit types and the SearchType union used by both the search API
  * route and the search page. Kept in $lib/types (not $lib/server) so the
  * page can import them without crossing the server/client boundary.
+ *
+ * These carry only what the results list actually renders — nothing more.
+ * Importing posts just the type and external id, and the full record is
+ * fetched separately at import time, so anything the list doesn't display
+ * is pure weight. Add a field here only when the UI starts using it.
  */
 
 export type TmdbSearchHit =
@@ -9,33 +14,23 @@ export type TmdbSearchHit =
 			type: "movie";
 			id: number;
 			title: string;
-			original_title: string;
-			overview: string;
 			release_date: string; // "YYYY-MM-DD" or ""
 			poster_path: string | null;
-			backdrop_path: string | null;
-			vote_average: number;
 	  }
 	| {
 			type: "tv";
 			id: number;
 			name: string;
-			original_name: string;
-			overview: string;
 			first_air_date: string;
 			poster_path: string | null;
-			backdrop_path: string | null;
-			vote_average: number;
 	  };
 
 export type IgdbSearchHit = {
 	type: "game";
 	id: number;
 	name: string;
-	summary: string;
 	firstReleaseDate: number | null; // unix seconds
 	coverImageId: string | null;
-	platforms: string[];
 	developers: string[];
 	publishers: string[];
 };
@@ -47,7 +42,6 @@ export type TenraiSearchHit =
 			title: string;
 			imageUrl: string | null;
 			year: number | null;
-			episodes: number | null;
 	  }
 	| {
 			type: "manga";
@@ -55,7 +49,6 @@ export type TenraiSearchHit =
 			title: string;
 			imageUrl: string | null;
 			year: number | null;
-			chapters: number | null;
 	  };
 
 export type MusicBrainzSearchHit = {

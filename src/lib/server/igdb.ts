@@ -107,7 +107,7 @@ import type { IgdbSearchHit } from "$lib/types/search";
 // ============================================================================
 
 const SEARCH_FIELDS =
-	"name,summary,first_release_date,cover.image_id,platforms.name,total_rating_count,involved_companies.company.name,involved_companies.developer,involved_companies.publisher";
+	"name,first_release_date,cover.image_id,total_rating_count,involved_companies.company.name,involved_companies.developer,involved_companies.publisher";
 
 /**
  * IGDB returns one `involved_companies` row per company with boolean role
@@ -206,10 +206,8 @@ function toSearchHit(g: IgdbGameRaw): IgdbSearchHit {
 		type: "game" as const,
 		id: g.id,
 		name: g.name,
-		summary: g.summary ?? "",
 		firstReleaseDate: g.first_release_date ?? null,
 		coverImageId: g.cover?.image_id ?? null,
-		platforms: (g.platforms ?? []).map((p) => p.name),
 		developers,
 		publishers,
 	};
