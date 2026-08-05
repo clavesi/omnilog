@@ -195,7 +195,14 @@ const orderedShowcase = $derived(
 				</p>
 			{:else}
 				{#each visibleLogs as log (log.id)}
-					<LogCard {log} showMediaInfo={true} isOwner={data.isOwnProfile} onDelete={handleDeleted} />
+					<LogCard
+						{log}
+						showMediaInfo={true}
+						isOwner={data.isOwnProfile}
+						commentCount={log.commentCount ?? 0}
+						reactionCount={log.reactionCount ?? 0}
+						onDelete={handleDeleted}
+					/>
 				{/each}
 			{/if}
 		</section>

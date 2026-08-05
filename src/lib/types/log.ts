@@ -28,6 +28,13 @@ export type LogCardData = {
 	/** TV season number — comes from the episode's parent part row. */
 	seasonNumber?: number | null;
 	username?: string;
+	/**
+	 * Comment and reaction tallies. Optional because a few callers select log
+	 * columns directly rather than going through queryLogsWithMedia; those
+	 * render the card with zeroes.
+	 */
+	commentCount?: number;
+	reactionCount?: number;
 };
 
 /** Pre-filled form state for LogForm edit mode. */

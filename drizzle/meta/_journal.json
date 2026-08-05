@@ -141,6 +141,20 @@
 			"when": 1785883378014,
 			"tag": "0019_funny_juggernaut",
 			"breakpoints": true
+		},
+		{
+			"idx": 20,
+			"version": "7",
+			"when": 1785925007974,
+			"tag": "0020_red_alex_wilder",
+			"breakpoints": true
+		},
+		{
+			"idx": 21,
+			"version": "7",
+			"when": 1785926312059,
+			"tag": "0021_ambiguous_slapstick",
+			"breakpoints": true
 		}
 	]
 }

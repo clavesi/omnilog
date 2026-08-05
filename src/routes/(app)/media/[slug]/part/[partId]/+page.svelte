@@ -77,6 +77,8 @@ const logHref = $derived(`/media/${data.item.slug}/part/${data.part.id}/log?retu
 					showAuthor={true}
 					isOwner={data.currentUserId === log.userId}
 					returnTo={partHref}
+					commentCount={log.commentCount ?? 0}
+					reactionCount={log.reactionCount ?? 0}
 					onDelete={handleDeleted}
 				/>
 			{/each}

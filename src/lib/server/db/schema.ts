@@ -47,7 +47,17 @@ export const mediaStatusEnum = pgEnum("media_status", ["planned", "in_progress",
 // admin was originally created for).
 export const userRoleEnum = pgEnum("user_role", ["user", "admin", "owner"]);
 export const followStatusEnum = pgEnum("follow_status", ["pending", "accepted"]);
-export const notificationTypeEnum = pgEnum("notification_type", ["follow", "follow_request", "follow_accepted"]);
+export const notificationTypeEnum = pgEnum("notification_type", [
+	"follow",
+	"follow_request",
+	"follow_accepted",
+	"log_comment",
+	"log_reply",
+	"log_reaction",
+]);
+
+/** Who the log's author allows to comment on it. */
+export const commentPolicyEnum = pgEnum("comment_policy", ["everyone", "followers", "nobody"]);
 
 export const externalSourceEnum = pgEnum("external_source", [
 	"tmdb",
@@ -308,6 +318,8 @@ export const logs = pgTable(
 		isRewatch: boolean("is_rewatch").notNull().default(false),
 		// True if this log is visible to everyone, not just the user.
 		isPublic: boolean("is_public").notNull().default(true),
+		// Set from the author's preference at insert time; editable per log.
+		commentPolicy: commentPolicyEnum("comment_policy").notNull().default("everyone"),
 
 		createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
 		updatedAt: timestamp("updated_at", { withTimezone: true }).notNull().defaultNow(),
@@ -459,6 +471,75 @@ export const follows = pgTable(
 );
 
 // ============================================================================
+// LOG SOCIAL: COMMENTS + REACTIONS
+// ============================================================================
+
+/**
+ * Comments on a log, one level of nesting.
+ *
+ * `parentCommentId` points at a top-level comment; replies to replies are
+ * flattened in the service layer rather than blocked by a constraint, since
+ * Postgres can't express "parent must itself have a null parent" without a
+ * trigger.
+ *
+ * Deletes are hard, and the self-referencing FK cascades — removing a
+ * top-level comment removes its replies with it.
+ */
+export const logComments = pgTable(
+	"log_comments",
+	{
+		id: uuid("id").primaryKey().defaultRandom(),
+		logId: uuid("log_id")
+			.notNull()
+			.references(() => logs.id, { onDelete: "cascade" }),
+		userId: text("user_id")
+			.notNull()
+			.references(() => users.id, { onDelete: "cascade" }),
+		parentCommentId: uuid("parent_comment_id").references((): AnyPgColumn => logComments.id, {
+			onDelete: "cascade",
+		}),
+
+		body: text("body").notNull(),
+
+		editedAt: timestamp("edited_at", { withTimezone: true }),
+
+		createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+	},
+	(t) => [
+		index("log_comments_log_idx").on(t.logId, t.createdAt),
+		index("log_comments_parent_idx").on(t.parentCommentId),
+		index("log_comments_user_idx").on(t.userId),
+	],
+);
+
+/**
+ * Emoji reactions on a log. One row per (log, user): picking a different
+ * emoji replaces the existing reaction rather than adding a second.
+ *
+ * The emoji is stored as text rather than an enum — the allowed set lives in
+ * $lib/reactions and is validated on write. Changing that set shouldn't
+ * require a migration.
+ */
+export const logReactions = pgTable(
+	"log_reactions",
+	{
+		id: uuid("id").primaryKey().defaultRandom(),
+		logId: uuid("log_id")
+			.notNull()
+			.references(() => logs.id, { onDelete: "cascade" }),
+		userId: text("user_id")
+			.notNull()
+			.references(() => users.id, { onDelete: "cascade" }),
+		emoji: text("emoji").notNull(),
+		createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+	},
+	(t) => [
+		uniqueIndex("log_reactions_log_user_unique").on(t.logId, t.userId),
+		index("log_reactions_log_idx").on(t.logId),
+	],
+);
+
+// ============================================================================
 // NOTIFICATIONS
 // ============================================================================
 export const notifications = pgTable(
@@ -472,13 +553,18 @@ export const notifications = pgTable(
 			.notNull()
 			.references(() => users.id, { onDelete: "cascade" }),
 		type: notificationTypeEnum("type").notNull(),
+		// What the notification is about — a log id for comment/reaction
+		// types. Empty string for follow types, which have no target beyond
+		// the actor. Deliberately not null: Postgres treats NULLs as distinct
+		// in unique indexes, which would silently break the dedupe below.
+		targetId: text("target_id").notNull().default(""),
 		read: boolean("read").notNull().default(false),
 		createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
 	},
 	(t) => [
 		// One notification per (recipient, actor, type). Re-triggering the same
 		// event bumps the existing row instead of creating a duplicate.
-		uniqueIndex("notifications_user_actor_type_unique").on(t.userId, t.actorId, t.type),
+		uniqueIndex("notifications_user_actor_type_target_unique").on(t.userId, t.actorId, t.type, t.targetId),
 		index("notifications_user_id_idx").on(t.userId),
 		index("notifications_user_read_idx").on(t.userId, t.read),
 	],
@@ -502,6 +588,22 @@ export const usersRelations = relations(users, ({ many }) => ({
 export const followsRelations = relations(follows, ({ one }) => ({
 	follower: one(users, { fields: [follows.followerId], references: [users.id], relationName: "follower" }),
 	following: one(users, { fields: [follows.followingId], references: [users.id], relationName: "following" }),
+}));
+
+export const logCommentsRelations = relations(logComments, ({ one, many }) => ({
+	log: one(logs, { fields: [logComments.logId], references: [logs.id] }),
+	author: one(users, { fields: [logComments.userId], references: [users.id] }),
+	parent: one(logComments, {
+		fields: [logComments.parentCommentId],
+		references: [logComments.id],
+		relationName: "parent_comment",
+	}),
+	replies: many(logComments, { relationName: "parent_comment" }),
+}));
+
+export const logReactionsRelations = relations(logReactions, ({ one }) => ({
+	log: one(logs, { fields: [logReactions.logId], references: [logs.id] }),
+	user: one(users, { fields: [logReactions.userId], references: [users.id] }),
 }));
 
 export const notificationsRelations = relations(notifications, ({ one }) => ({
@@ -597,7 +699,7 @@ export const mediaPartsRelations = relations(mediaParts, ({ one, many }) => ({
 	logs: many(logs),
 }));
 
-export const logsRelations = relations(logs, ({ one }) => ({
+export const logsRelations = relations(logs, ({ one, many }) => ({
 	user: one(users, { fields: [logs.userId], references: [users.id] }),
 	mediaItem: one(mediaItems, {
 		fields: [logs.mediaItemId],
@@ -607,6 +709,8 @@ export const logsRelations = relations(logs, ({ one }) => ({
 		fields: [logs.mediaPartId],
 		references: [mediaParts.id],
 	}),
+	comments: many(logComments),
+	reactions: many(logReactions),
 }));
 
 export const userMediaStatusRelations = relations(userMediaStatus, ({ one }) => ({

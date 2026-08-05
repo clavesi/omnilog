@@ -1,8 +1,17 @@
 import { and, count, desc, eq, ne, or, sql } from "drizzle-orm";
 import { db } from "./db";
-import { follows, notifications, users } from "./db/schema";
+import { follows, logs, mediaItems, notifications, users } from "./db/schema";
 
-export type NotificationType = "follow" | "follow_request" | "follow_accepted";
+export type NotificationType =
+	| "follow"
+	| "follow_request"
+	| "follow_accepted"
+	| "log_comment"
+	| "log_reply"
+	| "log_reaction";
+
+/** Types whose `targetId` is a log id, and which therefore link to a log. */
+const LOG_TARGET_TYPES = new Set<NotificationType>(["log_comment", "log_reply", "log_reaction"]);
 
 export type NotificationRow = {
 	id: string;
@@ -12,20 +21,36 @@ export type NotificationRow = {
 	actor: { id: string; username: string; image: string | null };
 	/** Only meaningful for `follow_request` — false once accepted or declined. */
 	isPending: boolean;
+	/**
+	 * Where clicking the notification should go. Null for follow types,
+	 * which link to the actor's profile instead.
+	 */
+	logHref: string | null;
 };
 
 /**
  * Create a notification, or bump the existing one if the same
- * (recipient, actor, type) already exists. Bumping resets it to unread and
- * refreshes the timestamp so it resurfaces rather than duplicating.
+ * (recipient, actor, type, target) already exists. Bumping resets it to
+ * unread and refreshes the timestamp so it resurfaces rather than
+ * duplicating.
+ *
+ * `targetId` is what keeps comment and reaction notifications separate per
+ * log — without it, someone commenting on two of your logs would collapse
+ * into a single notification. Follow types pass the empty-string default,
+ * since the actor is the whole story.
  */
-export async function createNotification(userId: string, actorId: string, type: NotificationType): Promise<void> {
+export async function createNotification(
+	userId: string,
+	actorId: string,
+	type: NotificationType,
+	targetId = "",
+): Promise<void> {
 	if (userId === actorId) return;
 	await db
 		.insert(notifications)
-		.values({ userId, actorId, type })
+		.values({ userId, actorId, type, targetId })
 		.onConflictDoUpdate({
-			target: [notifications.userId, notifications.actorId, notifications.type],
+			target: [notifications.userId, notifications.actorId, notifications.type, notifications.targetId],
 			set: { read: false, createdAt: new Date() },
 		});
 }
@@ -57,6 +82,8 @@ export async function getNotifications(userId: string, opts: { limit?: number } 
 			actorUsername: users.username,
 			actorImage: users.image,
 			followStatus: follows.status,
+			targetLogId: logs.id,
+			targetMediaSlug: mediaItems.slug,
 		})
 		.from(notifications)
 		.innerJoin(users, eq(notifications.actorId, users.id))
@@ -66,6 +93,12 @@ export async function getNotifications(userId: string, opts: { limit?: number } 
 			follows,
 			and(eq(follows.followerId, notifications.actorId), eq(follows.followingId, notifications.userId)),
 		)
+		// Resolve comment/reaction targets to a linkable log.
+		// Left-joined so a deleted log leaves the notification renderable, just unlinked.
+		// targetId is text (it holds "" for follow types), so the uuid side is cast rather than the reverse.
+		// A non-uuid targetId would otherwise error rather than simply not matching.
+		.leftJoin(logs, sql`${logs.id}::text = ${notifications.targetId}`)
+		.leftJoin(mediaItems, eq(mediaItems.id, logs.mediaItemId))
 		.where(eq(notifications.userId, userId))
 		.orderBy(desc(notifications.createdAt))
 		.limit(limit);
@@ -77,6 +110,10 @@ export async function getNotifications(userId: string, opts: { limit?: number } 
 		createdAt: r.createdAt,
 		actor: { id: r.actorId, username: r.actorUsername, image: r.actorImage },
 		isPending: r.type === "follow_request" && r.followStatus === "pending",
+		logHref:
+			LOG_TARGET_TYPES.has(r.type as NotificationType) && r.targetLogId && r.targetMediaSlug
+				? `/media/${r.targetMediaSlug}/log/${r.targetLogId}`
+				: null,
 	}));
 }
 

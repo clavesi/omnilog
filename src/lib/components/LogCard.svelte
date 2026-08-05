@@ -19,10 +19,25 @@ type Props = {
 	showAuthor?: boolean;
 	isOwner?: boolean;
 	returnTo?: string;
+	/** Comment/reaction tallies. Omitted where the caller doesn't load them. */
+	commentCount?: number;
+	reactionCount?: number;
+	/** Hidden on the log's own detail page, where the link would be circular. */
+	showDiscussionLink?: boolean;
 	onDelete?: (logId: string) => void;
 };
 
-let { log, showMediaInfo = true, showAuthor = false, isOwner = false, returnTo, onDelete }: Props = $props();
+let {
+	log,
+	showMediaInfo = true,
+	showAuthor = false,
+	isOwner = false,
+	returnTo,
+	commentCount = 0,
+	reactionCount = 0,
+	showDiscussionLink = true,
+	onDelete,
+}: Props = $props();
 
 let revealSpoilers = $state(false);
 
@@ -68,6 +83,7 @@ const editHref = $derived.by(() => {
 });
 
 const partHref = $derived(log.mediaPartId ? `/media/${log.mediaSlug}/part/${log.mediaPartId}` : null);
+const detailHref = $derived(`/media/${log.mediaSlug}/log/${log.id}`);
 
 const partLabel = $derived(
 	log.mediaPartId && log.partNumber != null
@@ -192,6 +208,21 @@ const typeColor = $derived(log.mediaType ? getMediaTypeColor(log.mediaType) : nu
 						</p>
 					{/if}
 				</div>
+			{/if}
+
+			{#if showDiscussionLink}
+				<a href={detailHref} class="mt-3 inline-flex gap-3 text-[0.8125rem] text-text-muted no-underline hover:text-text">
+					<span>
+						{commentCount}
+						{commentCount === 1 ? "comment" : "comments"}
+					</span>
+					{#if reactionCount > 0}
+						<span>
+							{reactionCount}
+							{reactionCount === 1 ? "reaction" : "reactions"}
+						</span>
+					{/if}
+				</a>
 			{/if}
 
 			{#if isOwner}

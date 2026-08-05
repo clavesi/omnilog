@@ -413,6 +413,8 @@ function handleDeleted(logId: string) {
 							showMediaInfo={false}
 							showAuthor={true}
 							isOwner={data.currentUserId === log.userId}
+							commentCount={log.commentCount ?? 0}
+							reactionCount={log.reactionCount ?? 0}
 							onDelete={handleDeleted}
 						/>
 					{/each}

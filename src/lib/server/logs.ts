@@ -1,8 +1,10 @@
 import { and, count, desc, eq, or, type SQL } from "drizzle-orm";
 import type { LogCardData } from "$lib/types/log";
+import { getCommentCounts } from "./comments";
 import { db } from "./db";
 import { logs, mediaParts, users } from "./db/schema";
 import { directMedia, logMediaSelect, parentPart, partMedia } from "./log-media-joins";
+import { getReactionCounts } from "./reactions";
 
 /** Core log columns shared by LogCard — keep in sync with LogCardData. */
 export const logCardSelect = {
@@ -108,7 +110,7 @@ export async function getLogsForMediaItem(
 		.orderBy(desc(logs.createdAt))
 		.limit(limit);
 
-	return attachItemMedia(rows, item);
+	return attachSocialCounts(attachItemMedia(rows, item));
 }
 
 export async function getLogsForPart(
@@ -124,7 +126,7 @@ export async function getLogsForPart(
 		.where(and(eq(logs.mediaPartId, partId), logVisibilityCondition(currentUserId)))
 		.orderBy(desc(logs.createdAt));
 
-	return attachItemMedia(rows, item, part);
+	return attachSocialCounts(attachItemMedia(rows, item, part));
 }
 
 /**
@@ -132,14 +134,40 @@ export async function getLogsForPart(
  * slug/title/cover per row. Used for profile (and feed uses the same joins inline
  * because it needs cursor pagination).
  */
+/**
+ * Attach comment and reaction tallies to a page of logs.
+ *
+ * Two grouped queries for the whole batch rather than a pair per card. Lives
+ * here so every log-listing path picks it up — the feed builds its own query
+ * and so can't share queryLogsWithMedia, but both funnel through this.
+ */
+export async function attachSocialCounts<T extends { id: string }>(
+	rows: T[],
+): Promise<(T & { commentCount: number; reactionCount: number })[]> {
+	const ids = rows.map((r) => r.id);
+	const [commentCounts, reactionCounts] = await Promise.all([getCommentCounts(ids), getReactionCounts(ids)]);
+	return rows.map((r) => ({
+		...r,
+		commentCount: commentCounts.get(r.id) ?? 0,
+		reactionCount: reactionCounts.get(r.id) ?? 0,
+	}));
+}
+
 export async function queryLogsWithMedia(opts: { where: SQL | undefined; limit?: number; withUsername?: boolean }) {
-	return db
+	const rows = await db
 		.select({
 			...logCardSelect,
 			...(opts.withUsername ? { username: users.username } : {}),
 			...logMediaSelect,
 		})
 		.from(logs)
+		// Inner, not left: logs.userId is NOT NULL with an FK to users, so
+		// the row always exists, and a left join would type `username` as
+		// nullable for no reason. Joined unconditionally even though it's
+		// only selected when asked for — users is 1:1 with logs here so it
+		// can't multiply rows, and a conditional join fights Drizzle's
+		// builder typing.
+		.innerJoin(users, eq(logs.userId, users.id))
 		.leftJoin(directMedia, eq(logs.mediaItemId, directMedia.id))
 		.leftJoin(mediaParts, eq(logs.mediaPartId, mediaParts.id))
 		.leftJoin(partMedia, eq(mediaParts.mediaItemId, partMedia.id))
@@ -147,4 +175,6 @@ export async function queryLogsWithMedia(opts: { where: SQL | undefined; limit?:
 		.where(opts.where)
 		.orderBy(desc(logs.createdAt))
 		.limit(opts.limit ?? 50);
+
+	return attachSocialCounts(rows);
 }

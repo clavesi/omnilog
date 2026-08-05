@@ -2,7 +2,7 @@ import { and, desc, eq, inArray, lt, not, or, type SQL } from "drizzle-orm";
 import { db } from "./db";
 import { follows, logs, mediaParts, users } from "./db/schema";
 import { directMedia, logMediaSelect, parentPart, partMedia } from "./log-media-joins";
-import { logCardSelect } from "./logs";
+import { attachSocialCounts, logCardSelect } from "./logs";
 
 const PAGE_SIZE = 20;
 
@@ -60,7 +60,9 @@ async function queryFeedPage(baseConditions: SQL[], opts: { cursorRaw?: string |
 	const last = page[page.length - 1];
 	const nextCursor = hasMore && last ? encodeCursor({ createdAt: last.createdAt.toISOString(), id: last.id }) : null;
 
-	return { logs: page, nextCursor };
+	// Attached here rather than at the call sites so cursor pagination picks
+	// it up automatically.
+	return { logs: await attachSocialCounts(page), nextCursor };
 }
 
 /**

@@ -22,6 +22,12 @@ function notificationText(type: string, username: string): string {
 			return `${username} requested to follow you`;
 		case "follow_accepted":
 			return `${username} accepted your follow request`;
+		case "log_comment":
+			return `${username} commented on your log`;
+		case "log_reply":
+			return `${username} replied to your comment`;
+		case "log_reaction":
+			return `${username} reacted to your log`;
 		default:
 			return `${username} interacted with you`;
 	}
@@ -74,7 +80,7 @@ function timeAgo(date: Date): string {
 					</a>
 					<div class="min-w-0 flex-1">
 						<a
-							href="/u/{n.actor.username}"
+							href={n.logHref ?? `/u/${n.actor.username}`}
 							class="text-sm text-text no-underline transition-colors hover:text-accent"
 						>
 							{notificationText(n.type, n.actor.username)}
