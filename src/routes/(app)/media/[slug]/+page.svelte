@@ -12,6 +12,15 @@ let { data } = $props();
 const item = $derived(data.item);
 const metadata = $derived(data.metadata);
 const genres = $derived(data.genres);
+
+/**
+ * Only worth showing when it's actually different.
+ * TMDB returns original_title identical to title for most English-language releases.
+ * Compared case-insensitively and whitespace-insensitively so a stray difference in casing doesn't render.
+ */
+const showOriginalTitle = $derived(
+	!!item.originalTitle && item.originalTitle.trim().toLowerCase() !== item.title.trim().toLowerCase(),
+);
 const year = $derived(item.releaseDate ? item.releaseDate.slice(0, 4) : null);
 const averageRatingNum = $derived(item.averageRating != null ? Number.parseFloat(item.averageRating) : NaN);
 const typeColor = $derived(getMediaTypeColor(item.mediaType));
@@ -71,6 +80,10 @@ function handleDeleted(logId: string) {
 					<span class="font-mono text-xl font-normal text-text-muted">({year})</span>
 				{/if}
 			</h1>
+
+			{#if showOriginalTitle}
+				<p class="-mt-1 mb-2 text-lg text-text-muted">{item.originalTitle}</p>
+			{/if}
 
 			{#if metadata && isMetadataType(metadata, "movie") && metadata.tagline}
 				<p class="mb-4 text-text-muted italic">{metadata.tagline}</p>
