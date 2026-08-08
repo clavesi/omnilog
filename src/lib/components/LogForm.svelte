@@ -4,6 +4,7 @@
  * field state and POST handling. Pass `initial` for edit mode (pre-filled values).
  */
 import { enhance } from "$app/forms";
+import { COMMENT_POLICY_OPTIONS, type CommentPolicy } from "$lib/comment-policy";
 import { INPUT_CLASS } from "$lib/form-styles";
 import type { LogFormInitial } from "$lib/types/log";
 import Checkbox from "./Checkbox.svelte";
@@ -16,9 +17,19 @@ type Props = {
 	form?: { error?: string } | null;
 	returnTo?: string;
 	initial?: LogFormInitial;
+	/** The author's saved preference — the starting value when creating. */
+	defaultCommentPolicy?: CommentPolicy;
 };
 
-let { today, cancelHref, submitLabel, form = null, returnTo, initial }: Props = $props();
+let {
+	today,
+	cancelHref,
+	submitLabel,
+	form = null,
+	returnTo,
+	initial,
+	defaultCommentPolicy = "everyone",
+}: Props = $props();
 
 // One-time init from props — form fields are edited locally until submit.
 // svelte-ignore state_referenced_locally
@@ -35,6 +46,9 @@ let containsSpoilers = $state(initial?.containsSpoilers ?? false);
 let isPublic = $state(initial?.isPublic ?? true);
 // svelte-ignore state_referenced_locally
 let showReview = $state(initial?.showReview ?? false);
+// Edit mode keeps the log's own policy; creating starts from the preference.
+// svelte-ignore state_referenced_locally
+let commentPolicy = $state<CommentPolicy>(initial?.commentPolicy ?? defaultCommentPolicy);
 let submitting = $state(false);
 </script>
 
@@ -64,6 +78,29 @@ let submitting = $state(false);
 			Public — visible to others
 		</label>
 	</div>
+
+	<fieldset class="mb-6 border-none p-0">
+		<legend class="mb-2 block text-sm font-medium">Who can comment</legend>
+		<div class="flex flex-wrap gap-2">
+			{#each COMMENT_POLICY_OPTIONS as opt (opt.value)}
+				<label
+					class="cursor-pointer rounded-sm border px-3 py-1.5 text-sm transition-colors {commentPolicy ===
+					opt.value
+						? 'border-accent text-accent'
+						: 'border-border text-text-muted hover:border-text-muted hover:text-text'}"
+				>
+					<input
+						type="radio"
+						name="commentPolicy"
+						value={opt.value}
+						bind:group={commentPolicy}
+						class="sr-only"
+					/>
+					{opt.label}
+				</label>
+			{/each}
+		</div>
+	</fieldset>
 
 	<section class="mb-6">
 		<label class="mb-2 block text-sm font-medium" for="loggedAt">Watched on</label>

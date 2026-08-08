@@ -13,5 +13,11 @@ let { data, form } = $props();
 		releaseDate={data.item.releaseDate}
 		label={data.hasPriorLog ? "Logging again" : "Log"}
 	/>
-	<LogForm today={data.today} cancelHref="/media/{data.item.slug}" submitLabel="Save log" {form} />
+	<LogForm
+		today={data.today}
+		cancelHref="/media/{data.item.slug}"
+		submitLabel="Save log"
+		defaultCommentPolicy={data.defaultCommentPolicy}
+		{form}
+	/>
 </div>

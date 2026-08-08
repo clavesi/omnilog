@@ -1,9 +1,26 @@
 import { and, asc, count, eq, inArray } from "drizzle-orm";
+import type { CommentPolicy } from "$lib/comment-policy";
 import { db } from "./db";
 import { logComments, logs, users } from "./db/schema";
 import { getFollowStatus } from "./follows";
 
 export const MAX_COMMENT_LENGTH = 2000;
+
+/**
+ * The user's preferred policy for new logs.
+ *
+ * Read at log-creation time and copied onto the row, so changing the
+ * preference later leaves existing threads as they were — someone who opened
+ * up a specific log doesn't want a settings change silently closing it.
+ */
+export async function getDefaultCommentPolicy(userId: string): Promise<CommentPolicy> {
+	const [row] = await db
+		.select({ policy: users.defaultCommentPolicy })
+		.from(users)
+		.where(eq(users.id, userId))
+		.limit(1);
+	return row?.policy ?? "everyone";
+}
 
 export type CommentAuthor = { id: string; username: string; image: string | null };
 

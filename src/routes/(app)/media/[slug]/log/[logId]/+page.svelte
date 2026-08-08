@@ -1,18 +1,13 @@
 <script lang="ts">
 import { enhance } from "$app/forms";
 import { MAX_COMMENT_LENGTH_CLIENT } from "$lib/comment-limits";
+import { COMMENT_POLICY_OPTIONS } from "$lib/comment-policy";
 import CommentThread from "$lib/components/CommentThread.svelte";
 import LogCard from "$lib/components/LogCard.svelte";
 import MediaBreadcrumb from "$lib/components/MediaBreadcrumb.svelte";
 import ReactionBar from "$lib/components/ReactionBar.svelte";
 
 let { data } = $props();
-
-const POLICY_LABELS: Record<string, string> = {
-	everyone: "Everyone",
-	followers: "Followers only",
-	nobody: "No one",
-};
 </script>
 
 <div>
@@ -36,7 +31,7 @@ const POLICY_LABELS: Record<string, string> = {
 			use:enhance
 		>
 			<span class="font-mono text-xs text-text-muted">Who can comment</span>
-			{#each Object.entries(POLICY_LABELS) as [value, label] (value)}
+			{#each COMMENT_POLICY_OPTIONS as { value, label } (value)}
 				<button
 					type="submit"
 					name="commentPolicy"

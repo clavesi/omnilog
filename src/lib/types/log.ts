@@ -1,3 +1,5 @@
+import type { CommentPolicy } from "$lib/comment-policy";
+
 /**
  * Shape passed to LogCard after a loader resolves media context.
  *
@@ -46,4 +48,5 @@ export type LogFormInitial = {
 	containsSpoilers: boolean;
 	isPublic: boolean;
 	showReview: boolean;
+	commentPolicy: CommentPolicy;
 };

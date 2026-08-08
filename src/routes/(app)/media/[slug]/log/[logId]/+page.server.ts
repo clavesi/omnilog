@@ -1,5 +1,6 @@
 import { error, fail } from "@sveltejs/kit";
 import { eq } from "drizzle-orm";
+import { isCommentPolicy } from "$lib/comment-policy";
 import { requireUser } from "$lib/server/auth";
 import { addComment, canComment, deleteComment, editComment, getCommentThread } from "$lib/server/comments";
 import { db } from "$lib/server/db";
@@ -145,7 +146,7 @@ export const actions: Actions = {
 		const user = requireUser(event);
 		const form = await event.request.formData();
 		const policy = String(form.get("commentPolicy") ?? "");
-		if (!["everyone", "followers", "nobody"].includes(policy)) {
+		if (!isCommentPolicy(policy)) {
 			return fail(400, { error: "Invalid comment policy" });
 		}
 
@@ -158,10 +159,7 @@ export const actions: Actions = {
 		if (!log) throw error(404, "Log not found");
 		if (log.userId !== user.id) throw error(403, "Not your log");
 
-		await db
-			.update(logs)
-			.set({ commentPolicy: policy as "everyone" | "followers" | "nobody" })
-			.where(eq(logs.id, log.id));
+		await db.update(logs).set({ commentPolicy: policy }).where(eq(logs.id, log.id));
 
 		return { success: true };
 	},

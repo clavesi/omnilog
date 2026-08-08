@@ -1,5 +1,6 @@
 <script lang="ts">
 import { enhance } from "$app/forms";
+import { COMMENT_POLICY_OPTIONS } from "$lib/comment-policy";
 import Checkbox from "$lib/components/Checkbox.svelte";
 
 let { data, form } = $props();
@@ -108,6 +109,31 @@ let deleteSubmitting = $state(false);
 			>
 				{profileSubmitting ? "Saving..." : "Save"}
 			</button>
+		</form>
+	</section>
+
+	<section class="mb-8 rounded-sm border border-border p-5">
+		<h2 class="mb-4 text-base">Comments</h2>
+
+		<p class="mb-4 text-sm text-text-muted">
+			Who can comment on logs you create from now on. Logs you've already posted keep their current
+			setting, which you can change on the log itself.
+		</p>
+
+		<form method="POST" action="?/updateCommentPolicy" class="flex flex-wrap gap-2" use:enhance>
+			{#each COMMENT_POLICY_OPTIONS as opt (opt.value)}
+				<button
+					type="submit"
+					name="defaultCommentPolicy"
+					value={opt.value}
+					class="cursor-pointer rounded-sm border px-3 py-1.5 text-sm transition-colors {data.profile
+						.defaultCommentPolicy === opt.value
+						? 'border-accent text-accent'
+						: 'border-border text-text-muted hover:border-text-muted hover:text-text'}"
+				>
+					{opt.label}
+				</button>
+			{/each}
 		</form>
 	</section>
 

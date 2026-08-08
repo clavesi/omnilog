@@ -1,12 +1,16 @@
 import { fail, redirect } from "@sveltejs/kit";
 import { eq } from "drizzle-orm";
+import { isCommentPolicy } from "$lib/comment-policy";
 import { auth, requireUser } from "$lib/server/auth";
+import { getDefaultCommentPolicy } from "$lib/server/comments";
 import { db } from "$lib/server/db";
 import { users } from "$lib/server/db/schema";
 import type { Actions, PageServerLoad } from "./$types";
 
-export const load: PageServerLoad = (event) => {
+export const load: PageServerLoad = async (event) => {
 	const user = requireUser(event);
+	// Not a Better Auth additionalField, so it isn't on the session user.
+	const defaultCommentPolicy = await getDefaultCommentPolicy(user.id);
 	return {
 		profile: {
 			username: user.username,
@@ -15,6 +19,7 @@ export const load: PageServerLoad = (event) => {
 			bio: user.bio,
 			emailVerified: user.emailVerified,
 			isPrivate: user.isPrivate,
+			defaultCommentPolicy,
 		},
 		justVerified: event.url.searchParams.get("verified") === "1" && !event.url.searchParams.get("error"),
 		verifyError: event.url.searchParams.get("error"),
@@ -22,6 +27,18 @@ export const load: PageServerLoad = (event) => {
 };
 
 export const actions: Actions = {
+	updateCommentPolicy: async (event) => {
+		const user = requireUser(event);
+		const form = await event.request.formData();
+		const policy = String(form.get("defaultCommentPolicy") ?? "");
+		if (!isCommentPolicy(policy)) return fail(400, { error: "Invalid comment policy" });
+
+		await db.update(users).set({ defaultCommentPolicy: policy }).where(eq(users.id, user.id));
+		// Existing logs keep whatever they were created with — see
+		// getDefaultCommentPolicy for why.
+		return { success: true };
+	},
+
 	updateProfile: async (event) => {
 		const user = requireUser(event);
 		const form = await event.request.formData();

@@ -13,5 +13,12 @@ let { data, form } = $props();
 		label={data.hasPriorLog ? "Logging again" : "Log"}
 		partLabel="{data.part.partNumber}. {data.part.title}"
 	/>
-	<LogForm today={data.today} cancelHref={data.returnTo} submitLabel="Save log" returnTo={data.returnTo} {form} />
+	<LogForm
+		today={data.today}
+		cancelHref={data.returnTo}
+		submitLabel="Save log"
+		returnTo={data.returnTo}
+		defaultCommentPolicy={data.defaultCommentPolicy}
+		{form}
+	/>
 </div>

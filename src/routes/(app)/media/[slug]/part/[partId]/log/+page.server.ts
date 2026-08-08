@@ -1,5 +1,6 @@
 import { fail, redirect } from "@sveltejs/kit";
 import { requireUser } from "$lib/server/auth";
+import { getDefaultCommentPolicy } from "$lib/server/comments";
 import { db } from "$lib/server/db";
 import { logs } from "$lib/server/db/schema";
 import { parseLogFormData } from "$lib/server/log-form";
@@ -21,6 +22,7 @@ export const load: PageServerLoad = async (event) => {
 	const returnTo = safeRelativePath(url.searchParams.get("returnTo"), `/media/${params.slug}/part/${params.partId}`);
 
 	return {
+		defaultCommentPolicy: await getDefaultCommentPolicy(user.id),
 		item,
 		part,
 		hasPriorLog: priorCount > 0,
@@ -47,7 +49,7 @@ export const actions: Actions = {
 		const parsed = parseLogFormData(form);
 		if (!parsed.ok) return fail(400, { error: parsed.error });
 
-		const { rating, loggedAt, reviewBody, reviewTitle, containsSpoilers, isPublic } = parsed.fields;
+		const { rating, loggedAt, reviewBody, reviewTitle, containsSpoilers, isPublic, commentPolicy } = parsed.fields;
 
 		const priorCount = await countUserLogsForPart(user.id, part.id);
 		const watchNumber = priorCount + 1;
@@ -55,6 +57,7 @@ export const actions: Actions = {
 
 		await db.insert(logs).values({
 			userId: user.id,
+			commentPolicy: commentPolicy ?? (await getDefaultCommentPolicy(user.id)),
 			mediaItemId: null,
 			mediaPartId: part.id,
 			loggedAt,

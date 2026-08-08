@@ -1,0 +1,1 @@
+ALTER TABLE "users" ADD COLUMN "default_comment_policy" "comment_policy" DEFAULT 'everyone' NOT NULL;

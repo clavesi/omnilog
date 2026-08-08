@@ -3,6 +3,8 @@
  * Keeps the four route handlers in sync on rating, date, and review rules.
  */
 
+import { type CommentPolicy, isCommentPolicy } from "$lib/comment-policy";
+
 export type LogFormFields = {
 	rating: number | null;
 	loggedAt: string | null;
@@ -10,6 +12,11 @@ export type LogFormFields = {
 	reviewTitle: string | null;
 	containsSpoilers: boolean;
 	isPublic: boolean;
+	/**
+	 * Null when the form didn't supply one — callers fall back to the user's
+	 * default on create, or leave the existing value alone on edit.
+	 */
+	commentPolicy: CommentPolicy | null;
 };
 
 export type ParseLogFormResult = { ok: true; fields: LogFormFields } | { ok: false; error: string };
@@ -21,6 +28,10 @@ export function parseLogFormData(form: FormData): ParseLogFormResult {
 	const reviewTitleRaw = form.get("reviewTitle");
 	const containsSpoilers = form.get("containsSpoilers") === "on";
 	const isPublic = form.get("isPublic") === "on";
+
+	const commentPolicyRaw = form.get("commentPolicy");
+	const commentPolicy =
+		commentPolicyRaw && isCommentPolicy(String(commentPolicyRaw)) ? (String(commentPolicyRaw) as CommentPolicy) : null;
 
 	// Empty rating/date fields mean "not set" — logs can be review-only or date-only.
 	let rating: number | null = null;
@@ -56,6 +67,6 @@ export function parseLogFormData(form: FormData): ParseLogFormResult {
 
 	return {
 		ok: true,
-		fields: { rating, loggedAt, reviewBody, reviewTitle, containsSpoilers, isPublic },
+		fields: { rating, loggedAt, reviewBody, reviewTitle, containsSpoilers, isPublic, commentPolicy },
 	};
 }

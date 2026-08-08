@@ -95,6 +95,9 @@ export const users = pgTable(
 		usernameConfirmed: boolean("username_confirmed").notNull().default(true),
 		// When true, follow requests must be approved before the follower can see this account's logs in their feed
 		isPrivate: boolean("is_private").notNull().default(false),
+		// Copied onto each new log at creation time rather than read live, so
+		// changing it later doesn't retroactively reopen or close old threads.
+		defaultCommentPolicy: commentPolicyEnum("default_comment_policy").notNull().default("everyone"),
 		createdAt: timestamp("created_at", { withTimezone: true }).defaultNow().notNull(),
 		updatedAt: timestamp("updated_at", { withTimezone: true }).defaultNow().notNull(),
 	},

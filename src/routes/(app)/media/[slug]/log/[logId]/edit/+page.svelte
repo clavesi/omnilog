@@ -25,6 +25,7 @@ let { data, form } = $props();
 			reviewTitle: data.log.reviewTitle ?? "",
 			containsSpoilers: data.log.containsSpoilers,
 			isPublic: data.log.isPublic,
+			commentPolicy: data.log.commentPolicy,
 			showReview: !!data.log.reviewBody,
 		}}
 	/>

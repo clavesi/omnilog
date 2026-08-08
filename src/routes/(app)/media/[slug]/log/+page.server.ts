@@ -1,6 +1,7 @@
 import { fail, redirect } from "@sveltejs/kit";
 import { eq } from "drizzle-orm";
 import { requireUser } from "$lib/server/auth";
+import { getDefaultCommentPolicy } from "$lib/server/comments";
 import { db } from "$lib/server/db";
 import { logs, mediaItems } from "$lib/server/db/schema";
 import { parseLogFormData } from "$lib/server/log-form";
@@ -18,6 +19,7 @@ export const load: PageServerLoad = async (event) => {
 	const priorCount = await countUserLogsForItem(user.id, item.id);
 
 	return {
+		defaultCommentPolicy: await getDefaultCommentPolicy(user.id),
 		item,
 		hasPriorLog: priorCount > 0,
 		today: new Date().toISOString().slice(0, 10),
@@ -42,7 +44,7 @@ export const actions: Actions = {
 		const parsed = parseLogFormData(form);
 		if (!parsed.ok) return fail(400, { error: parsed.error });
 
-		const { rating, loggedAt, reviewBody, reviewTitle, containsSpoilers, isPublic } = parsed.fields;
+		const { rating, loggedAt, reviewBody, reviewTitle, containsSpoilers, isPublic, commentPolicy } = parsed.fields;
 
 		const priorCount = await countUserLogsForItem(user.id, item.id);
 		const watchNumber = priorCount + 1;
@@ -50,6 +52,7 @@ export const actions: Actions = {
 
 		await db.insert(logs).values({
 			userId: user.id,
+			commentPolicy: commentPolicy ?? (await getDefaultCommentPolicy(user.id)),
 			mediaItemId: item.id,
 			mediaPartId: null,
 			loggedAt,
