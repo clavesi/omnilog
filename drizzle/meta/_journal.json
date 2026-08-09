@@ -169,6 +169,13 @@
 			"when": 1786264012293,
 			"tag": "0023_wide_excalibur",
 			"breakpoints": true
+		},
+		{
+			"idx": 24,
+			"version": "7",
+			"when": 1786264982687,
+			"tag": "0024_known_mister_sinister",
+			"breakpoints": true
 		}
 	]
 }

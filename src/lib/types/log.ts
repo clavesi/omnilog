@@ -16,7 +16,6 @@ export type LogCardData = {
 	reviewBody: string | null;
 	containsSpoilers: boolean;
 	isRewatch: boolean;
-	watchNumber: number;
 	isPublic: boolean;
 	mediaPartId: string | null;
 	loggedAt: string | null;
@@ -48,6 +47,7 @@ export type LogFormInitial = {
 	reviewTitle: string;
 	containsSpoilers: boolean;
 	isPublic: boolean;
+	isRewatch: boolean;
 	showReview: boolean;
 	commentPolicy: CommentPolicy;
 };

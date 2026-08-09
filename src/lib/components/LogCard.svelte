@@ -105,7 +105,7 @@ const partLabel = $derived(
 		: null,
 );
 
-const watchLabel = $derived(formatWatchLabel(log.watchNumber, log.isRewatch));
+const watchLabel = $derived(formatWatchLabel(log.isRewatch));
 const typeColor = $derived(log.mediaType ? getMediaTypeColor(log.mediaType) : null);
 </script>
 

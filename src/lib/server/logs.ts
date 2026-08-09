@@ -16,7 +16,6 @@ export const logCardSelect = {
 	reviewBody: logs.reviewBody,
 	containsSpoilers: logs.containsSpoilers,
 	isRewatch: logs.isRewatch,
-	watchNumber: logs.watchNumber,
 	isPublic: logs.isPublic,
 	mediaPartId: logs.mediaPartId,
 	loggedAt: logs.loggedAt,
@@ -76,7 +75,6 @@ export function attachItemMedia<
 		reviewBody: string | null;
 		containsSpoilers: boolean;
 		isRewatch: boolean;
-		watchNumber: number;
 		isPublic: boolean;
 		mediaPartId?: string | null;
 		loggedAt: string | null;

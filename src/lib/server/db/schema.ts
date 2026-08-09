@@ -316,8 +316,7 @@ export const logs = pgTable(
 		containsSpoilers: boolean("contains_spoilers").notNull().default(false),
 
 		// Denormalized on insert: 1 = first log for this target, 2+ = rewatch.
-		watchNumber: smallint("watch_number").notNull().default(1),
-		// True when watchNumber > 1. Kept for simple queries; the label uses watchNumber.
+		// Set by the author, not derived. A first log is often not a first viewing.
 		isRewatch: boolean("is_rewatch").notNull().default(false),
 		// True if this log is visible to everyone, not just the user.
 		isPublic: boolean("is_public").notNull().default(true),
@@ -335,7 +334,6 @@ export const logs = pgTable(
 		),
 		// Rating is optional, but if set must be in range.
 		check("logs_rating_range", sql`${t.rating} IS NULL OR ${t.rating} BETWEEN 1 AND 10`),
-		check("logs_watch_number_min", sql`${t.watchNumber} >= 1`),
 		// Log date can't be in the future.
 		check("logs_logged_at_not_future", sql`${t.loggedAt} IS NULL OR ${t.loggedAt} <= CURRENT_DATE`),
 		index("logs_user_idx").on(t.userId),

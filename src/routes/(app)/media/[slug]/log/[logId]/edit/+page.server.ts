@@ -42,7 +42,7 @@ export const actions: Actions = {
 		const parsed = parseLogFormData(form);
 		if (!parsed.ok) return fail(400, { error: parsed.error });
 
-		const { rating, loggedAt, reviewBody, reviewTitle, containsSpoilers, isPublic, commentPolicy, tags } =
+		const { rating, loggedAt, reviewBody, reviewTitle, containsSpoilers, isPublic, isRewatch, commentPolicy, tags } =
 			parsed.fields;
 
 		await db
@@ -54,6 +54,7 @@ export const actions: Actions = {
 				reviewBody,
 				containsSpoilers: containsSpoilers && reviewBody !== null,
 				isPublic,
+				isRewatch,
 				// Absent only if the form was submitted without the field —
 				// leave the log's existing policy alone rather than resetting it.
 				...(commentPolicy ? { commentPolicy } : {}),

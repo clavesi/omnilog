@@ -52,6 +52,8 @@ let containsSpoilers = $state(initial?.containsSpoilers ?? false);
 // svelte-ignore state_referenced_locally
 let isPublic = $state(initial?.isPublic ?? true);
 // svelte-ignore state_referenced_locally
+let isRewatch = $state(initial?.isRewatch ?? false);
+// svelte-ignore state_referenced_locally
 let showReview = $state(initial?.showReview ?? false);
 // Edit mode keeps the log's own policy; creating starts from the preference.
 // svelte-ignore state_referenced_locally
@@ -83,6 +85,13 @@ let submitting = $state(false);
 		<label class="flex items-center gap-2 text-sm text-text-muted">
 			<Checkbox name="isPublic" bind:checked={isPublic} />
 			Public — visible to others
+		</label>
+	</div>
+
+	<div class="mb-6">
+		<label class="flex cursor-pointer items-center gap-2 text-sm">
+			<Checkbox name="isRewatch" bind:checked={isRewatch} />
+			Rewatch — I've experienced this before
 		</label>
 	</div>
 

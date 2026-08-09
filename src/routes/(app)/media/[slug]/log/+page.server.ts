@@ -46,12 +46,8 @@ export const actions: Actions = {
 		const parsed = parseLogFormData(form);
 		if (!parsed.ok) return fail(400, { error: parsed.error });
 
-		const { rating, loggedAt, reviewBody, reviewTitle, containsSpoilers, isPublic, commentPolicy, tags } =
+		const { rating, loggedAt, reviewBody, reviewTitle, containsSpoilers, isPublic, isRewatch, commentPolicy, tags } =
 			parsed.fields;
-
-		const priorCount = await countUserLogsForItem(user.id, item.id);
-		const watchNumber = priorCount + 1;
-		const isRewatch = watchNumber > 1;
 
 		const [created] = await db
 			.insert(logs)
@@ -66,7 +62,6 @@ export const actions: Actions = {
 				reviewBody,
 				// Spoiler flag only applies when there's a review to hide.
 				containsSpoilers: containsSpoilers && reviewBody !== null,
-				watchNumber,
 				isRewatch,
 				isPublic,
 			})
