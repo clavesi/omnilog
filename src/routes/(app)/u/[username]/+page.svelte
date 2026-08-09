@@ -60,6 +60,14 @@ const orderedShowcase = $derived(
 				>
 					{data.followCounts.following} following
 				</a>
+				{#if data.trackedCount > 0}
+					<a
+						href="/u/{data.profileUser.username}/library"
+						class="text-text-muted no-underline hover:text-text"
+					>
+						{data.trackedCount} tracked
+					</a>
+				{/if}
 				{#if data.tagCount > 0}
 					<a
 						href="/u/{data.profileUser.username}/tags"

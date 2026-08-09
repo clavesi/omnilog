@@ -1,11 +1,13 @@
 import { error, fail } from "@sveltejs/kit";
 import { eq } from "drizzle-orm";
+import { isMediaStatus } from "$lib/media-status";
 import { requireUser } from "$lib/server/auth";
 import { db } from "$lib/server/db";
 import { genres, mediaGenres, mediaItems, mediaMetadata } from "$lib/server/db/schema";
 import { getFavoriteForType, removeFavorite, setFavorite } from "$lib/server/favorites";
 import { addItemToList, createList, getUserListsWithMembership, removeItemFromList } from "$lib/server/lists";
 import { getLogsForMediaItem } from "$lib/server/logs";
+import { clearStatus, getStatus, setStatus } from "$lib/server/media-status";
 import type { Actions, PageServerLoad } from "./$types";
 
 export const load: PageServerLoad = async ({ params, locals }) => {
@@ -24,6 +26,7 @@ export const load: PageServerLoad = async ({ params, locals }) => {
 	const currentUserId = locals.user?.id ?? null;
 	// Item is already loaded — attach media fields in JS instead of joining again.
 	const logs = await getLogsForMediaItem(item.id, currentUserId, item);
+	const status = currentUserId ? await getStatus(currentUserId, item.id) : null;
 
 	// Is this item the viewer's current favorite for its media type?
 	let isFavorite = false;
@@ -39,6 +42,7 @@ export const load: PageServerLoad = async ({ params, locals }) => {
 		metadata: meta?.metadata ?? null,
 		genres: itemGenres,
 		logs,
+		status,
 		currentUserId,
 		isFavorite,
 		userLists,
@@ -46,6 +50,37 @@ export const load: PageServerLoad = async ({ params, locals }) => {
 };
 
 export const actions: Actions = {
+	setStatus: async (event) => {
+		const user = requireUser(event);
+		const form = await event.request.formData();
+		const raw = String(form.get("status") ?? "");
+
+		const [item] = await db
+			.select({ id: mediaItems.id })
+			.from(mediaItems)
+			.where(eq(mediaItems.slug, event.params.slug))
+			.limit(1);
+		if (!item) return fail(404, { error: "Media not found" });
+
+		// Empty means "no status" — remove the row rather than storing a
+		// sentinel, so an untracked item and a cleared one look identical.
+		if (raw === "") {
+			await clearStatus(user.id, item.id);
+			return { success: true };
+		}
+
+		if (!isMediaStatus(raw)) return fail(400, { error: "Invalid status" });
+
+		const progressRaw = form.get("progress");
+		const parsedProgress = progressRaw != null && String(progressRaw).trim() !== "" ? Number(progressRaw) : null;
+		if (parsedProgress !== null && (!Number.isInteger(parsedProgress) || parsedProgress < 0)) {
+			return fail(400, { error: "Progress must be a whole number" });
+		}
+
+		await setStatus({ userId: user.id, mediaItemId: item.id, status: raw, progress: parsedProgress });
+		return { success: true };
+	},
+
 	toggleFavorite: async (event) => {
 		const user = requireUser(event);
 		const { params } = event;

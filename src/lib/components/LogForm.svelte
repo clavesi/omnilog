@@ -20,6 +20,13 @@ type Props = {
 	initial?: LogFormInitial;
 	/** The author's saved preference — the starting value when creating. */
 	defaultCommentPolicy?: CommentPolicy;
+	/**
+	 * Offer "mark as completed". Off for part logs — finishing one episode
+	 * doesn't finish the series, so the prompt would be actively misleading.
+	 */
+	offerMarkCompleted?: boolean;
+	/** Whether the item is already marked completed, to skip a pointless prompt. */
+	alreadyCompleted?: boolean;
 	/** Comma-separated tags already on this log (edit mode). */
 	initialTags?: string;
 	/** The author's existing tags, offered as quick-add. */
@@ -34,6 +41,8 @@ let {
 	returnTo,
 	initial,
 	defaultCommentPolicy = "everyone",
+	offerMarkCompleted = false,
+	alreadyCompleted = false,
 	initialTags = "",
 	tagSuggestions = [],
 }: Props = $props();
@@ -53,6 +62,9 @@ let containsSpoilers = $state(initial?.containsSpoilers ?? false);
 let isPublic = $state(initial?.isPublic ?? true);
 // svelte-ignore state_referenced_locally
 let isRewatch = $state(initial?.isRewatch ?? false);
+// Defaults on: logging a whole work usually does mean you finished it. It's
+// a visible checkbox, so the assumption is always overridable.
+let markCompleted = $state(true);
 // svelte-ignore state_referenced_locally
 let showReview = $state(initial?.showReview ?? false);
 // Edit mode keeps the log's own policy; creating starts from the preference.
@@ -94,6 +106,15 @@ let submitting = $state(false);
 			Rewatch — I've experienced this before
 		</label>
 	</div>
+
+	{#if offerMarkCompleted && !alreadyCompleted}
+		<div class="mb-6">
+			<label class="flex cursor-pointer items-center gap-2 text-sm">
+				<Checkbox name="markCompleted" bind:checked={markCompleted} />
+				Mark as completed
+			</label>
+		</div>
+	{/if}
 
 	<section class="mb-6">
 		<span class="mb-2 block text-sm font-medium">Tags</span>

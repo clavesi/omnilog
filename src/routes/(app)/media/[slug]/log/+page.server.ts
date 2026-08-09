@@ -8,6 +8,7 @@ import { parseLogFormData } from "$lib/server/log-form";
 import { requireItemBySlug } from "$lib/server/log-routes";
 import { countUserLogsForItem } from "$lib/server/logs";
 import { recomputeAggregate } from "$lib/server/media-aggregate";
+import { getStatus, markCompleted as markItemCompleted } from "$lib/server/media-status";
 import { getTagSuggestions, setLogTags } from "$lib/server/tags";
 import type { Actions, PageServerLoad } from "./$types";
 
@@ -24,6 +25,7 @@ export const load: PageServerLoad = async (event) => {
 		tagSuggestions: await getTagSuggestions(user.id),
 		item,
 		hasPriorLog: priorCount > 0,
+		alreadyCompleted: (await getStatus(user.id, item.id))?.status === "completed",
 		today: new Date().toISOString().slice(0, 10),
 	};
 };
@@ -46,8 +48,18 @@ export const actions: Actions = {
 		const parsed = parseLogFormData(form);
 		if (!parsed.ok) return fail(400, { error: parsed.error });
 
-		const { rating, loggedAt, reviewBody, reviewTitle, containsSpoilers, isPublic, isRewatch, commentPolicy, tags } =
-			parsed.fields;
+		const {
+			rating,
+			loggedAt,
+			reviewBody,
+			reviewTitle,
+			containsSpoilers,
+			isPublic,
+			isRewatch,
+			markCompleted,
+			commentPolicy,
+			tags,
+		} = parsed.fields;
 
 		const [created] = await db
 			.insert(logs)
@@ -68,6 +80,9 @@ export const actions: Actions = {
 			.returning({ id: logs.id });
 
 		await setLogTags(created.id, tags);
+
+		// Opt-in via the form's checkbox — logging isn't assumed to mean finished.
+		if (markCompleted) await markItemCompleted(user.id, item.id);
 
 		await recomputeAggregate(item.id);
 

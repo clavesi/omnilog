@@ -4,6 +4,7 @@ import { Popover, Tooltip } from "bits-ui";
 import { enhance } from "$app/forms";
 import LogCard from "$lib/components/LogCard.svelte";
 import MediaTypeMark from "$lib/components/MediaTypeMark.svelte";
+import StatusControl from "$lib/components/StatusControl.svelte";
 import { getMediaTypeColor, mediaTypeLabel } from "$lib/media-type-colors";
 import { isMetadataType } from "$lib/media-types";
 
@@ -219,6 +220,10 @@ function handleDeleted(logId: string) {
 						</li>
 					{/each}
 				</ul>
+			{/if}
+
+			{#if data.currentUserId}
+				<StatusControl mediaType={item.mediaType} current={data.status} />
 			{/if}
 
 			{#if item.description}

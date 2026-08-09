@@ -18,6 +18,8 @@ let { data, form } = $props();
 		cancelHref="/media/{data.item.slug}"
 		submitLabel="Save log"
 		defaultCommentPolicy={data.defaultCommentPolicy}
+		offerMarkCompleted
+		alreadyCompleted={data.alreadyCompleted}
 		tagSuggestions={data.tagSuggestions}
 		{form}
 	/>

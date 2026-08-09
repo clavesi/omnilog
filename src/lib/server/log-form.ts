@@ -13,6 +13,8 @@ export type LogFormFields = {
 	containsSpoilers: boolean;
 	isPublic: boolean;
 	isRewatch: boolean;
+	/** Only sent by the media-level form — see markCompleted in LogForm. */
+	markCompleted: boolean;
 	/**
 	 * Null when the form didn't supply one — callers fall back to the user's
 	 * default on create, or leave the existing value alone on edit.
@@ -32,6 +34,7 @@ export function parseLogFormData(form: FormData): ParseLogFormResult {
 	const containsSpoilers = form.get("containsSpoilers") === "on";
 	const isPublic = form.get("isPublic") === "on";
 	const isRewatch = form.get("isRewatch") === "on";
+	const markCompleted = form.get("markCompleted") === "on";
 
 	const tags = String(form.get("tags") ?? "");
 
@@ -73,6 +76,17 @@ export function parseLogFormData(form: FormData): ParseLogFormResult {
 
 	return {
 		ok: true,
-		fields: { rating, loggedAt, reviewBody, reviewTitle, containsSpoilers, isPublic, isRewatch, commentPolicy, tags },
+		fields: {
+			rating,
+			loggedAt,
+			reviewBody,
+			reviewTitle,
+			containsSpoilers,
+			isPublic,
+			isRewatch,
+			markCompleted,
+			commentPolicy,
+			tags,
+		},
 	};
 }
