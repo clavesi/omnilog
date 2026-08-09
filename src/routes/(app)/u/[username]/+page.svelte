@@ -46,7 +46,8 @@ const orderedShowcase = $derived(
 			{#if data.profileUser.bio}
 				<p class="mb-2 text-text-muted">{data.profileUser.bio}</p>
 			{/if}
-			<div class="flex items-center gap-4 font-mono text-sm text-text-muted">
+		
+			<div class="flex flex-wrap items-center gap-4 font-mono text-sm text-text-muted">
 				<span>{visibleLogs.length} log{visibleLogs.length === 1 ? "" : "s"}</span>
 				<a
 					href="/u/{data.profileUser.username}/followers"
@@ -60,23 +61,30 @@ const orderedShowcase = $derived(
 				>
 					{data.followCounts.following} following
 				</a>
-				{#if data.trackedCount > 0}
-					<a
-						href="/u/{data.profileUser.username}/library"
-						class="text-text-muted no-underline hover:text-text"
-					>
-						{data.trackedCount} tracked
-					</a>
-				{/if}
-				{#if data.tagCount > 0}
-					<a
-						href="/u/{data.profileUser.username}/tags"
-						class="text-text-muted no-underline hover:text-text"
-					>
-						{data.tagCount} tag{data.tagCount === 1 ? "" : "s"}
-					</a>
-				{/if}
 			</div>
+
+			{#if data.trackedCount > 0 || data.tagCount > 0}
+				<nav class="mt-3 flex flex-wrap gap-2" aria-label="Profile sections">
+					{#if data.trackedCount > 0}
+						<a
+							href="/u/{data.profileUser.username}/library"
+							class="rounded-sm border border-border px-2.5 py-1 text-sm text-text-muted no-underline transition-colors hover:border-accent hover:text-accent"
+						>
+							Library
+							<span class="ml-1 font-mono text-xs opacity-60">{data.trackedCount}</span>
+						</a>
+					{/if}
+					{#if data.tagCount > 0}
+						<a
+							href="/u/{data.profileUser.username}/tags"
+							class="rounded-sm border border-border px-2.5 py-1 text-sm text-text-muted no-underline transition-colors hover:border-accent hover:text-accent"
+						>
+							Tags
+							<span class="ml-1 font-mono text-xs opacity-60">{data.tagCount}</span>
+						</a>
+					{/if}
+				</nav>
+			{/if}
 		</div>
 
 		{#if !data.isOwnProfile && data.followStatus !== null}
