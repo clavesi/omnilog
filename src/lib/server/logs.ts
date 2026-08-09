@@ -5,6 +5,7 @@ import { db } from "./db";
 import { logs, mediaParts, users } from "./db/schema";
 import { directMedia, logMediaSelect, parentPart, partMedia } from "./log-media-joins";
 import { getReactionCounts } from "./reactions";
+import { getTagsForLogs, type TagRef } from "./tags";
 
 /** Core log columns shared by LogCard — keep in sync with LogCardData. */
 export const logCardSelect = {
@@ -143,13 +144,18 @@ export async function getLogsForPart(
  */
 export async function attachSocialCounts<T extends { id: string }>(
 	rows: T[],
-): Promise<(T & { commentCount: number; reactionCount: number })[]> {
+): Promise<(T & { commentCount: number; reactionCount: number; tags: TagRef[] })[]> {
 	const ids = rows.map((r) => r.id);
-	const [commentCounts, reactionCounts] = await Promise.all([getCommentCounts(ids), getReactionCounts(ids)]);
+	const [commentCounts, reactionCounts, tagsByLog] = await Promise.all([
+		getCommentCounts(ids),
+		getReactionCounts(ids),
+		getTagsForLogs(ids),
+	]);
 	return rows.map((r) => ({
 		...r,
 		commentCount: commentCounts.get(r.id) ?? 0,
 		reactionCount: reactionCounts.get(r.id) ?? 0,
+		tags: tagsByLog.get(r.id) ?? [],
 	}));
 }
 

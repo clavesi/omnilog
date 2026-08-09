@@ -37,6 +37,7 @@ export type LogCardData = {
 	 */
 	commentCount?: number;
 	reactionCount?: number;
+	tags?: { id: string; name: string; slug: string }[];
 };
 
 /** Pre-filled form state for LogForm edit mode. */

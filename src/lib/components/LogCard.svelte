@@ -24,6 +24,12 @@ type Props = {
 	reactionCount?: number;
 	/** Hidden on the log's own detail page, where the link would be circular. */
 	showDiscussionLink?: boolean;
+	/**
+	 * Whose tag pages the tag chips link to. Falls back to log.username, which
+	 * is only selected on listings that show an author — the profile page
+	 * knows the owner but doesn't select it per row, so it passes this.
+	 */
+	tagOwnerUsername?: string;
 	onDelete?: (logId: string) => void;
 };
 
@@ -36,8 +42,12 @@ let {
 	commentCount = 0,
 	reactionCount = 0,
 	showDiscussionLink = true,
+	tagOwnerUsername,
 	onDelete,
 }: Props = $props();
+
+// Without an owner there's nowhere to link — render the tags as plain chips.
+const tagOwner = $derived(tagOwnerUsername ?? log.username ?? null);
 
 let revealSpoilers = $state(false);
 
@@ -208,6 +218,29 @@ const typeColor = $derived(log.mediaType ? getMediaTypeColor(log.mediaType) : nu
 						</p>
 					{/if}
 				</div>
+			{/if}
+
+			{#if log.tags && log.tags.length > 0}
+				<ul class="m-0 mt-3 flex list-none flex-wrap gap-1.5 p-0">
+					{#each log.tags as tag (tag.id)}
+						<li>
+							{#if tagOwner}
+								<a
+									href="/u/{tagOwner}/tags/{tag.slug}"
+									class="inline-block rounded-full border border-border px-2 py-0.5 text-xs text-text-muted no-underline transition-colors hover:border-accent hover:text-accent"
+								>
+									{tag.name}
+								</a>
+							{:else}
+								<span
+									class="inline-block rounded-full border border-border px-2 py-0.5 text-xs text-text-muted"
+								>
+									{tag.name}
+								</span>
+							{/if}
+						</li>
+					{/each}
+				</ul>
 			{/if}
 
 			{#if showDiscussionLink}

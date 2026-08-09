@@ -7,6 +7,7 @@ import { parseLogFormData } from "$lib/server/log-form";
 import { requireLogForPart, requireOwnedLogForPartAction, requirePartForItem } from "$lib/server/log-routes";
 import { recomputePartAggregate } from "$lib/server/media-aggregate";
 import { safeRelativePath } from "$lib/server/safe-path";
+import { getLogTagsInput, getTagSuggestions, setLogTags } from "$lib/server/tags";
 import type { Actions, PageServerLoad } from "./$types";
 
 export const load: PageServerLoad = async (event) => {
@@ -27,6 +28,8 @@ export const load: PageServerLoad = async (event) => {
 		log: existingLog,
 		today: new Date().toISOString().slice(0, 10),
 		returnTo,
+		initialTags: await getLogTagsInput(params.logId),
+		tagSuggestions: await getTagSuggestions(user.id),
 	};
 };
 
@@ -48,7 +51,8 @@ export const actions: Actions = {
 		const parsed = parseLogFormData(form);
 		if (!parsed.ok) return fail(400, { error: parsed.error });
 
-		const { rating, loggedAt, reviewBody, reviewTitle, containsSpoilers, isPublic, commentPolicy } = parsed.fields;
+		const { rating, loggedAt, reviewBody, reviewTitle, containsSpoilers, isPublic, commentPolicy, tags } =
+			parsed.fields;
 
 		await db
 			.update(logs)
@@ -65,6 +69,8 @@ export const actions: Actions = {
 				updatedAt: new Date(),
 			})
 			.where(eq(logs.id, params.logId));
+
+		await setLogTags(params.logId, tags);
 
 		await recomputePartAggregate(part.id);
 

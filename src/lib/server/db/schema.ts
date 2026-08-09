@@ -474,6 +474,46 @@ export const follows = pgTable(
 );
 
 // ============================================================================
+// TAGS
+// ============================================================================
+
+/**
+ * Global tag vocabulary, deduplicated by slug.
+ *
+ * Shared rather than per-user so "comfort watch" is one row however many people use it.
+ * That keeps autocomplete cheap and means a rename or merge later touches one row.
+ * Ownership lives on log_tags via the log's author, which is what per-user browsing keys on.
+ */
+export const tags = pgTable(
+	"tags",
+	{
+		id: uuid("id").primaryKey().defaultRandom(),
+		// Display form, as first written. Slug is what's compared.
+		name: text("name").notNull(),
+		slug: text("slug").notNull(),
+		createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+	},
+	(t) => [uniqueIndex("tags_slug_unique").on(t.slug)],
+);
+
+export const logTags = pgTable(
+	"log_tags",
+	{
+		logId: uuid("log_id")
+			.notNull()
+			.references(() => logs.id, { onDelete: "cascade" }),
+		tagId: uuid("tag_id")
+			.notNull()
+			.references(() => tags.id, { onDelete: "cascade" }),
+	},
+	(t) => [
+		uniqueIndex("log_tags_pk").on(t.logId, t.tagId),
+		index("log_tags_log_idx").on(t.logId),
+		index("log_tags_tag_idx").on(t.tagId),
+	],
+);
+
+// ============================================================================
 // LOG SOCIAL: COMMENTS + REACTIONS
 // ============================================================================
 
@@ -591,6 +631,15 @@ export const usersRelations = relations(users, ({ many }) => ({
 export const followsRelations = relations(follows, ({ one }) => ({
 	follower: one(users, { fields: [follows.followerId], references: [users.id], relationName: "follower" }),
 	following: one(users, { fields: [follows.followingId], references: [users.id], relationName: "following" }),
+}));
+
+export const tagsRelations = relations(tags, ({ many }) => ({
+	logs: many(logTags),
+}));
+
+export const logTagsRelations = relations(logTags, ({ one }) => ({
+	log: one(logs, { fields: [logTags.logId], references: [logs.id] }),
+	tag: one(tags, { fields: [logTags.tagId], references: [tags.id] }),
 }));
 
 export const logCommentsRelations = relations(logComments, ({ one, many }) => ({
@@ -714,6 +763,7 @@ export const logsRelations = relations(logs, ({ one, many }) => ({
 	}),
 	comments: many(logComments),
 	reactions: many(logReactions),
+	tags: many(logTags),
 }));
 
 export const userMediaStatusRelations = relations(userMediaStatus, ({ one }) => ({

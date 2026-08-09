@@ -19,6 +19,7 @@ let { data, form } = $props();
 		submitLabel="Save log"
 		returnTo={data.returnTo}
 		defaultCommentPolicy={data.defaultCommentPolicy}
+		tagSuggestions={data.tagSuggestions}
 		{form}
 	/>
 </div>

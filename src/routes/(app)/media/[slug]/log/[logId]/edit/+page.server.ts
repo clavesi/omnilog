@@ -6,6 +6,7 @@ import { logs } from "$lib/server/db/schema";
 import { parseLogFormData } from "$lib/server/log-form";
 import { requireItemBySlug, requireLogForItem, requireOwnedLogForItemAction } from "$lib/server/log-routes";
 import { recomputeAggregate } from "$lib/server/media-aggregate";
+import { getLogTagsInput, getTagSuggestions, setLogTags } from "$lib/server/tags";
 import type { Actions, PageServerLoad } from "./$types";
 
 export const load: PageServerLoad = async (event) => {
@@ -22,6 +23,8 @@ export const load: PageServerLoad = async (event) => {
 		item,
 		log: existingLog,
 		today: new Date().toISOString().slice(0, 10),
+		initialTags: await getLogTagsInput(params.logId),
+		tagSuggestions: await getTagSuggestions(user.id),
 	};
 };
 
@@ -39,7 +42,8 @@ export const actions: Actions = {
 		const parsed = parseLogFormData(form);
 		if (!parsed.ok) return fail(400, { error: parsed.error });
 
-		const { rating, loggedAt, reviewBody, reviewTitle, containsSpoilers, isPublic, commentPolicy } = parsed.fields;
+		const { rating, loggedAt, reviewBody, reviewTitle, containsSpoilers, isPublic, commentPolicy, tags } =
+			parsed.fields;
 
 		await db
 			.update(logs)
@@ -56,6 +60,8 @@ export const actions: Actions = {
 				updatedAt: new Date(),
 			})
 			.where(eq(logs.id, params.logId));
+
+		await setLogTags(params.logId, tags);
 
 		if (existingLog.mediaItemId) {
 			await recomputeAggregate(existingLog.mediaItemId);

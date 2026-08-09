@@ -8,6 +8,7 @@ import { follow, unfollow } from "$lib/server/follows";
 import { getListsForUser } from "$lib/server/lists";
 import { queryLogsWithMedia } from "$lib/server/logs";
 import { getProfileContext } from "$lib/server/profile";
+import { countUserTags } from "$lib/server/tags";
 import type { Actions, PageServerLoad } from "./$types";
 
 export const load: PageServerLoad = async ({ params, locals }) => {
@@ -38,6 +39,7 @@ export const load: PageServerLoad = async ({ params, locals }) => {
 		canSeeLogs: canSeeContent,
 		followStatus,
 		followCounts,
+		tagCount: await countUserTags(profileUser.id, isOwnProfile),
 	};
 };
 

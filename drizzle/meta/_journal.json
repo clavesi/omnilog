@@ -162,6 +162,13 @@
 			"when": 1786161089070,
 			"tag": "0022_sour_ma_gnuci",
 			"breakpoints": true
+		},
+		{
+			"idx": 23,
+			"version": "7",
+			"when": 1786264012293,
+			"tag": "0023_wide_excalibur",
+			"breakpoints": true
 		}
 	]
 }

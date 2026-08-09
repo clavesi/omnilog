@@ -9,6 +9,7 @@ import { INPUT_CLASS } from "$lib/form-styles";
 import type { LogFormInitial } from "$lib/types/log";
 import Checkbox from "./Checkbox.svelte";
 import StarRating from "./StarRating.svelte";
+import TagInput from "./TagInput.svelte";
 
 type Props = {
 	today: string;
@@ -19,6 +20,10 @@ type Props = {
 	initial?: LogFormInitial;
 	/** The author's saved preference — the starting value when creating. */
 	defaultCommentPolicy?: CommentPolicy;
+	/** Comma-separated tags already on this log (edit mode). */
+	initialTags?: string;
+	/** The author's existing tags, offered as quick-add. */
+	tagSuggestions?: string[];
 };
 
 let {
@@ -29,6 +34,8 @@ let {
 	returnTo,
 	initial,
 	defaultCommentPolicy = "everyone",
+	initialTags = "",
+	tagSuggestions = [],
 }: Props = $props();
 
 // One-time init from props — form fields are edited locally until submit.
@@ -78,6 +85,11 @@ let submitting = $state(false);
 			Public — visible to others
 		</label>
 	</div>
+
+	<section class="mb-6">
+		<span class="mb-2 block text-sm font-medium">Tags</span>
+		<TagInput initial={initialTags} suggestions={tagSuggestions} />
+	</section>
 
 	<fieldset class="mb-6 border-none p-0">
 		<legend class="mb-2 block text-sm font-medium">Who can comment</legend>

@@ -18,6 +18,8 @@ let { data, form } = $props();
 		cancelHref={data.returnTo}
 		submitLabel="Save changes"
 		returnTo={data.returnTo}
+		initialTags={data.initialTags}
+		tagSuggestions={data.tagSuggestions}
 		{form}
 		initial={{
 			rating: data.log.rating,

@@ -17,6 +17,8 @@ let { data, form } = $props();
 		today={data.today}
 		cancelHref="/media/{data.item.slug}"
 		submitLabel="Save changes"
+		initialTags={data.initialTags}
+		tagSuggestions={data.tagSuggestions}
 		{form}
 		initial={{
 			rating: data.log.rating,

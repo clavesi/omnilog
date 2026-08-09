@@ -8,6 +8,7 @@ import { parseLogFormData } from "$lib/server/log-form";
 import { requireItemBySlug } from "$lib/server/log-routes";
 import { countUserLogsForItem } from "$lib/server/logs";
 import { recomputeAggregate } from "$lib/server/media-aggregate";
+import { getTagSuggestions, setLogTags } from "$lib/server/tags";
 import type { Actions, PageServerLoad } from "./$types";
 
 export const load: PageServerLoad = async (event) => {
@@ -20,6 +21,7 @@ export const load: PageServerLoad = async (event) => {
 
 	return {
 		defaultCommentPolicy: await getDefaultCommentPolicy(user.id),
+		tagSuggestions: await getTagSuggestions(user.id),
 		item,
 		hasPriorLog: priorCount > 0,
 		today: new Date().toISOString().slice(0, 10),
@@ -44,27 +46,33 @@ export const actions: Actions = {
 		const parsed = parseLogFormData(form);
 		if (!parsed.ok) return fail(400, { error: parsed.error });
 
-		const { rating, loggedAt, reviewBody, reviewTitle, containsSpoilers, isPublic, commentPolicy } = parsed.fields;
+		const { rating, loggedAt, reviewBody, reviewTitle, containsSpoilers, isPublic, commentPolicy, tags } =
+			parsed.fields;
 
 		const priorCount = await countUserLogsForItem(user.id, item.id);
 		const watchNumber = priorCount + 1;
 		const isRewatch = watchNumber > 1;
 
-		await db.insert(logs).values({
-			userId: user.id,
-			commentPolicy: commentPolicy ?? (await getDefaultCommentPolicy(user.id)),
-			mediaItemId: item.id,
-			mediaPartId: null,
-			loggedAt,
-			rating,
-			reviewTitle,
-			reviewBody,
-			// Spoiler flag only applies when there's a review to hide.
-			containsSpoilers: containsSpoilers && reviewBody !== null,
-			watchNumber,
-			isRewatch,
-			isPublic,
-		});
+		const [created] = await db
+			.insert(logs)
+			.values({
+				userId: user.id,
+				commentPolicy: commentPolicy ?? (await getDefaultCommentPolicy(user.id)),
+				mediaItemId: item.id,
+				mediaPartId: null,
+				loggedAt,
+				rating,
+				reviewTitle,
+				reviewBody,
+				// Spoiler flag only applies when there's a review to hide.
+				containsSpoilers: containsSpoilers && reviewBody !== null,
+				watchNumber,
+				isRewatch,
+				isPublic,
+			})
+			.returning({ id: logs.id });
+
+		await setLogTags(created.id, tags);
 
 		await recomputeAggregate(item.id);
 

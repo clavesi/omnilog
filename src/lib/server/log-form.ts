@@ -17,6 +17,8 @@ export type LogFormFields = {
 	 * default on create, or leave the existing value alone on edit.
 	 */
 	commentPolicy: CommentPolicy | null;
+	/** Raw comma-separated input; parsed and normalized by setLogTags. */
+	tags: string;
 };
 
 export type ParseLogFormResult = { ok: true; fields: LogFormFields } | { ok: false; error: string };
@@ -28,6 +30,8 @@ export function parseLogFormData(form: FormData): ParseLogFormResult {
 	const reviewTitleRaw = form.get("reviewTitle");
 	const containsSpoilers = form.get("containsSpoilers") === "on";
 	const isPublic = form.get("isPublic") === "on";
+
+	const tags = String(form.get("tags") ?? "");
 
 	const commentPolicyRaw = form.get("commentPolicy");
 	const commentPolicy =
@@ -67,6 +71,6 @@ export function parseLogFormData(form: FormData): ParseLogFormResult {
 
 	return {
 		ok: true,
-		fields: { rating, loggedAt, reviewBody, reviewTitle, containsSpoilers, isPublic, commentPolicy },
+		fields: { rating, loggedAt, reviewBody, reviewTitle, containsSpoilers, isPublic, commentPolicy, tags },
 	};
 }

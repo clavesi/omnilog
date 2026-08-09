@@ -60,6 +60,14 @@ const orderedShowcase = $derived(
 				>
 					{data.followCounts.following} following
 				</a>
+				{#if data.tagCount > 0}
+					<a
+						href="/u/{data.profileUser.username}/tags"
+						class="text-text-muted no-underline hover:text-text"
+					>
+						{data.tagCount} tag{data.tagCount === 1 ? "" : "s"}
+					</a>
+				{/if}
 			</div>
 		</div>
 
@@ -199,6 +207,7 @@ const orderedShowcase = $derived(
 						{log}
 						showMediaInfo={true}
 						isOwner={data.isOwnProfile}
+						tagOwnerUsername={data.profileUser.username}
 						commentCount={log.commentCount ?? 0}
 						reactionCount={log.reactionCount ?? 0}
 						onDelete={handleDeleted}
